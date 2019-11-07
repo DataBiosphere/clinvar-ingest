@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: clinvar-extraction-
+spec:
+  entrypoint: extract-latest-clinvar-release
+  volumeClaimTemplates:
+    - metadata:
+        name: workdir
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+  templates:
+    ## "Main" function for the workflow.
+    - name: extract-latest-clinvar-release
+      steps:
+        - - name: download-latest-release
+            template: download-latest-weekly-release
+        - - name: check-downloaded-release
+            template: check-downloaded-release
+
+    ## Downloads the latest weekly release onto the workflow's workdir volume.
+    - name: download-latest-weekly-release
+      container:
+        image: alpine:3.10
+        command: [wget]
+        args: [-c, -O, /out/ClinVarRelease.xml.gz, ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/clinvar_variation/weekly_release/ClinVarVariationRelease_00-latest_weekly.xml.gz]
+        volumeMounts:
+          - name: workdir
+            mountPath: /out
+
+    ## Checks that the downloaded release can be passed to another task.
+    - name: check-downloaded-release
+      container:
+        image: alpine:3.10
+        command: [stat]
+        args: [/out/ClinVarRelease.xml.gz]
+        volumeMounts:
+          - name: workdir
+            mountPath: /out
