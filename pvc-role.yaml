@@ -25,3 +25,14 @@ rules:
   - delete
   - patch
   - update
+- apiGroups:
+  - "argoproj.io"
+  resources:
+  - workflows
+  verbs:
+  - get
+  - list
+  - create
+  - delete
+  - patch
+  - update

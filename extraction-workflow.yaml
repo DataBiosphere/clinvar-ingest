@@ -4,40 +4,127 @@ metadata:
   generateName: clinvar-extraction-
 spec:
   entrypoint: extract-latest-clinvar-release
-  volumeClaimTemplates:
-    - metadata:
-        name: workdir
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        resources:
-          requests:
-            storage: 10Gi
+  podGC:
+    strategy: OnPodSuccess
+  arguments:
+    parameters:
+      - name: service-account-name
+        value: argo
+      - name: ftp-site
+        value: ftp.ncbi.nlm.nih.gov
+      - name: ftp-path
+        value: pub/clinvar/xml/clinvar_variation/weekly_release/ClinVarVariationRelease_00-latest_weekly.xml.gz
+  serviceAccountName: '{{workflow.parameters.service-account-name}}'
   templates:
-    ## "Main" function for the workflow.
+    ## "Main" function for the extraction workflow.
     - name: extract-latest-clinvar-release
       steps:
-        - - name: download-latest-release
-            template: download-latest-weekly-release
-        - - name: check-downloaded-release
-            template: check-downloaded-release
+        - - name: get-latest-release-size
+            template: get-latest-release-size
+        - - name: launch-sub-workflow
+            template: launch-extraction-workflow
+            arguments:
+              parameters:
+                - name: release-size
+                  value: '{{steps.get-latest-release-size.outputs.result}}'
+        - - name: wait-for-sub-workflow
+            template: wait-for-sub-workflow
+            arguments:
+              parameters:
+                - name: workflow-name
+                  value: '{{steps.launch-sub-workflow.outputs.parameters.workflow-name}}'
 
-    ## Downloads the latest weekly release onto the workflow's workdir volume.
-    - name: download-latest-weekly-release
-      container:
-        image: alpine:3.10
-        command: [wget]
-        args: [-c, -O, /out/ClinVarRelease.xml.gz, ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/clinvar_variation/weekly_release/ClinVarVariationRelease_00-latest_weekly.xml.gz]
-        volumeMounts:
-          - name: workdir
-            mountPath: /out
+    ## Query ClinVar's FTP site to get the size of the latest release.
+    - name: get-latest-release-size
+      script:
+        image: python:3.8-alpine
+        command: [python]
+        source: |
+          import ftplib
+          client = ftplib.FTP('{{workflow.parameters.ftp-site}}')
+          client.set_pasv(True)
+          client.login()
+          print(client.size('{{workflow.parameters.ftp-path}}'))
 
-    ## Checks that the downloaded release can be passed to another task.
-    - name: check-downloaded-release
-      container:
-        image: alpine:3.10
-        command: [stat]
-        args: [/out/ClinVarRelease.xml.gz]
-        volumeMounts:
-          - name: workdir
-            mountPath: /out
+    ## Launch another Argo workflow to actually download & extract the latest release.
+    ## Argo's support for dynamically-created persistent volumes is restricted to the
+    ## workflow level, so this is the least-verbose way to handle setting the volume
+    ## size based on a previous workflow step.
+    - name: launch-extraction-workflow
+      inputs:
+        parameters:
+          - name: release-size
+      resource:
+        action: create
+        setOwnerReference: true
+        manifest: |
+          apiVersion: argoproj.io/v1alpha1
+          kind: Workflow
+          metadata:
+            generateName: {{workflow.name}}-helper-
+          spec:
+            entrypoint: extract-latest-clinvar-release
+            podGC:
+              strategy: OnPodSuccess
+            serviceAccountName: {{workflow.parameters.service-account-name}}
+            volumeClaimTemplates:
+              - metadata:
+                  name: workdir
+                spec:
+                  accessModes:
+                    - ReadWriteOnce
+                  resources:
+                    requests:
+                      storage: {{inputs.parameters.release-size}}
+            templates:
+              ## "Main" function for the workflow.
+              - name: extract-latest-clinvar-release
+                steps:
+                  - - name: download-latest-release
+                      template: download-latest-weekly-release
+                  - - name: check-downloaded-release
+                      template: check-downloaded-release
+
+              ## Downloads the latest weekly release onto the workflow's workdir volume.
+              - name: download-latest-weekly-release
+                container:
+                  image: alpine:3.10
+                  command: [wget]
+                  args:
+                    - -c
+                    - -O
+                    - /out/ClinVarRelease.xml.gz
+                    - ftp://{{workflow.parameters.ftp-site}}/{{workflow.parameters.ftp-path}}
+                  volumeMounts:
+                    - name: workdir
+                      mountPath: /out
+
+              ## Checks that the downloaded release can be passed to another task.
+              - name: check-downloaded-release
+                container:
+                  image: alpine:3.10
+                  command: [stat]
+                  args: [/out/ClinVarRelease.xml.gz]
+                  volumeMounts:
+                    - name: workdir
+                      mountPath: /out
+      outputs:
+        parameters:
+          - name: workflow-name
+            valueFrom:
+              jsonPath: '{.metadata.name}'
+
+    ## Poll another Argo workflow until it reaches a terminal state.
+    - name: wait-for-sub-workflow
+      inputs:
+        parameters:
+          - name: workflow-name
+      resource:
+        action: get
+        successCondition: status.phase == Succeeded
+        failureCondition: status.phase in (Failed, Error)
+        manifest: |
+          apiVersion: argoproj.io/v1alpha1
+          kind: Workflow
+          metadata:
+            name: {{inputs.parameters.workflow-name}}
