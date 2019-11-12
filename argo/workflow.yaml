@@ -90,7 +90,6 @@ spec:
           - name: output-path
           - name: rows-per-output
       container:
-        # TODO: Replace with a "real" image.
         image: us.gcr.io/broad-dsp-gcr-public/xml-clp:1.1.0
         command: []
         args:

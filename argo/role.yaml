@@ -1,7 +1,8 @@
+# Permissions needed by a k8s SA to run the extraction workflow.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: pvc-admin
+  name: clinvar-extraction-role
 rules:
 - apiGroups:
   - ""
