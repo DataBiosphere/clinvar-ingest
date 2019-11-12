@@ -5,7 +5,7 @@ metadata:
 spec:
   entrypoint: extract-latest-clinvar-release
   podGC:
-    strategy: OnPodSuccess
+    strategy: OnWorkflowSuccess
   volumeClaimTemplates:
     - metadata:
         name: state-dir
