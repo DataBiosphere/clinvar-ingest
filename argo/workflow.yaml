@@ -6,6 +6,10 @@ spec:
   entrypoint: extract-latest-clinvar-release
   podGC:
     strategy: OnWorkflowSuccess
+  volumes:
+    - name: gcs-writer-key
+      secret:
+        secretName: "{{workflow.parameters.gcs-key-secret}}"
   volumeClaimTemplates:
     - metadata:
         name: state-dir
@@ -51,6 +55,10 @@ spec:
                   value: '{{workflow.parameters.output-gcs-bucket}}'
                 - name: gcs-path
                   value: '{{workflow.parameters.output-gcs-prefix}}'
+                - name: key-secret-volume
+                  value: gcs-writer-key
+                - name: key-secret-file
+                  value: "{{workflow.parameters.gcs-key-name}}"
 
     ## Downloads a file from an FTP site onto a k8s volume.
     - name: download-ftp-file
@@ -67,8 +75,6 @@ spec:
           - --continue
           # Reset the download connection if it goes idle for > 30 seconds.
           - --read-timeout=30
-          # Retry up to 60 times (total timeout of 30 minutes).
-          - --tries=60
           - --output-document=/state/{{inputs.parameters.local-path}}
           - ftp://{{inputs.parameters.ftp-site}}/{{inputs.parameters.ftp-path}}
         volumeMounts:
@@ -81,6 +87,8 @@ spec:
           limits:
             memory: 512Mi
             cpu: 1000m
+      retryStrategy:
+        limit: 32
 
     ## Extracts a local XML payload into badger-fish JSON.
     - name: extract-xml-to-json
@@ -118,20 +126,32 @@ spec:
           - name: local-path
           - name: gcs-bucket
           - name: gcs-path
+          - name: key-secret-volume
+          - name: key-secret-file
       container:
         image: google/cloud-sdk:slim
         command: [gsutil]
         args:
           - -m
+          # Move the state dir to the persistent volume so we don't
+          # lose track of progress across restarts.
           - -o
           - "GSUtil:state_dir=/state/.gsutil"
+          # Point at the mounted SA credentials for auth.
+          - -o
+          - "Credentials:gs_service_key_file=/secrets/key.json"
           - rsync
           - -r
           - /state/{{inputs.parameters.local-path}}
-          - gs://{{inputs.parameters.gcs-bucket}}/{{gcs-path}}
+          - gs://{{inputs.parameters.gcs-bucket}}/{{inputs.parameters.gcs-path}}
         volumeMounts:
           - name: state-dir
             mountPath: /state
+          - name: "{{inputs.parameters.key-secret-volume}}"
+            mountPath: /secrets
+        env:
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: /secrets/{{inputs.parameters.key-secret-file}}
         resources:
           requests:
             memory: 1Gi
@@ -139,4 +159,6 @@ spec:
           limits:
             memory: 2Gi
             cpu: 2000m
+      retryStrategy:
+        limit: 32
 
