@@ -1,0 +1,22 @@
+{
+  "name": "gene",
+  "columns": [
+    {
+      "name": "id",
+      "datatype": "string",
+      "type": "primary_key"
+    },
+    {
+      "name": "symbol",
+      "datatype": "string"
+    },
+    {
+      "name": "hgnc_id",
+      "datatype": "string"
+    },
+    {
+      "name": "full_name",
+      "datatype": "string"
+    }
+  ]
+}

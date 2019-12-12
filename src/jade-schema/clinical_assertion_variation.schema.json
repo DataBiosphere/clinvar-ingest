@@ -1,0 +1,56 @@
+{
+  "name": "clinical_assertion_variation",
+  "columns": [
+    {
+      "name": "id",
+      "datatype": "string",
+      "type": "primary_key"
+    },
+    {
+      "name": "clinical_assertion_id",
+      "datatype": "string",
+      "type": "required",
+      "links": [
+        {
+          "table_name": "clinical_assertion",
+          "column_name": "id"
+        }
+      ]
+    },
+    {
+      "name": "child_ids",
+      "datatype": "string",
+      "type": "repeated",
+      "links": [
+        {
+          "table_name": "clinical_assertion_variation",
+          "column_name": "id"
+        }
+      ]
+    },
+    {
+      "name": "descendant_ids",
+      "datatype": "string",
+      "type": "repeated",
+      "links": [
+        {
+          "table_name": "clinical_assertion_variation",
+          "column_name": "id"
+        }
+      ]
+    },
+    {
+      "name": "subclass_type",
+      "datatype": "string",
+      "type": "required"
+    },
+    {
+      "name": "variation_type",
+      "datatype": "string"
+    },
+    {
+      "name": "content",
+      "datatype": "string"
+    }
+  ]
+}

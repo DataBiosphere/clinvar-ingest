@@ -1,0 +1,22 @@
+{
+  "name": "submitter",
+  "columns": [
+    {
+      "name": "id",
+      "datatype": "string",
+      "type": "primary_key"
+    },
+    {
+      "name": "submitter_name",
+      "datatype": "string"
+    },
+    {
+      "name": "org_category",
+      "datatype": "string"
+    },
+    {
+      "name": "org_abbrev",
+      "datatype": "string"
+    }
+  ]
+}

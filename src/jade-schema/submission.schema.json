@@ -1,0 +1,31 @@
+{
+  "name": "submission",
+  "columns": [
+    {
+      "name": "id",
+      "datatype": "string",
+      "type": "primary_key"
+    },
+    {
+      "name": "submitter_id",
+      "datatype": "string",
+      "type": "required",
+      "links": [
+        {
+          "table_name": "submitter",
+          "column_name": "id"
+        }
+      ]
+    },
+    {
+      "name": "submission_date",
+      "datatype": "date",
+      "type": "required"
+    },
+    {
+      "name": "submission_names",
+      "datatype": "string",
+      "type": "repeated"
+    }
+  ]
+}

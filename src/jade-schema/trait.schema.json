@@ -1,0 +1,36 @@
+{
+  "name": "trait",
+  "columns": [
+    {
+      "name": "id",
+      "datatype": "string",
+      "type": "primary_key"
+    },
+    {
+      "name": "medgen_id",
+      "datatype": "string"
+    },
+    {
+      "name": "type",
+      "datatype": "string"
+    },
+    {
+      "name": "name",
+      "datatype": "string"
+    },
+    {
+      "name": "alternate_names",
+      "datatype": "string",
+      "type": "repeated"
+    },
+    {
+      "name": "xrefs",
+      "datatype": "string",
+      "type": "repeated"
+    },
+    {
+      "name": "content",
+      "datatype": "string"
+    }
+  ]
+}

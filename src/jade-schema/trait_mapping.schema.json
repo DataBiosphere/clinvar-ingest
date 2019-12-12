@@ -1,0 +1,44 @@
+{
+  "name": "trait_mapping",
+  "columns": [
+    {
+      "name": "clinical_assertion_id",
+      "datatype": "string",
+      "type": "primary_key",
+      "links": [
+        {
+          "table_name": "clinical_assertion",
+          "column_name": "id"
+        }
+      ]
+    },
+    {
+      "name": "trait_type",
+      "datatype": "string",
+      "type": "primary_key"
+    },
+    {
+      "name": "mapping_type",
+      "datatype": "string",
+      "type": "primary_key"
+    },
+    {
+      "name": "mapping_ref",
+      "datatype": "string",
+      "type": "primary_key"
+    },
+    {
+      "name": "mapping_value",
+      "datatype": "string",
+      "type": "primary_key"
+    },
+    {
+      "name": "medgen_id",
+      "datatype": "string"
+    },
+    {
+      "name": "medgen_name",
+      "datatype": "string"
+    }
+  ]
+}
