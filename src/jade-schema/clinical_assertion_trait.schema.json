@@ -1,0 +1,41 @@
+{
+  "name": "clinical_assertion_trait",
+  "columns": [
+    {
+      "name": "id",
+      "datatype": "string",
+      "type": "primary_key"
+    },
+    {
+      "name": "trait_id",
+      "datatype": "string",
+      "links": [
+        {
+          "table_name": "trait",
+          "column_name": "id"
+        }
+      ]
+    },
+    {
+      "name": "type",
+      "datatype": "string"
+    },
+    {
+      "name": "name",
+      "datatype": "string"
+    },
+    {
+      "name": "medgen_id",
+      "datatype": "string"
+    },
+    {
+      "name": "xrefs",
+      "datatype": "string",
+      "type": "repeated"
+    },
+    {
+      "name": "content",
+      "datatype": "string"
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "name": "clinical_assertion",
+  "columns": [
+    {
+      "name": "id",
+      "datatype": "string",
+      "type": "primary_key"
+    },
+    {
+      "name": "version",
+      "datatype": "integer",
+      "type": "primary_key"
+    },
+    {
+      "name": "variation_archive_id",
+      "datatype": "string",
+      "type": "required",
+      "links": [
+        {
+          "table_name": "variation_archive",
+          "column_name": "id"
+        }
+      ]
+    },
+    {
+      "name": "variation_id",
+      "datatype": "string",
+      "type": "required",
+      "links": [
+        {
+          "table_name": "variation",
+          "column_name": "id"
+        }
+      ]
+    },
+    {
+      "name": "submitter_id",
+      "datatype": "string",
+      "type": "required",
+      "links": [
+        {
+          "table_name": "submitter",
+          "column_name": "id"
+        }
+      ]
+    },
+    {
+      "name": "submission_id",
+      "datatype": "string",
+      "type": "required",
+      "links": [
+        {
+          "table_name": "submission",
+          "column_name": "id"
+        }
+      ]
+    },
+    {
+      "name": "rcv_accession_id",
+      "datatype": "string",
+      "links": [
+        {
+          "table_name": "rcv_accession",
+          "column_name": "id"
+        }
+      ]
+    },
+    {
+      "name": "trait_set_id",
+      "datatype": "string",
+      "links": [
+        {
+          "table_name": "trait_set",
+          "column_name": "id"
+        }
+      ]
+    },
+    {
+      "name": "clinical_assertion_trait_set_id",
+      "datatype": "string",
+      "links": [
+        {
+          "table_name": "clinical_assertion_trait_set",
+          "column_name": "id"
+        }
+      ]
+    },
+    {
+      "name": "clinical_assertion_observation_ids",
+      "datatype": "string",
+      "type": "repeated",
+      "links": [
+        {
+          "table_name": "clinical_assertion_observation",
+          "column_name": "id"
+        }
+      ]
+    },
+    {
+      "name": "title",
+      "datatype": "string"
+    },
+    {
+      "name": "local_key",
+      "datatype": "string"
+    },
+    {
+      "name": "assertion_type",
+      "datatype": "string"
+    },
+    {
+      "name": "date_created",
+      "datatype": "date"
+    },
+    {
+      "name": "date_last_updated",
+      "datatype": "date"
+    },
+    {
+      "name": "submitted_assembly",
+      "datatype": "string"
+    },
+    {
+      "name": "record_status",
+      "datatype": "string"
+    },
+    {
+      "name": "review_status",
+      "datatype": "string"
+    },
+    {
+      "name": "interp_description",
+      "datatype": "string"
+    },
+    {
+      "name": "interp_date_last_evaluated",
+      "datatype": "date"
+    },
+    {
+      "name": "interp_comments",
+      "datatype": "string",
+      "type": "repeated"
+    },
+    {
+      "name": "content",
+      "datatype": "string"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "name": "variation",
+  "columns": [
+    {
+      "name": "id",
+      "datatype": "string",
+      "type": "primary_key"
+    },
+    {
+      "name": "subclass_type",
+      "datatype": "string",
+      "type": "required"
+    },
+    {
+      "name": "child_ids",
+      "datatype": "string",
+      "type": "repeated",
+      "links": [
+        {
+          "table_name": "variation",
+          "column_name": "id"
+        }
+      ]
+    },
+    {
+      "name": "descendant_ids",
+      "datatype": "string",
+      "type": "repeated",
+      "links": [
+        {
+          "table_name": "variation",
+          "column_name": "id"
+        }
+      ]
+    },
+    {
+      "name": "name",
+      "datatype": "string"
+    },
+    {
+      "name": "variation_type",
+      "datatype": "string"
+    },
+    {
+      "name": "allele_id",
+      "datatype": "string"
+    },
+    {
+      "name": "protein_change",
+      "datatype": "string",
+      "cardinality": "many"
+    },
+    {
+      "name": "num_chromosomes",
+      "datatype": "integer"
+    },
+    {
+      "name": "num_copies",
+      "datatype": "integer"
+    },
+    {
+      "name": "content",
+      "datatype": "string"
+    }
+  ]
+}

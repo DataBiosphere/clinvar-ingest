@@ -1,0 +1,25 @@
+{
+  "name": "clinical_assertion_observation",
+  "columns": [
+    {
+      "name": "id",
+      "datatype": "string",
+      "type": "primary_key"
+    },
+    {
+      "name": "clinical_assertion_trait_ids",
+      "datatype": "string",
+      "type": "repeated",
+      "links": [
+        {
+          "table_name": "clinical_assertion_trait",
+          "column_name": "id"
+        }
+      ]
+    },
+    {
+      "name": "content",
+      "datatype": "string"
+    }
+  ]
+}
