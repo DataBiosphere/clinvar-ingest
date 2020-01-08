@@ -1,0 +1,15 @@
+{
+  "name": "xref",
+  "fields": [
+    {
+      "name": "db",
+      "datatype": "string",
+      "type": "required"
+    },
+    {
+      "name": "id",
+      "datatype": "string",
+      "type": "required"
+    }
+  ]
+}

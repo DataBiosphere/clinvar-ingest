@@ -29,13 +29,15 @@
       "datatype": "string"
     },
     {
-      "name": "xrefs",
-      "datatype": "string",
-      "type": "repeated"
-    },
-    {
       "name": "content",
       "datatype": "string"
+    }
+  ],
+  "struct_columns": [
+    {
+      "name": "xrefs",
+      "struct_name": "xref",
+      "type": "repeated"
     }
   ]
 }
