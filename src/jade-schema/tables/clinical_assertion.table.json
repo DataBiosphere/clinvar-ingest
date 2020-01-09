@@ -137,13 +137,15 @@
       "datatype": "date"
     },
     {
-      "name": "interp_comments",
-      "datatype": "string",
-      "type": "repeated"
-    },
-    {
       "name": "content",
       "datatype": "string"
+    }
+  ],
+  "struct_columns": [
+    {
+      "name": "interp_comments",
+      "struct_name": "interpretation_comment",
+      "type": "repeated"
     }
   ]
 }

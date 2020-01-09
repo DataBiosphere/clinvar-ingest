@@ -8,5 +8,6 @@ lazy val `clinvar-ingest` = project
       .fromString("broad_dsp_clinvar")
       .fold(sys.error, identity),
     jadeDatasetDescription := "Mirror of NCBI's ClinVar archive, maintained by Broad's Data Sciences Platform",
-    jadeTablePackage := "org.broadinstitute.monster.clinvar.jadeschema"
+    jadeTablePackage := "org.broadinstitute.monster.clinvar.jadeschema.table",
+    jadeStructPackage := "org.broadinstitute.monster.clinvar.jadeschema.struct"
   )
