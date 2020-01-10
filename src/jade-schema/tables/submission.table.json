@@ -18,6 +18,17 @@
       ]
     },
     {
+      "name": "additional_submitter_ids",
+      "datatype": "string",
+      "type": "repeated",
+      "links": [
+        {
+          "table_name": "submitter",
+          "column_name": "id"
+        }
+      ]
+    },
+    {
       "name": "submission_date",
       "datatype": "date",
       "type": "required"
