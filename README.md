@@ -12,7 +12,7 @@ Batch ETL pipeline to mirror ClinVar releases into the Jade Data Repository.
     and store the output to a temporary local volume
     3. Upload the JSON data to GCS using [gsutil](https://github.com/GoogleCloudPlatform/gsutil)
 2. [Dataflow](https://cloud.google.com/dataflow/)
-    1. Transform JSON input data from GCS into specified output schema
+    1. Transform the JSON input data from GCS into the specified output schema
     2. Store output part files in GCS
 3. Jade API: Use the Jade API to perform a tabular ingest of the new part files
  into the Data Repo
