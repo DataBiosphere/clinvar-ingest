@@ -1,0 +1,6 @@
+{"id":"SCV000190831","type":"PhenotypeInstruction","clinical_assertion_trait_ids":["SCV000190831.0"]}
+{"id":"SCV000190831.0","type":"Finding","clinical_assertion_trait_ids":["SCV000190831.0.0"]}
+{"id":"SCV000190832","type":"PhenotypeInstruction","clinical_assertion_trait_ids":["SCV000190832.0"]}
+{"id":"SCV000190832.0","type":"Finding","clinical_assertion_trait_ids":["SCV000190832.0.0"]}
+{"id":"SCV000190832.1","type":"Finding","clinical_assertion_trait_ids":["SCV000190832.1.0"]}
+{"id":"SCV000328419","type":"Disease","clinical_assertion_trait_ids":["SCV000328419.0"]}

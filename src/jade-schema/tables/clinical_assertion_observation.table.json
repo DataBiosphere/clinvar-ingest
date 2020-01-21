@@ -7,12 +7,11 @@
       "type": "primary_key"
     },
     {
-      "name": "clinical_assertion_trait_ids",
+      "name": "clinical_assertion_trait_set_id",
       "datatype": "string",
-      "type": "repeated",
       "links": [
         {
-          "table_name": "clinical_assertion_trait",
+          "table_name": "clinical_assertion_trait_set",
           "column_name": "id"
         }
       ]

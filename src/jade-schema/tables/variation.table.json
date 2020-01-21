@@ -48,7 +48,7 @@
     {
       "name": "protein_change",
       "datatype": "string",
-      "cardinality": "many"
+      "type": "repeated"
     },
     {
       "name": "num_chromosomes",
