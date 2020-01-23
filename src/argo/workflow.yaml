@@ -98,7 +98,7 @@ spec:
           - name: output-path
           - name: rows-per-output
       container:
-        image: us.gcr.io/broad-dsp-gcr-public/xml-clp:1.1.0
+        image: us.gcr.io/broad-dsp-gcr-public/monster-xml-to-json-list:2.0.0
         command: []
         args:
           - --input=/state/{{inputs.parameters.xml-path}}
