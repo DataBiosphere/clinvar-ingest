@@ -3,7 +3,7 @@ kind: Workflow
 metadata:
   generateName: clinvar-extraction-
 spec:
-  entrypoint: extract-latest-clinvar-release
+  entrypoint: extract-clinvar-archive
   podGC:
     strategy: OnWorkflowSuccess
   volumes:
@@ -32,9 +32,9 @@ spec:
         value: weekly_release/ClinVarVariationRelease_00-latest_weekly.xml.gz
   templates:
     ## "Main" function for the extraction workflow.
-    - name: extract-latest-clinvar-release
+    - name: extract-clinvar-archive
       steps:
-        - - name: download-latest-weekly-release
+        - - name: download-archive
             template: download-ftp-file
             arguments:
               parameters:
@@ -44,7 +44,7 @@ spec:
                   value: pub/clinvar/xml/clinvar_variation/{{workflow.parameters.archive-path}}
                 - name: local-path
                   value: ClinVarRelease.xml.gz
-        - - name: extract-release
+        - - name: extract-archive
             template: extract-xml-to-json
             arguments:
               parameters:
@@ -54,7 +54,7 @@ spec:
                   value: extracted-clinvar-json
                 - name: rows-per-output
                   value: 1024
-        - - name: upload-extracted-release
+        - - name: upload-extracted-archive
             template: upload-to-gcs
             arguments:
               parameters:
