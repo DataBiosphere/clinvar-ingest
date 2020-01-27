@@ -3,13 +3,16 @@ kind: Workflow
 metadata:
   generateName: clinvar-extraction-
 spec:
-  entrypoint: extract-latest-clinvar-release
+  entrypoint: extract-clinvar-archive
   podGC:
     strategy: OnWorkflowSuccess
   volumes:
     - name: gcs-writer-key
       secret:
         secretName: "{{workflow.parameters.gcs-key-secret}}"
+        items:
+          - key: "{{workflow.parameters.gcs-key-name}}"
+            path: "{{workflow.parameters.gcs-key-name}}"
   volumeClaimTemplates:
     - metadata:
         name: state-dir
@@ -21,21 +24,27 @@ spec:
             # ClinVar releases are typically ~650Mi when gzipped, and extract to
             # ~7-8Gi. Throw in some extra for gsutil scratch space.
             storage: 10Gi
+  arguments:
+    parameters:
+      - name: archive-path
+        # NOTE: Relative to the clinvar_variation directory, to avoid downloading
+        # one of the payloads with the older XML schema.
+        value: weekly_release/ClinVarVariationRelease_00-latest_weekly.xml.gz
   templates:
     ## "Main" function for the extraction workflow.
-    - name: extract-latest-clinvar-release
+    - name: extract-clinvar-archive
       steps:
-        - - name: download-latest-weekly-release
+        - - name: download-archive
             template: download-ftp-file
             arguments:
               parameters:
                 - name: ftp-site
                   value: ftp.ncbi.nlm.nih.gov
                 - name: ftp-path
-                  value: pub/clinvar/xml/clinvar_variation/weekly_release/ClinVarVariationRelease_00-latest_weekly.xml.gz
+                  value: pub/clinvar/xml/clinvar_variation/{{workflow.parameters.archive-path}}
                 - name: local-path
                   value: ClinVarRelease.xml.gz
-        - - name: extract-release
+        - - name: extract-archive
             template: extract-xml-to-json
             arguments:
               parameters:
@@ -45,7 +54,7 @@ spec:
                   value: extracted-clinvar-json
                 - name: rows-per-output
                   value: 1024
-        - - name: upload-extracted-release
+        - - name: upload-extracted-archive
             template: upload-to-gcs
             arguments:
               parameters:
@@ -98,7 +107,7 @@ spec:
           - name: output-path
           - name: rows-per-output
       container:
-        image: us.gcr.io/broad-dsp-gcr-public/monster-xml-to-json-list:2.0.0
+        image: us.gcr.io/broad-dsp-gcr-public/monster-xml-to-json-list:2.0.2
         command: []
         args:
           - --input=/state/{{inputs.parameters.xml-path}}
@@ -107,16 +116,16 @@ spec:
           - --gunzip-input
         env:
           - name: JAVA_OPTS
-            value: "-Xmx1g -Xms1g"
+            value: "-Xmx2g -Xms2g"
         volumeMounts:
           - name: state-dir
             mountPath: /state
         resources:
           requests:
-            memory: 1Gi
-            cpu: 1000m
+            memory: 2560Mi
+            cpu: 1500m
           limits:
-            memory: 2Gi
+            memory: 2560Mi
             cpu: 1500m
 
     ## Uploads local files to a GCS bucket.
