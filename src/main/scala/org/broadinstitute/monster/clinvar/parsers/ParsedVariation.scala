@@ -1,4 +1,4 @@
-package org.broadinstitute.monster.clinvar.parsed
+package org.broadinstitute.monster.clinvar.parsers
 
 import org.broadinstitute.monster.clinvar.{Constants, Content}
 import org.broadinstitute.monster.clinvar.jadeschema.table.{
@@ -6,7 +6,7 @@ import org.broadinstitute.monster.clinvar.jadeschema.table.{
   GeneAssociation,
   Variation
 }
-import upack.{Arr, Msg}
+import upack.Msg
 
 /**
   * Wrapper for fully-parsed contents of a variation modeled by ClinVar.
@@ -30,10 +30,7 @@ object ParsedVariation {
     // Get the top-level variation.
     val (rawVariation, variationType) = Constants.VariationTypes
       .foldLeft(Option.empty[(Msg, String)]) { (acc, subtype) =>
-        acc.orElse {
-          val subtypeStr = subtype.str
-          rawRecord.tryExtract[Msg](subtypeStr).map(_ -> subtypeStr)
-        }
+        acc.orElse(rawRecord.tryExtract[Msg](subtype).map(_ -> subtype))
       }
       .getOrElse {
         throw new IllegalStateException(
@@ -66,13 +63,13 @@ object ParsedVariation {
       .unzip
 
     val variation = {
-      val (childIds, descendantIds) = extractDescendantIds(rawVariation)
+      val descendants = extractDescendantIds(rawVariation)
 
       Variation(
         id = topId,
         subclassType = variationType,
-        childIds = childIds.toArray,
-        descendantIds = (childIds ::: descendantIds).toArray,
+        childIds = descendants.childIds.toArray,
+        descendantIds = (descendants.childIds ::: descendants.descendantIds).toArray,
         name = rawVariation.tryExtract[String]("Name", "$"),
         variationType = rawVariation
           .tryExtract[Msg]("VariantType")
@@ -100,24 +97,10 @@ object ParsedVariation {
     *         immediate children, and the second contains the IDs of all other
     *         descendants of the variation
     */
-  def extractDescendantIds(rawVariation: Msg): (List[String], List[String]) = {
-    val zero = (List.empty[String], List.empty[String])
-    Constants.VariationTypes.foldLeft(zero) {
-      case ((childAcc, descendantsAcc), subtype) =>
-        val (childIds, descendantIds) = rawVariation.obj.remove(subtype).fold(zero) {
-          case Arr(children) =>
-            children.foldLeft(zero) {
-              case ((childAcc, descendantsAcc), child) =>
-                val childId = child.extract[String]("@VariationID")
-                val (grandchildIds, deepIds) = extractDescendantIds(child)
-                (childId :: childAcc, grandchildIds ::: deepIds ::: descendantsAcc)
-            }
-          case child =>
-            val childId = child.extract[String]("@VariationID")
-            val (grandchildIds, deepIds) = extractDescendantIds(child)
-            (List(childId), grandchildIds ::: deepIds)
-        }
-        (childIds ::: childAcc, descendantIds ::: descendantsAcc)
+  def extractDescendantIds(rawVariation: Msg): VariationDescendants =
+    VariationDescendants.fromVariationWrapper(rawVariation) { (_, variation) =>
+      val id = variation.extract[String]("@VariationID")
+      val descendants = extractDescendantIds(variation)
+      (id, descendants.childIds ::: descendants.descendantIds)
     }
-  }
 }

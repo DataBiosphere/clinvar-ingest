@@ -1,4 +1,4 @@
-package org.broadinstitute.monster.clinvar.parsed
+package org.broadinstitute.monster.clinvar.parsers
 
 import java.time.LocalDate
 

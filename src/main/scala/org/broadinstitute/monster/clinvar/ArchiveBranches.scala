@@ -5,7 +5,7 @@ import java.time.LocalDate
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.{SCollection, SideOutput}
 import org.broadinstitute.monster.clinvar.jadeschema.table._
-import org.broadinstitute.monster.clinvar.parsed.ParsedArchive
+import org.broadinstitute.monster.clinvar.parsers.ParsedArchive
 import upack.{Msg, Str}
 
 /**

@@ -1,4 +1,4 @@
-package org.broadinstitute.monster.clinvar.parsed
+package org.broadinstitute.monster.clinvar.parsers
 
 import org.broadinstitute.monster.clinvar.Constants
 import org.broadinstitute.monster.clinvar.jadeschema.struct.Xref
