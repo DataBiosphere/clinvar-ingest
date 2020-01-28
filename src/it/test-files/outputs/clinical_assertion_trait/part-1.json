@@ -1,0 +1,40 @@
+{"id":"SCV000244092.0","medgen_id":"C0950123","name":"Hereditary disease","alternate_names":[],"type":"Disease","xrefs":["{\"db\":\"MeSH\",\"id\":\"D030342\",\"source_name\":null}"],"trait_id":"32761"}
+{"id":"SCV000244092.0.0","name":"Movement disorders","alternate_names":[],"type":"Finding","xrefs":[]}
+{"id":"SCV000244092.0.1","name":"Musculoskeletal/Structural (child onset)","alternate_names":[],"type":"Finding","xrefs":[]}
+{"id":"SCV000024774.0","medgen_id":"C2931355","name":"SPASTIC PARAPLEGIA 3, AUTOSOMAL DOMINANT","alternate_names":[],"type":"Disease","xrefs":[],"trait_id":"15930"}
+{"id":"SCV000244092.0.2","name":"Neurologic (child onset)","alternate_names":[],"type":"Finding","xrefs":[]}
+{"id":"SCV000551414.0","medgen_id":"C2931355","alternate_names":[],"type":"Disease","xrefs":[],"trait_id":"15930"}
+{"id":"SCV000041287.0","medgen_id":"C2931355","name":"Spastic Paraplegia 3A","alternate_names":[],"type":"Disease","xrefs":["{\"db\":\"GeneReviews\",\"id\":\"NBK45978\",\"source_name\":null}","{\"db\":\"OMIM\",\"id\":\"182600\",\"source_name\":null}"],"trait_id":"15930"}
+{"id":"SCV000190831.0","name":"See cases","alternate_names":[],"type":"PhenotypeInstruction","xrefs":[],"trait_id":"18728"}
+{"id":"SCV000190831.0.0","name":"Developmental delay AND/OR other significant developmental or morphological phenotypes","alternate_names":[],"type":"Finding","xrefs":[],"trait_id":"18728"}
+{"id":"SCV000190832.0","name":"See cases","alternate_names":[],"type":"PhenotypeInstruction","xrefs":[],"trait_id":"18728"}
+{"id":"SCV000190832.0.0","name":"Macrocephaly","alternate_names":[],"type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000256\",\"source_name\":null}"],"trait_id":"18728"}
+{"id":"SCV000190832.1.0","name":"Developmental delay AND/OR other significant developmental or morphological phenotypes","alternate_names":[],"type":"Finding","xrefs":[],"trait_id":"18728"}
+{"id":"SCV000328419.0","medgen_id":"C1855772","name":"Vici syndrome","alternate_names":[],"type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"242840\",\"source_name\":null}"],"trait_id":"2298"}
+{"id":"SCV000119895.2.0","type":"Finding","name":"absence of severe ID","alternate_names":[],"xrefs":[]}
+{"id":"SCV000119895.2.4","type":"Finding","name":"absence of progressive spastic tetraplegia","alternate_names":[],"xrefs":[]}
+{"id":"SCV000119895.1.3","type":"Finding","name":"growth retardation","alternate_names":[],"xrefs":[]}
+{"id":"SCV000119895.0.2","type":"Finding","name":"microcephaly","alternate_names":[],"xrefs":[]}
+{"id":"SCV000256543.0","trait_id":"16052","type":"Disease","name":"SPASTIC PARAPLEGIA 47, AUTOSOMAL RECESSIVE","alternate_names":[],"medgen_id":"C3279738","xrefs":[]}
+{"id":"SCV000742035.0.3","type":"Finding","name":"Brain MRI positive","alternate_names":[],"xrefs":[]}
+{"id":"SCV000822690.0","trait_id":"16052","type":"Disease","name":"Spastic paraplegia 47, autosomal recessive","alternate_names":[],"medgen_id":"C3279738","xrefs":[]}
+{"id":"SCV000119895.2.1","type":"Finding","name":"absence of absent speech","alternate_names":[],"xrefs":[]}
+{"id":"SCV000119895.1.0","type":"Finding","name":"severe ID","alternate_names":[],"xrefs":[]}
+{"id":"SCV000119895.1.4","type":"Finding","name":"progressive spastic tetraplegia","alternate_names":[],"xrefs":[]}
+{"id":"SCV000119895.0.3","type":"Finding","name":"growth retardation","alternate_names":[],"xrefs":[]}
+{"id":"SCV000742035.0.0","type":"Finding","name":"MR/ID/DD","alternate_names":[],"xrefs":[]}
+{"id":"SCV000742035.0.4","type":"Finding","name":"Craniofacial (child onset)","alternate_names":[],"xrefs":[]}
+{"id":"SCV000992278.0","trait_id":"43188","type":"Disease","name":"VARIANT OF UNKNOWN SIGNIFICANCE","alternate_names":[],"xrefs":[]}
+{"id":"SCV000119895.2.2","type":"Finding","name":"absence of microcephaly","alternate_names":[],"xrefs":[]}
+{"id":"SCV000119895.1.1","type":"Finding","name":"absent speech","alternate_names":[],"xrefs":[]}
+{"id":"SCV000119895.0.0","type":"Finding","name":"severe ID","alternate_names":[],"xrefs":[]}
+{"id":"SCV000119895.0.4","type":"Finding","name":"progressive spastic tetraplegia","alternate_names":[],"xrefs":[]}
+{"id":"SCV000742035.0.1","type":"Finding","name":"Autism spectrum","alternate_names":[],"xrefs":[]}
+{"id":"SCV000742035.0.5","type":"Finding","name":"Neurologic (child onset)","alternate_names":[],"xrefs":[]}
+{"id":"SCV000196422.0","trait_id":"43188","type":"Disease","alternate_names":[],"xrefs":["{\"db\":\"OMIM phenotypic series\",\"id\":\"PS213300\",\"source_name\":null}"]}
+{"id":"SCV000119895.2.3","type":"Finding","name":"absence of growth retardation","alternate_names":[],"xrefs":[]}
+{"id":"SCV000119895.1.2","type":"Finding","name":"microcephaly","alternate_names":[],"xrefs":[]}
+{"id":"SCV000119895.0.1","type":"Finding","name":"absent speech","alternate_names":[],"xrefs":[]}
+{"id":"SCV000119895.0","trait_id":"16052","type":"Disease","name":"spastic paraplegia 47, autosomal recessive; SPG47","alternate_names":["adaptor protein 4 (AP-4) deficiency syndrome"],"medgen_id":"C3279738","xrefs":["{\"db\":\"OMIM\",\"id\":\"614066\",\"source_name\":null}"]}
+{"id":"SCV000742035.0.2","type":"Finding","name":"Hypotonia","alternate_names":[],"xrefs":[]}
+{"id":"SCV000742035.0","trait_id":"32761","type":"Disease","name":"Hereditary disease","alternate_names":[],"medgen_id":"C0950123","xrefs":["{\"db\":\"MeSH\",\"id\":\"D030342\",\"source_name\":null}"]}

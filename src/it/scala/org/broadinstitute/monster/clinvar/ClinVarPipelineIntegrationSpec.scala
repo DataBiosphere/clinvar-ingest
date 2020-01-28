@@ -64,10 +64,9 @@ class ClinVarPipelineIntegrationSpec
     */
   private def compareTruthAndCompSets(filePattern: String, description: String): Unit = {
     it should description in {
-      createSetFromFiles(compareDir, filePattern) shouldBe createSetFromFiles(
-        truthDir,
-        filePattern
-      )
+      val expected = createSetFromFiles(truthDir, filePattern)
+      val actual = createSetFromFiles(compareDir, filePattern)
+      actual should contain theSameElementsAs expected
     }
   }
 

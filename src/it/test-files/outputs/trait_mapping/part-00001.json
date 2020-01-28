@@ -1,3 +1,0 @@
-{"clinical_assertion_id":"SCV000041287","trait_type":"Disease","mapping_type":"Name","mapping_ref":"Preferred","mapping_value":"Spastic Paraplegia 3A","medgen_id":"C2931355","medgen_name":"Spastic paraplegia 3"}
-{"clinical_assertion_id":"SCV000244092","trait_type":"Disease","mapping_type":"Name","mapping_ref":"Preferred","mapping_value":"Hereditary disease","medgen_id":"C0019247","medgen_name":"Hereditary disease"}
-{"clinical_assertion_id":"SCV000244092","trait_type":"Finding","mapping_type":"Name","mapping_ref":"Preferred","mapping_value":"Musculoskeletal/Structural (child onset)","medgen_id":"CN232543","medgen_name":"Musculoskeletal/Structural (child onset)"}

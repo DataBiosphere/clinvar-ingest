@@ -3,8 +3,8 @@ package org.broadinstitute.monster.clinvar.parsed
 import java.time.LocalDate
 import java.util.concurrent.atomic.AtomicInteger
 
+import org.broadinstitute.monster.clinvar.jadeschema.struct.InterpretationComment
 import org.broadinstitute.monster.clinvar.{Constants, Content}
-import org.broadinstitute.monster.clinvar.jadeschema.struct.{InterpretationComment, Xref}
 import org.broadinstitute.monster.clinvar.jadeschema.table._
 import upack.{Arr, Msg}
 
@@ -289,30 +289,8 @@ object ParsedScv {
     referenceTraits: Array[Trait],
     traitMappings: Array[TraitMapping]
   ): ClinicalAssertionTrait = {
-    val nameWrapper = rawTrait.tryExtract[Msg]("Name", "ElementValue")
-    val nameValue = nameWrapper.map(_.extract[String]("$"))
-    val nameType = nameWrapper.map(_.extract[String]("@Type"))
-    val assertionType = rawTrait.tryExtract[String]("@Type")
-
-    val allXrefs =
-      rawTrait.tryExtract[Array[Msg]]("XRef").getOrElse(Array.empty).map { rawXref =>
-        Xref(rawXref.extract[String]("@DB"), rawXref.extract[String]("@ID"), None)
-      }
-    val (medgenId, xrefs) =
-      allXrefs.foldLeft((Option.empty[String], List.empty[Xref])) {
-        case ((medgenAcc, xrefAcc), xref) =>
-          if (xref.db == Constants.MedGenKey) {
-            if (medgenAcc.isDefined) {
-              throw new IllegalStateException(
-                s"SCV Trait $traitId contains two MedGen references"
-              )
-            } else {
-              (Option(xref.id), xrefAcc)
-            }
-          } else {
-            (medgenAcc, xref :: xrefAcc)
-          }
-      }
+    // Extract common metadata from the trait.
+    val metadata = TraitMetadata.fromRawTrait(rawTrait)(_ => traitId)
 
     val matchingTrait = if (traitMappings.isEmpty) {
       // Lack of trait mappings means the VCV contains at most one trait,
@@ -320,10 +298,11 @@ object ParsedScv {
       referenceTraits.headOption
     } else {
       // Look through the reference traits to see if there are any with aligned medgen IDs.
-      val medgenDirectMatch = referenceTraits.find(_.medgenId == medgenId)
+      val medgenDirectMatch = referenceTraits.find(_.medgenId == metadata.medgenId)
 
       // Look to see if there are any with aligned XRefs.
-      val xrefDirectMatch = referenceTraits.find(!_.xrefs.intersect(xrefs).isEmpty)
+      val xrefDirectMatch =
+        referenceTraits.find(!_.xrefs.intersect(metadata.xrefs).isEmpty)
 
       // Find the reference trait with the matching MedGen ID if it's defined.
       // Otherwise match on preferred name.
@@ -333,24 +312,21 @@ object ParsedScv {
           // Look through the trait mappings for one that aligns with
           // the SCV's data.
           val matchingMapping = traitMappings.find { candidateMapping =>
-            val sameTraitType =
-              assertionType.contains(candidateMapping.traitType)
+            val sameTraitType = metadata.`type`.contains(candidateMapping.traitType)
 
             val nameMatch = {
               val isNameMapping = candidateMapping.mappingType == "Name"
               val isPreferredMatch = candidateMapping.mappingRef == "Preferred" &&
-                nameType.contains("Preferred") &&
-                nameValue.contains(candidateMapping.mappingValue)
+                metadata.name.contains(candidateMapping.mappingValue)
               val isAlternateMatch = candidateMapping.mappingRef == "Alternate" &&
-                nameType.contains("included") &&
-                nameValue.contains(candidateMapping.mappingValue)
+                metadata.alternateNames.contains(candidateMapping.mappingValue)
 
               isNameMapping && (isPreferredMatch || isAlternateMatch)
             }
 
             val xrefMatch = {
               val isXrefMapping = candidateMapping.mappingType == "XRef"
-              val xrefMatches = xrefs.exists { xref =>
+              val xrefMatches = metadata.xrefs.exists { xref =>
                 xref.db == candidateMapping.mappingRef &&
                 xref.id == candidateMapping.mappingValue
               }
@@ -373,12 +349,13 @@ object ParsedScv {
     }
 
     ClinicalAssertionTrait(
-      id = traitId,
+      id = metadata.id,
       traitId = matchingTrait.map(_.id),
-      `type` = assertionType,
-      name = nameValue,
-      medgenId = medgenId.orElse(matchingTrait.flatMap(_.medgenId)),
-      xrefs = xrefs.toArray,
+      `type` = metadata.`type`,
+      name = metadata.name,
+      alternateNames = metadata.alternateNames,
+      medgenId = metadata.medgenId.orElse(matchingTrait.flatMap(_.medgenId)),
+      xrefs = metadata.xrefs,
       // NOTE: This must always be the last filled-in field, so that every
       // other field is popped from the raw payload before it's bundled into
       // the content column.

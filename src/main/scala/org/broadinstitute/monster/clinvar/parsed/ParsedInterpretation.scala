@@ -2,8 +2,7 @@ package org.broadinstitute.monster.clinvar.parsed
 
 import java.time.LocalDate
 
-import org.broadinstitute.monster.clinvar.{Constants, Content}
-import org.broadinstitute.monster.clinvar.jadeschema.struct.Xref
+import org.broadinstitute.monster.clinvar.Content
 import org.broadinstitute.monster.clinvar.jadeschema.table.{Trait, TraitSet}
 import upack.Msg
 
@@ -62,79 +61,16 @@ object ParsedInterpretation {
 
   /** Convert a raw Trait payload into our model. */
   def parseRawTrait(rawTrait: Msg): Trait = {
-    val allNames = rawTrait.extract[Array[Msg]]("Name")
-
-    // "Unzip" name entries from their nested xrefs so we can store
-    // each in a separate field.
-    val (preferredName, alternateNames, nameXrefs) =
-      allNames
-        .foldLeft((Option.empty[String], List.empty[String], Set.empty[Xref])) {
-          case ((prefAcc, altAcc, xrefAcc), name) =>
-            val nameValue = name.extract[Msg]("ElementValue")
-            val nameType = nameValue.extract[String]("@Type")
-            val nameString = nameValue.extract[String]("$")
-
-            val nameRefs = name
-              .tryExtract[Array[Msg]]("XRef")
-              .getOrElse(Array.empty)
-              .map { nameRef =>
-                Xref(
-                  nameRef.extract[String]("@DB"),
-                  nameRef.extract[String]("@ID"),
-                  // Keep a link between xref and name.
-                  Some(nameString)
-                )
-              }
-              .toSet
-
-            if (nameType == "Preferred") {
-              if (prefAcc.isDefined) {
-                throw new IllegalStateException(
-                  s"Trait $rawTrait has multiple preferred names"
-                )
-              } else {
-                (Some(nameString), altAcc, nameRefs.union(xrefAcc))
-              }
-            } else {
-              (prefAcc, nameString :: altAcc, nameRefs.union(xrefAcc))
-            }
-        }
-
-    // Process remaining xrefs in the payload, combining them with the
-    // name-based refs.
-    val topLevelRefs = rawTrait
-      .tryExtract[Array[Msg]]("XRef")
-      .getOrElse(Array.empty)
-      .map { xref =>
-        Xref(
-          xref.extract[String]("@DB"),
-          xref.extract[String]("@ID"),
-          None
-        )
-      }
-    val (medgenId, finalXrefs) =
-      topLevelRefs.foldLeft((Option.empty[String], nameXrefs)) {
-        case ((medgenAcc, xrefAcc), xref) =>
-          if (xref.db.contains(Constants.MedGenKey)) {
-            if (medgenAcc.isDefined) {
-              throw new IllegalStateException(
-                s"VCV Trait Set contains two MedGen references: $rawTrait"
-              )
-            } else {
-              (Some(xref.id), xrefAcc)
-            }
-          } else {
-            (medgenAcc, xrefAcc + xref)
-          }
-      }
+    // Extract common metadata from the trait.
+    val metadata = TraitMetadata.fromRawTrait(rawTrait)(_.extract[String]("@ID"))
 
     Trait(
-      id = rawTrait.extract[String]("@ID"),
-      medgenId = medgenId,
-      `type` = rawTrait.tryExtract[String]("@Type"),
-      name = preferredName,
-      alternateNames = alternateNames.toArray,
-      xrefs = finalXrefs.toArray,
+      id = metadata.id,
+      medgenId = metadata.medgenId,
+      `type` = metadata.`type`,
+      name = metadata.name,
+      alternateNames = metadata.alternateNames,
+      xrefs = metadata.xrefs,
       content = Content.encode(rawTrait)
     )
   }

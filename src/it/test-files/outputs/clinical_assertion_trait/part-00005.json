@@ -1,6 +1,0 @@
-{"id":"SCV000190831.0","name":"See cases","type":"PhenotypeInstruction","xrefs":[],"trait_id":"18728"}
-{"id":"SCV000190831.0.0","name":"Developmental delay AND/OR other significant developmental or morphological phenotypes","type":"Finding","xrefs":[],"trait_id":"18728"}
-{"id":"SCV000190832.0","name":"See cases","type":"PhenotypeInstruction","xrefs":[],"trait_id":"18728"}
-{"id":"SCV000190832.0.0","name":"Macrocephaly","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000256\",\"source_name\":null}"],"trait_id":"18728"}
-{"id":"SCV000190832.1.0","name":"Developmental delay AND/OR other significant developmental or morphological phenotypes","type":"Finding","xrefs":[],"trait_id":"18728"}
-{"id":"SCV000328419.0","medgen_id":"C1855772","name":"Vici syndrome","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"242840\",\"source_name\":null}"],"trait_id":"2298"}
