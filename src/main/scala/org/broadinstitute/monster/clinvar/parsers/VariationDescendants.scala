@@ -4,10 +4,10 @@ import org.broadinstitute.monster.clinvar.Constants
 import upack.Msg
 
 /**
-  * TODO
+  * Wrapper for our representation of variation ancestry.
   *
-  * @param childIds TODO
-  * @param descendantIds TODO
+  * @param childIds IDs of the immediate children of a variation
+  * @param descendantIds IDs for every descendant (including children) of a variation
   */
 case class VariationDescendants(
   childIds: List[String],
@@ -18,10 +18,11 @@ object VariationDescendants {
   import org.broadinstitute.monster.common.msg.MsgOps
 
   /**
-    * TODO
+    * Extract child and descendant IDs of the variation contained in a wrapper payload.
     *
-    * @param variationWrapper TODO
-    * @param processChild TODO
+    * @param variationWrapper raw payload containing at least one variation element
+    * @param processChild function to extract the (ID, child IDs) from any raw variations
+    *                     found while descending the tree
     */
   def fromVariationWrapper(variationWrapper: Msg)(
     processChild: (String, Msg) => (String, List[String])

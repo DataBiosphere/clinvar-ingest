@@ -72,7 +72,7 @@ object ParsedScv {
       rawAssertion.extract[String]("ClinVarAccession", "@Accession")
     val relevantTraitMappings = mappingsById.getOrElse(assertionId, Array.empty)
 
-    val (directTraitSet, directTraits) = extractTraitSet(
+    val directTraitSet = ParsedScvTraitSet.fromRawSetWrapper(
       assertionAccession,
       rawAssertion,
       interpretation.traits,
@@ -80,21 +80,32 @@ object ParsedScv {
     )
 
     // Extract info about any other traits observed in the submission.
-    val (observations, observedTraitSets, observedTraits) = extractObservations(
+    val (observations, observedTraitSets) = extractObservations(
       assertionAccession,
       rawAssertion,
       interpretation.traits,
       relevantTraitMappings
-    )
+    ).unzip
+
+    // Flatten out nested trait-set info.
+    val (allTraitSets, allTraits) = {
+      val directSetAsArray = directTraitSet.toArray
+      val actualObservedSets = observedTraitSets.flatten
+      val sets = (directSetAsArray ++ actualObservedSets).map(_.traitSet)
+      val traits = (directSetAsArray ++ actualObservedSets).flatMap(_.traits)
+      (sets, traits)
+    }
 
     // Extract the tree of variation records stored in the submission.
     val variations = extractVariations(assertionAccession, rawAssertion)
 
     // Extract remaining top-level info about the submitted assertion.
     val assertion = {
-      val referenceTraitSetId = interpretation.traitSets
-        .find(_.traitIds.sameElements(directTraits.flatMap(_.traitId)))
-        .map(_.id)
+      val referenceTraitSetId = directTraitSet.flatMap { traitSet =>
+        interpretation.traitSets
+          .find(_.traitIds.sameElements(traitSet.traits.flatMap(_.traitId)))
+          .map(_.id)
+      }
       val relatedRcv = referenceAccessions.find { rcv =>
         rcv.traitSetId.isDefined && rcv.traitSetId == referenceTraitSetId
       }
@@ -109,7 +120,7 @@ object ParsedScv {
         submissionId = submission.id,
         rcvAccessionId = relatedRcv.map(_.id),
         traitSetId = referenceTraitSetId,
-        clinicalAssertionTraitSetId = directTraitSet.map(_.id),
+        clinicalAssertionTraitSetId = directTraitSet.map(_.traitSet.id),
         clinicalAssertionObservationIds = observations.map(_.id),
         title = rawAssertion.tryExtract[String]("ClinVarSubmissionID", "@title"),
         localKey = rawAssertion.tryExtract[String]("ClinVarSubmissionID", "@localKey"),
@@ -147,8 +158,8 @@ object ParsedScv {
       submission = submission,
       variations = variations,
       observations = observations,
-      traitSets = directTraitSet.toArray ++ observedTraitSets,
-      traits = directTraits ++ observedTraits
+      traitSets = allTraitSets,
+      traits = allTraits
     )
   }
 
@@ -181,178 +192,45 @@ object ParsedScv {
   }
 
   /**
-    * TODO
+    * Extract observation data from a raw clinical assertion.
     *
-    * @param assertionAccession TODO
-    * @param rawAssertion TODO
+    * @param assertionAccession ID of the assertion
+    * @param rawAssertion raw assertion payload to extract from
     */
   private def extractObservations(
     assertionAccession: String,
     rawAssertion: Msg,
     referenceTraits: Array[Trait],
     traitMappings: Array[TraitMapping]
-  ): (
-    Array[ClinicalAssertionObservation],
-    Array[ClinicalAssertionTraitSet],
-    Array[ClinicalAssertionTrait]
-  ) = {
+  ): Array[(ClinicalAssertionObservation, Option[ParsedScvTraitSet])] = {
     val observationCounter = new AtomicInteger(0)
-    val zero = (
-      Array.empty[ClinicalAssertionObservation],
-      Array.empty[ClinicalAssertionTraitSet],
-      Array.empty[ClinicalAssertionTrait]
-    )
     rawAssertion
       .tryExtract[Array[Msg]]("ObservedInList", "ObservedIn")
       .getOrElse(Array.empty)
-      .foldLeft(zero) {
-        case ((observationAcc, traitSetAcc, traitAcc), rawObservation) =>
-          val observationId =
-            s"$assertionAccession.${observationCounter.getAndIncrement()}"
-          val (observedTraitSet, observedTraits) = extractTraitSet(
-            observationId,
-            rawObservation,
-            referenceTraits,
-            traitMappings
-          )
-          val observation = ClinicalAssertionObservation(
-            id = observationId,
-            clinicalAssertionTraitSetId = observedTraitSet.map(_.id),
-            content = Content.encode(rawObservation)
-          )
+      .map { rawObservation =>
+        val observationId =
+          s"$assertionAccession.${observationCounter.getAndIncrement()}"
+        val parsedSet = ParsedScvTraitSet.fromRawSetWrapper(
+          observationId,
+          rawObservation,
+          referenceTraits,
+          traitMappings
+        )
+        val observation = ClinicalAssertionObservation(
+          id = observationId,
+          clinicalAssertionTraitSetId = parsedSet.map(_.traitSet.id),
+          content = Content.encode(rawObservation)
+        )
 
-          (
-            observation +: observationAcc,
-            observedTraitSet.toArray ++ traitSetAcc,
-            observedTraits ++ traitAcc
-          )
+        (observation, parsedSet)
       }
   }
 
   /**
-    * TODO
+    * Extract variation data from a raw clinical assertion.
     *
-    * @param setId ID to assign to the extracted set
-    * @param setWrapper TODO
-    * @param referenceTraits curated traits from the same archive as the payload
-    * @param traitMappings mappings from raw traits to curated traits
-    */
-  private def extractTraitSet(
-    setId: String,
-    setWrapper: Msg,
-    referenceTraits: Array[Trait],
-    traitMappings: Array[TraitMapping]
-  ): (Option[ClinicalAssertionTraitSet], Array[ClinicalAssertionTrait]) =
-    setWrapper.tryExtract[Msg]("TraitSet") match {
-      case None => (None, Array.empty)
-      case Some(rawSet) =>
-        val counter = new AtomicInteger(0)
-        val traits = rawSet
-          .extract[Array[Msg]]("Trait")
-          .map { rawTrait =>
-            val metadata = TraitMetadata.fromRawTrait(rawTrait) { _ =>
-              // No meaningful ID for these nested traits.
-              s"$setId.${counter.getAndIncrement()}"
-            }
-            val matchingTrait =
-              findMatchingTrait(metadata, referenceTraits, traitMappings)
-
-            ClinicalAssertionTrait(
-              id = metadata.id,
-              traitId = matchingTrait.map(_.id),
-              `type` = metadata.`type`,
-              name = metadata.name,
-              alternateNames = metadata.alternateNames,
-              medgenId = metadata.medgenId.orElse(matchingTrait.flatMap(_.medgenId)),
-              xrefs = metadata.xrefs,
-              // NOTE: This must always be the last filled-in field, so that every
-              // other field is popped from the raw payload before it's bundled into
-              // the content column.
-              content = Content.encode(rawTrait)
-            )
-          }
-        val traitSet = ClinicalAssertionTraitSet(
-          id = setId,
-          clinicalAssertionTraitIds = traits.map(_.id),
-          `type` = rawSet.tryExtract[String]("@Type"),
-          content = Content.encode(rawSet)
-        )
-        (Some(traitSet), traits)
-    }
-
-  /**
-    * TODO
-    *
-    * @param metadata TODO
-    * @param referenceTraits TODO
-    * @param mappings TODO
-    */
-  def findMatchingTrait(
-    metadata: TraitMetadata,
-    referenceTraits: Array[Trait],
-    mappings: Array[TraitMapping]
-  ): Option[Trait] =
-    if (mappings.isEmpty) {
-      // Lack of trait mappings means the VCV contains at most one trait,
-      // which all the attached SCV traits should link to.
-      referenceTraits.headOption
-    } else {
-      // Look through the reference traits to see if there are any with aligned medgen IDs.
-      val medgenDirectMatch = referenceTraits.find(_.medgenId == metadata.medgenId)
-
-      // Look to see if there are any with aligned XRefs.
-      val xrefDirectMatch =
-        referenceTraits.find(!_.xrefs.intersect(metadata.xrefs).isEmpty)
-
-      // Find the reference trait with the matching MedGen ID if it's defined.
-      // Otherwise match on preferred name.
-      medgenDirectMatch
-        .orElse(xrefDirectMatch)
-        .orElse {
-          // Look through the trait mappings for one that aligns with
-          // the SCV's data.
-          val matchingMapping = mappings.find { candidateMapping =>
-            val sameTraitType = metadata.`type`.contains(candidateMapping.traitType)
-
-            val nameMatch = {
-              val isNameMapping = candidateMapping.mappingType == "Name"
-              val isPreferredMatch = candidateMapping.mappingRef == "Preferred" &&
-                metadata.name.contains(candidateMapping.mappingValue)
-              val isAlternateMatch = candidateMapping.mappingRef == "Alternate" &&
-                metadata.alternateNames.contains(candidateMapping.mappingValue)
-
-              isNameMapping && (isPreferredMatch || isAlternateMatch)
-            }
-
-            val xrefMatch = {
-              val isXrefMapping = candidateMapping.mappingType == "XRef"
-              val xrefMatches = metadata.xrefs.exists { xref =>
-                xref.db == candidateMapping.mappingRef &&
-                xref.id == candidateMapping.mappingValue
-              }
-
-              isXrefMapping && xrefMatches
-            }
-
-            sameTraitType && (nameMatch || xrefMatch)
-          }
-
-          // Find the MedGen ID / name to look for in the VCV traits.
-          val matchingMedgenId = matchingMapping.flatMap(_.medgenId)
-          val matchingName = matchingMapping.flatMap(_.medgenName)
-
-          // return the trait mapping medgen ID match or the name match
-          referenceTraits
-            .find(_.medgenId == matchingMedgenId)
-            .orElse(referenceTraits.find(_.name == matchingName))
-        }
-    }
-
-  /**
-    * TODO
-    *
-    * @param assertionAccession TODO
-    * @param rawAssertion TODO
+    * @param assertionAccession ID of the assertion
+    * @param rawAssertion raw assertion payload to extract from
     */
   private def extractVariations(
     assertionAccession: String,
