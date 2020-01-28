@@ -35,8 +35,9 @@ object StorageIO {
     filePattern: String
   )(implicit coder: Coder[Msg]): SCollection[Msg] =
     context
+      .withName(s"Read '$description' messages from '$filePattern'")
       .textFile(filePattern)
-      .transform(s"Parse Messages: $description")(_.map(msg.parseJsonString))
+      .transform(s"Parse '$description' messages")(_.map(msg.parseJsonString))
 
   /**
     * Write unmodeled messages to storage for use by downstream components.
@@ -50,9 +51,10 @@ object StorageIO {
     outputPrefix: String
   ): ClosedTap[String] =
     messages
-      .transform(s"Stringify Messages: $description")(
+      .transform(s"Stringify '$description' messages")(
         _.map(upack.transform(_, StringRenderer()).toString)
       )
+      .withName(s"Write '$description' messages to '$outputPrefix'")
       .saveAsTextFile(outputPrefix, suffix = ".json")
 
   /**
@@ -67,8 +69,9 @@ object StorageIO {
     outputPrefix: String
   ): ClosedTap[String] =
     messages
-      .transform(s"Stringify Messages: $description")(
+      .transform(s"Stringify '$description' messages")(
         _.map(_.asJson.printWith(circePrinter))
       )
+      .withName(s"Write '$description' messages to '$outputPrefix'")
       .saveAsTextFile(outputPrefix, suffix = ".json")
 }
