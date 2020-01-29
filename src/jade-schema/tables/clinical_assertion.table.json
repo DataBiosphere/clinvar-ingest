@@ -12,6 +12,11 @@
       "type": "primary_key"
     },
     {
+      "name": "internal_id",
+      "datatype": "string",
+      "type": "required"
+    },
+    {
       "name": "variation_archive_id",
       "datatype": "string",
       "type": "required",
@@ -129,11 +134,11 @@
       "datatype": "string"
     },
     {
-      "name": "interp_description",
+      "name": "interpretation_description",
       "datatype": "string"
     },
     {
-      "name": "interp_date_last_evaluated",
+      "name": "interpretation_date_last_evaluated",
       "datatype": "date"
     },
     {
@@ -143,7 +148,7 @@
   ],
   "struct_columns": [
     {
-      "name": "interp_comments",
+      "name": "interpretation_comments",
       "struct_name": "interpretation_comment",
       "type": "repeated"
     }

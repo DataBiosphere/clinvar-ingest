@@ -25,6 +25,11 @@
       "datatype": "string"
     },
     {
+      "name": "alternate_names",
+      "datatype": "string",
+      "type": "repeated"
+    },
+    {
       "name": "medgen_id",
       "datatype": "string"
     },

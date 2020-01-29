@@ -2,13 +2,13 @@
   "name": "interpretation_comment",
   "fields": [
     {
-      "name": "type",
-      "datatype": "string"
-    },
-    {
       "name": "text",
       "datatype": "string",
       "type": "required"
+    },
+    {
+      "name": "type",
+      "datatype": "string"
     }
   ]
 }
