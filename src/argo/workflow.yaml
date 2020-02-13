@@ -59,11 +59,25 @@ spec:
             arguments:
               parameters:
                 - name: local-path
+                  value: raw-clinvar-xml
+                - name: gcs-bucket
+                  value: '{{workflow.parameters.xml-output-gcs-bucket}}'
+                - name: gcs-path
+                  value: '{{workflow.parameters.xml-output-gcs-prefix}}'
+                - name: key-secret-volume
+                  value: gcs-writer-key
+                - name: key-secret-file
+                  value: "{{workflow.parameters.gcs-key-name}}"
+        - - name: upload-extracted-archive
+            template: upload-to-gcs
+            arguments:
+              parameters:
+                - name: local-path
                   value: extracted-clinvar-json
                 - name: gcs-bucket
-                  value: '{{workflow.parameters.output-gcs-bucket}}'
+                  value: '{{workflow.parameters.json-output-gcs-bucket}}'
                 - name: gcs-path
-                  value: '{{workflow.parameters.output-gcs-prefix}}'
+                  value: '{{workflow.parameters.json-output-gcs-prefix}}'
                 - name: key-secret-volume
                   value: gcs-writer-key
                 - name: key-secret-file
