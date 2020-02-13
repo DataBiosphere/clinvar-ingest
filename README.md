@@ -10,7 +10,7 @@ Batch ETL pipeline to mirror ClinVar releases into the Jade Data Repository.
     2. Run the compressed download file through our command line 
     [XML -> JSON tool](https://github.com/broadinstitute/monster-xml-to-json-list) 
     and store the output to a temporary local volume
-    3. Upload the JSON data to GCS using [gsutil](https://github.com/GoogleCloudPlatform/gsutil)
+    3. Upload both the raw XML data and the JSON data to GCS using [gsutil](https://github.com/GoogleCloudPlatform/gsutil)
 2. [Dataflow](https://cloud.google.com/dataflow/)
     1. Transform the JSON input data from GCS into the specified output schema
     2. Store output part files in GCS
