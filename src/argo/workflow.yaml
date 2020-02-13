@@ -61,9 +61,9 @@ spec:
                 - name: local-path
                   value: ClinVarRelease.xml.gz
                 - name: gcs-bucket
-                  value: '{{workflow.parameters.xml-output-gcs-bucket}}'
+                  value: '{{workflow.parameters.output-gcs-bucket-xml}}'
                 - name: gcs-path
-                  value: '{{workflow.parameters.xml-output-gcs-prefix}}'
+                  value: '{{workflow.parameters.output-gcs-prefix}}'
                 - name: key-secret-volume
                   value: gcs-writer-key
                 - name: key-secret-file
@@ -75,9 +75,9 @@ spec:
                 - name: local-path
                   value: extracted-clinvar-json
                 - name: gcs-bucket
-                  value: '{{workflow.parameters.json-output-gcs-bucket}}'
+                  value: '{{workflow.parameters.output-gcs-bucket-json}}'
                 - name: gcs-path
-                  value: '{{workflow.parameters.json-output-gcs-prefix}}'
+                  value: '{{workflow.parameters.output-gcs-prefix}}'
                 - name: key-secret-volume
                   value: gcs-writer-key
                 - name: key-secret-file
