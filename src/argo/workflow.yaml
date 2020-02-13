@@ -54,12 +54,12 @@ spec:
                   value: extracted-clinvar-json
                 - name: rows-per-output
                   value: 1024
-        - - name: upload-extracted-archive
+        - - name: upload-raw-archive
             template: upload-to-gcs
             arguments:
               parameters:
                 - name: local-path
-                  value: raw-clinvar-xml
+                  value: ClinVarRelease.xml.gz
                 - name: gcs-bucket
                   value: '{{workflow.parameters.xml-output-gcs-bucket}}'
                 - name: gcs-path
@@ -67,7 +67,7 @@ spec:
                 - name: key-secret-volume
                   value: gcs-writer-key
                 - name: key-secret-file
-                  value: "{{workflow.parameters.gcs-key-name}}"
+                  value: '{{workflow.parameters.gcs-key-name}}'
         - - name: upload-extracted-archive
             template: upload-to-gcs
             arguments:
@@ -81,7 +81,7 @@ spec:
                 - name: key-secret-volume
                   value: gcs-writer-key
                 - name: key-secret-file
-                  value: "{{workflow.parameters.gcs-key-name}}"
+                  value: '{{workflow.parameters.gcs-key-name}}'
 
     ## Downloads a file from an FTP site onto a k8s volume.
     - name: download-ftp-file
