@@ -15,15 +15,26 @@ spec:
             path: "{{workflow.parameters.gcs-key-name}}"
   volumeClaimTemplates:
     - metadata:
-        name: state-dir
+        name: extract-dir
       spec:
         accessModes:
           - ReadWriteOnce
+          - ReadOnlyMany
         resources:
           requests:
             # ClinVar releases are typically ~650Mi when gzipped, and extract to
             # ~7-8Gi. Throw in some extra for gsutil scratch space.
             storage: 10Gi
+    - metadata:
+        name: download-dir
+      spec:
+        accessModes:
+          - ReadWriteOnce
+          - ReadOnlyMany
+        resources:
+          requests:
+            # ClinVar releases are typically ~650Mi when gzipped.
+            storage: 1Gi
   arguments:
     parameters:
       - name: archive-path
@@ -60,6 +71,8 @@ spec:
                   value: gcs-writer-key
                 - name: key-secret-file
                   value: '{{workflow.parameters.gcs-key-name}}'
+                - name: volume-name
+                  value: download-dir
           - name: extract-archive
             dependencies: [download-archive]
             template: extract-xml-to-json
@@ -86,6 +99,8 @@ spec:
                   value: gcs-writer-key
                 - name: key-secret-file
                   value: '{{workflow.parameters.gcs-key-name}}'
+                - name: volume-name
+                  value: extract-dir
     ## Downloads a file from an FTP site onto a k8s volume.
     - name: download-ftp-file
       inputs:
@@ -104,7 +119,7 @@ spec:
           - --output-document=/state/{{inputs.parameters.local-path}}
           - ftp://{{inputs.parameters.ftp-site}}/{{inputs.parameters.ftp-path}}
         volumeMounts:
-          - name: state-dir
+          - name: download-dir
             mountPath: /state
         resources:
           requests:
@@ -135,7 +150,10 @@ spec:
           - name: JAVA_OPTS
             value: "-Xmx2g -Xms2g"
         volumeMounts:
-          - name: state-dir
+          - name: download-dir
+            mountPath: /state
+            readOnly: true
+          - name: extract-dir
             mountPath: /state
         resources:
           requests:
@@ -154,6 +172,7 @@ spec:
           - name: gcs-path
           - name: key-secret-volume
           - name: key-secret-file
+          - name: volume-name
       container:
         image: google/cloud-sdk:slim
         command: [gsutil]
@@ -171,8 +190,9 @@ spec:
           - /state/{{inputs.parameters.local-path}}
           - gs://{{inputs.parameters.gcs-bucket}}/{{inputs.parameters.gcs-path}}
         volumeMounts:
-          - name: state-dir
+          - name: {{inputs.parameters.volume-name}}
             mountPath: /state
+            readOnly: true
           - name: "{{inputs.parameters.key-secret-volume}}"
             mountPath: /secrets
         env:
