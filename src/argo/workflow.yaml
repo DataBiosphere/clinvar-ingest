@@ -31,6 +31,61 @@ spec:
         # one of the payloads with the older XML schema.
         value: weekly_release/ClinVarVariationRelease_00-latest_weekly.xml.gz
   templates:
+    ## "Main" function for the extraction workflow.
+    - name: extract-clinvar-archive
+      dag:
+        tasks:
+          - name: download-archive
+            template: download-ftp-file
+            arguments:
+              parameters:
+                - name: ftp-site
+                  value: ftp.ncbi.nlm.nih.gov
+                - name: ftp-path
+                  value: pub/clinvar/xml/clinvar_variation/{{workflow.parameters.archive-path}}
+                - name: local-path
+                  value: ClinVarRelease.xml.gz
+          - name: upload-raw-archive
+            dependencies: [download-archive]
+            template: upload-to-gcs
+            arguments:
+              parameters:
+                - name: local-path
+                  value: ClinVarRelease.xml.gz
+                - name: gcs-bucket
+                  value: '{{workflow.parameters.output-gcs-bucket}}'
+                - name: gcs-path
+                  value: '{{workflow.parameters.output-gcs-prefix}}'
+                - name: key-secret-volume
+                  value: gcs-writer-key
+                - name: key-secret-file
+                  value: '{{workflow.parameters.gcs-key-name}}'
+          - name: extract-archive
+            dependencies: [download-archive]
+            template: extract-xml-to-json
+            arguments:
+              parameters:
+                - name: xml-path
+                  value: ClinVarRelease.xml.gz
+                - name: output-path
+                  value: extracted-clinvar-json
+                - name: rows-per-output
+                  value: 1024
+          - name: upload-extracted-archive
+            dependencies: [extract-archive]
+            template: upload-to-gcs
+            arguments:
+              parameters:
+                - name: local-path
+                  value: extracted-clinvar-json
+                - name: gcs-bucket
+                  value: '{{workflow.parameters.output-gcs-bucket-json}}'
+                - name: gcs-path
+                  value: '{{workflow.parameters.output-gcs-prefix}}'
+                - name: key-secret-volume
+                  value: gcs-writer-key
+                - name: key-secret-file
+                  value: '{{workflow.parameters.gcs-key-name}}'
     ## Downloads a file from an FTP site onto a k8s volume.
     - name: download-ftp-file
       inputs:
@@ -132,58 +187,3 @@ spec:
             cpu: 2000m
       retryStrategy:
         limit: 32
-    ## "Main" function for the extraction workflow.
-    - name: extract-clinvar-archive
-      dag:
-        tasks:
-        - name: download-archive
-          template: download-ftp-file
-          arguments:
-            parameters:
-              - name: ftp-site
-                value: ftp.ncbi.nlm.nih.gov
-              - name: ftp-path
-                value: pub/clinvar/xml/clinvar_variation/{{workflow.parameters.archive-path}}
-              - name: local-path
-                value: ClinVarRelease.xml.gz
-        - name: upload-raw-archive
-          dependencies: [download-archive]
-          template: upload-to-gcs
-          arguments:
-            parameters:
-              - name: local-path
-                value: ClinVarRelease.xml.gz
-              - name: gcs-bucket
-                value: '{{workflow.parameters.output-gcs-bucket}}'
-              - name: gcs-path
-                value: '{{workflow.parameters.output-gcs-prefix}}'
-              - name: key-secret-volume
-                value: gcs-writer-key
-              - name: key-secret-file
-                value: '{{workflow.parameters.gcs-key-name}}'
-        - name: extract-archive
-          dependencies: [download-archive]
-          template: extract-xml-to-json
-          arguments:
-            parameters:
-              - name: xml-path
-                value: ClinVarRelease.xml.gz
-              - name: output-path
-                value: extracted-clinvar-json
-              - name: rows-per-output
-                value: 1024
-        - name: upload-extracted-archive
-          dependencies: [extract-archive]
-          template: upload-to-gcs
-          arguments:
-            parameters:
-              - name: local-path
-                value: extracted-clinvar-json
-              - name: gcs-bucket
-                value: '{{workflow.parameters.output-gcs-bucket-json}}'
-              - name: gcs-path
-                value: '{{workflow.parameters.output-gcs-prefix}}'
-              - name: key-secret-volume
-                value: gcs-writer-key
-              - name: key-secret-file
-                value: '{{workflow.parameters.gcs-key-name}}'
