@@ -178,10 +178,6 @@ spec:
         command: [gsutil]
         args:
           - -m
-          # Move the state dir to the persistent volume so we don't
-          # lose track of progress across restarts.
-          - -o
-          - "GSUtil:state_dir=/state/.gsutil"
           # Point at the mounted SA credentials for auth.
           - -o
           - "Credentials:gs_service_key_file=/secrets/key.json"
