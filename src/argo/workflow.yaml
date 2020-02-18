@@ -92,7 +92,7 @@ spec:
                 - name: local-path
                   value: extracted-clinvar-json
                 - name: gcs-bucket
-                  value: '{{workflow.parameters.output-gcs-bucket-json}}'
+                  value: '{{workflow.parameters.output-gcs-bucket}}'
                 - name: gcs-path
                   value: '{{workflow.parameters.output-gcs-prefix}}'
                 - name: key-secret-volume
