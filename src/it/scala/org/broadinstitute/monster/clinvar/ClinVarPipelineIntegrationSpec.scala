@@ -1,7 +1,5 @@
 package org.broadinstitute.monster.clinvar
 
-import java.time.LocalDate
-
 import better.files.File
 import com.spotify.scio.testing.PipelineSpec
 import io.circe.Json
@@ -24,12 +22,7 @@ class ClinVarPipelineIntegrationSpec
     runWithRealContext(PipelineOptionsFactory.create()) { sc =>
       ClinVarPipeline.buildPipeline(
         sc,
-        ClinVarPipeline.Args(
-          inputPrefix = inputDirString,
-          releaseDate = LocalDate.parse("2020-02-18"),
-          archiveDrsId = "fake-drs-id",
-          outputPrefix = compareDirString
-        )
+        ClinVarPipeline.Args(inputDirString, compareDirString)
       )
     }.waitUntilDone()
     ()
@@ -104,11 +97,7 @@ class ClinVarPipelineIntegrationSpec
     ("trait_mapping/*.json", "have written the correct trait_mapping data"),
     ("trait_set/*.json", "have written the correct trait_set data"),
     ("variation/*.json", "have written the correct variation data"),
-    ("variation_archive/*.json", "have written the correct variation_archive data"),
-    (
-      "variation_archive_release/*.json",
-      "have written the correct variation_archive_release data"
-    )
+    ("variation_archive/*.json", "have written the correct variation_archive data")
   )
 
   filePatternsAndDescriptions.foreach {

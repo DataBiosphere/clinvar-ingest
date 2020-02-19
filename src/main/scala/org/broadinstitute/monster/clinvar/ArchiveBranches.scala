@@ -17,7 +17,6 @@ case class ArchiveBranches(
   genes: SCollection[Gene],
   geneAssociations: SCollection[GeneAssociation],
   vcvs: SCollection[VariationArchive],
-  vcvReleases: SCollection[VariationArchiveRelease],
   rcvs: SCollection[RcvAccession],
   submitters: SCollection[Submitter],
   submissions: SCollection[Submission],
@@ -32,7 +31,6 @@ case class ArchiveBranches(
 )
 
 object ArchiveBranches {
-
   /** Object wrapper key expected for all archive entries. */
   val ArchiveKey: Msg = Str("VariationArchive")
 
@@ -49,11 +47,7 @@ object ArchiveBranches {
     * Cross-linking between entities in the output streams occurs
     * prior to elements being pushed out of the split step.
     */
-  def fromArchiveStream(
-    archiveStream: SCollection[Msg],
-    releaseDate: LocalDate,
-    archivePath: String
-  ): ArchiveBranches = {
+  def fromArchiveStream(archiveStream: SCollection[Msg]): ArchiveBranches = {
     val geneOut = SideOutput[Gene]
     val geneAssociationOut = SideOutput[GeneAssociation]
     val vcvOut = SideOutput[VariationArchive]
@@ -115,28 +109,11 @@ object ArchiveBranches {
         parsed.variation.variation
       }
 
-    val vcvStream = sideCtx(vcvOut)
-    val vcvReleaseStream = vcvStream.transform("Build VCV Release") { vcvs =>
-      vcvs
-        .map(_.id)
-        // Use groupBy to collect all the IDs into one Iterable.
-        .groupBy(_ => (releaseDate, archivePath))
-        .map {
-          case ((relDate, path), ids) =>
-            VariationArchiveRelease(
-              releaseDate = relDate,
-              archivePath = path,
-              variationArchiveIds = ids.toArray.sorted
-            )
-        }
-    }
-
     ArchiveBranches(
       variations = variationStream,
       genes = sideCtx(geneOut).distinctBy(_.id),
       geneAssociations = sideCtx(geneAssociationOut),
-      vcvs = vcvStream,
-      vcvReleases = vcvReleaseStream,
+      vcvs = sideCtx(vcvOut),
       rcvs = sideCtx(rcvOut),
       submitters = sideCtx(submitterOut).distinctBy(_.id),
       submissions = sideCtx(submissionOut).distinctBy(_.id),
