@@ -1,5 +1,7 @@
 package org.broadinstitute.monster.clinvar
 
+import java.time.LocalDate
+
 import better.files.File
 import com.spotify.scio.testing.PipelineSpec
 import io.circe.Json
@@ -22,7 +24,12 @@ class ClinVarPipelineIntegrationSpec
     runWithRealContext(PipelineOptionsFactory.create()) { sc =>
       ClinVarPipeline.buildPipeline(
         sc,
-        ClinVarPipeline.Args(inputDirString, compareDirString)
+        ClinVarPipeline.Args(
+          inputPrefix = inputDirString,
+          releaseDate = LocalDate.parse("2020-02-18"),
+          archiveDrsId = "fake-drs-id",
+          outputPrefix = compareDirString
+        )
       )
     }.waitUntilDone()
     ()

@@ -2,25 +2,25 @@
   "name": "variation_archive_release",
   "columns": [
     {
-      "name": "variation_archive_id",
+      "name": "release_date",
+      "datatype": "date",
+      "type": "primary_key"
+    },
+    {
+      "name": "archive_path",
+      "datatype": "file_ref",
+      "type": "required"
+    },
+    {
+      "name": "variation_archive_ids",
       "datatype": "string",
-      "type": "primary_key",
+      "type": "repeated",
       "links": [
         {
           "table_name": "variation_archive",
           "column_name": "id"
         }
       ]
-    },
-    {
-      "name": "version",
-      "datatype": "integer",
-      "type": "primary_key"
-    },
-    {
-      "name": "release_date",
-      "datatype": "date",
-      "type": "primary_key"
     }
   ]
 }

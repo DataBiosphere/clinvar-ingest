@@ -32,6 +32,7 @@ case class ArchiveBranches(
 )
 
 object ArchiveBranches {
+
   /** Object wrapper key expected for all archive entries. */
   val ArchiveKey: Msg = Str("VariationArchive")
 
@@ -48,11 +49,14 @@ object ArchiveBranches {
     * Cross-linking between entities in the output streams occurs
     * prior to elements being pushed out of the split step.
     */
-  def fromArchiveStream(archiveStream: SCollection[Msg]): ArchiveBranches = {
+  def fromArchiveStream(
+    archiveStream: SCollection[Msg],
+    releaseDate: LocalDate,
+    archivePath: String
+  ): ArchiveBranches = {
     val geneOut = SideOutput[Gene]
     val geneAssociationOut = SideOutput[GeneAssociation]
     val vcvOut = SideOutput[VariationArchive]
-    val vcvReleaseOut = SideOutput[VariationArchiveRelease]
     val rcvOut = SideOutput[RcvAccession]
     val submitterOut = SideOutput[Submitter]
     val submissionOut = SideOutput[Submission]
@@ -70,7 +74,6 @@ object ArchiveBranches {
         geneOut,
         geneAssociationOut,
         vcvOut,
-        vcvReleaseOut,
         rcvOut,
         submitterOut,
         submissionOut,
@@ -94,7 +97,6 @@ object ArchiveBranches {
         parsed.variation.genes.foreach(ctx.output(geneOut, _))
         parsed.variation.associations.foreach(ctx.output(geneAssociationOut, _))
         parsed.vcv.foreach(ctx.output(vcvOut, _))
-        parsed.vcvRelease.foreach(ctx.output(vcvReleaseOut, _))
         parsed.rcvs.foreach(ctx.output(rcvOut, _))
         parsed.scvs.foreach { aggregateScv =>
           ctx.output(submitterOut, aggregateScv.submitter)
@@ -113,12 +115,28 @@ object ArchiveBranches {
         parsed.variation.variation
       }
 
+    val vcvStream = sideCtx(vcvOut)
+    val vcvReleaseStream = vcvStream.transform("Build VCV Release") { vcvs =>
+      vcvs
+        .map(_.id)
+        // Use groupBy to collect all the IDs into one Iterable.
+        .groupBy(_ => (releaseDate, archivePath))
+        .map {
+          case ((relDate, path), ids) =>
+            VariationArchiveRelease(
+              releaseDate = relDate,
+              archivePath = path,
+              variationArchiveIds = ids.toArray.sorted
+            )
+        }
+    }
+
     ArchiveBranches(
       variations = variationStream,
       genes = sideCtx(geneOut).distinctBy(_.id),
       geneAssociations = sideCtx(geneAssociationOut),
-      vcvs = sideCtx(vcvOut),
-      vcvReleases = sideCtx(vcvReleaseOut),
+      vcvs = vcvStream,
+      vcvReleases = vcvReleaseStream,
       rcvs = sideCtx(rcvOut),
       submitters = sideCtx(submitterOut).distinctBy(_.id),
       submissions = sideCtx(submissionOut).distinctBy(_.id),

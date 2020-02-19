@@ -1,5 +1,9 @@
 package org.broadinstitute.monster.clinvar
 
+import java.time.LocalDate
+import java.time.format.DateTimeParseException
+
+import caseapp.core.argparser.{ArgParser, SimpleArgParser}
 import caseapp.{AppName, AppVersion, HelpMessage, ProgName}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.{ContextAndArgs, ScioContext}
@@ -10,12 +14,25 @@ import upack.Msg
 
 object ClinVarPipeline {
 
+  implicit val dateParser: ArgParser[LocalDate] = SimpleArgParser.from("date") { str =>
+    try {
+      Right(LocalDate.parse(str))
+    } catch {
+      case _: DateTimeParseException =>
+        Left(caseapp.core.Error.MalformedValue("date", str))
+    }
+  }
+
   @AppName("ClinVar transformation pipeline")
   @AppVersion(ClinvarIngestBuildInfo.version)
   @ProgName("org.broadinstitute.monster.etl.clinvar.ClinVarPipeline")
   case class Args(
     @HelpMessage("Path to the top-level directory where ClinVar XML was extracted")
     inputPrefix: String,
+    @HelpMessage("Release date extracted from the ClinVar XML")
+    releaseDate: LocalDate,
+    @HelpMessage("DRS ID returned by the Data Repo after ingesting the raw XML archive")
+    archiveDrsId: String,
     @HelpMessage("Path where transformed ClinVar JSON should be written")
     outputPrefix: String
   )
@@ -48,7 +65,8 @@ object ClinVarPipeline {
     // Split apart all of the entities that exist in the archives.
     // Since individual archives are self-contained, nearly all of the pipeline's
     // logic is done in this step.
-    val archiveBranches = ArchiveBranches.fromArchiveStream(fullArchives)
+    val archiveBranches =
+      ArchiveBranches.fromArchiveStream(fullArchives, args.releaseDate, args.archiveDrsId)
 
     // Write everything back to storage.
     StorageIO.writeJsonLists(
