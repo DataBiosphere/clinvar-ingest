@@ -186,7 +186,7 @@ spec:
           - /state/{{inputs.parameters.local-path}}
           - gs://{{inputs.parameters.gcs-bucket}}/{{inputs.parameters.gcs-path}}
         volumeMounts:
-          - name: {{inputs.parameters.volume-name}}
+          - name: "{{inputs.parameters.volume-name}}"
             mountPath: /state
             readOnly: true
           - name: "{{inputs.parameters.key-secret-volume}}"
