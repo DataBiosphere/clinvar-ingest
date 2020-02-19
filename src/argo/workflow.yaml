@@ -9,10 +9,10 @@ spec:
   volumes:
     - name: gcs-writer-key
       secret:
-        secretName: "{{workflow.parameters.gcs-key-secret}}"
+        secretName: '{{workflow.parameters.gcs-key-secret}}'
         items:
-          - key: "{{workflow.parameters.gcs-key-name}}"
-            path: "{{workflow.parameters.gcs-key-name}}"
+          - key: '{{workflow.parameters.gcs-key-name}}'
+            path: '{{workflow.parameters.gcs-key-name}}'
   volumeClaimTemplates:
     - metadata:
         name: extract-dir
@@ -41,8 +41,16 @@ spec:
         # NOTE: Relative to the clinvar_variation directory, to avoid downloading
         # one of the payloads with the older XML schema.
         value: weekly_release/ClinVarVariationRelease_00-latest_weekly.xml.gz
+      - name: local-path-xml
+        value: ClinVarRelease.xml.gz
+      - name: local-path-json
+        value: extracted-clinvar-json
+      - name: download-dir-mount-path
+        value: state
+      - name: extract-dir-mount-path
+        value: extracted
   templates:
-    ## "Main" function for the extraction workflow.
+    ## 'Main" function for the extraction workflow.
     - name: extract-clinvar-archive
       dag:
         tasks:
@@ -55,14 +63,14 @@ spec:
                 - name: ftp-path
                   value: pub/clinvar/xml/clinvar_variation/{{workflow.parameters.archive-path}}
                 - name: local-path
-                  value: ClinVarRelease.xml.gz
+                  value: '{{workflow.parameters.local-path-xml}}'
           - name: upload-raw-archive
             dependencies: [download-archive]
             template: upload-to-gcs
             arguments:
               parameters:
                 - name: local-path
-                  value: ClinVarRelease.xml.gz
+                  value: ''
                 - name: gcs-bucket
                   value: '{{workflow.parameters.output-gcs-bucket}}'
                 - name: gcs-path
@@ -73,15 +81,17 @@ spec:
                   value: '{{workflow.parameters.gcs-key-name}}'
                 - name: volume-name
                   value: download-dir
+                - name: volume-mount-path
+                  value: '{{workflow.parameters.download-dir-mount-path}}'
           - name: extract-archive
             dependencies: [download-archive]
             template: extract-xml-to-json
             arguments:
               parameters:
                 - name: xml-path
-                  value: ClinVarRelease.xml.gz
+                  value: '{{workflow.parameters.local-path-xml}}'
                 - name: output-path
-                  value: extracted-clinvar-json
+                  value: '{{workflow.parameters.local-path-json}}'
                 - name: rows-per-output
                   value: 1024
           - name: upload-extracted-archive
@@ -90,7 +100,7 @@ spec:
             arguments:
               parameters:
                 - name: local-path
-                  value: extracted-clinvar-json
+                  value: '{{workflow.parameters.local-path-json}}'
                 - name: gcs-bucket
                   value: '{{workflow.parameters.output-gcs-bucket}}'
                 - name: gcs-path
@@ -101,6 +111,8 @@ spec:
                   value: '{{workflow.parameters.gcs-key-name}}'
                 - name: volume-name
                   value: extract-dir
+                - name: volume-mount-path
+                  value: '{{workflow.parameters.extract-dir-mount-path}}'
     ## Downloads a file from an FTP site onto a k8s volume.
     - name: download-ftp-file
       inputs:
@@ -116,11 +128,11 @@ spec:
           - --continue
           # Reset the download connection if it goes idle for > 30 seconds.
           - --read-timeout=30
-          - --output-document=/state/{{inputs.parameters.local-path}}
+          - --output-document=/{{workflow.parameters.download-dir-mount-path}}/{{inputs.parameters.local-path}}
           - ftp://{{inputs.parameters.ftp-site}}/{{inputs.parameters.ftp-path}}
         volumeMounts:
           - name: download-dir
-            mountPath: /state
+            mountPath: /{{workflow.parameters.download-dir-mount-path}}
         resources:
           requests:
             memory: 512Mi
@@ -142,19 +154,19 @@ spec:
         image: us.gcr.io/broad-dsp-gcr-public/monster-xml-to-json-list:2.1.0
         command: []
         args:
-          - --input=/state/{{inputs.parameters.xml-path}}
-          - --output=/state/{{inputs.parameters.output-path}}
+          - --input=/{{workflow.parameters.download-dir-mount-path}}/{{inputs.parameters.xml-path}}
+          - --output=/{{workflow.parameters.extract-dir-mount-path}}/{{inputs.parameters.output-path}}
           - --objects-per-part={{inputs.parameters.rows-per-output}}
           - --gunzip-input
         env:
           - name: JAVA_OPTS
-            value: "-Xmx2g -Xms2g"
+            value: '-Xmx2g -Xms2g'
         volumeMounts:
           - name: download-dir
-            mountPath: /state
+            mountPath: /{{workflow.parameters.download-dir-mount-path}}
             readOnly: true
           - name: extract-dir
-            mountPath: /state
+            mountPath: /{{workflow.parameters.extract-dir-mount-path}}
         resources:
           requests:
             memory: 2560Mi
@@ -173,6 +185,7 @@ spec:
           - name: key-secret-volume
           - name: key-secret-file
           - name: volume-name
+          - name: volume-mount-path
       container:
         image: google/cloud-sdk:slim
         command: [gsutil]
@@ -180,20 +193,17 @@ spec:
           - -m
           # Point at the mounted SA credentials for auth.
           - -o
-          - "Credentials:gs_service_key_file=/secrets/key.json"
+          - 'Credentials:gs_service_key_file=/secrets/{{inputs.parameters.key-secret-file}}'
           - rsync
           - -r
-          - /state/{{inputs.parameters.local-path}}
+          - /{{inputs.parameters.volume-mount-path}}/{{inputs.parameters.local-path}}
           - gs://{{inputs.parameters.gcs-bucket}}/{{inputs.parameters.gcs-path}}
         volumeMounts:
-          - name: "{{inputs.parameters.volume-name}}"
-            mountPath: /state
+          - name: '{{inputs.parameters.volume-name}}'
+            mountPath: /{{inputs.parameters.volume-mount-path}}
             readOnly: true
-          - name: "{{inputs.parameters.key-secret-volume}}"
+          - name: '{{inputs.parameters.key-secret-volume}}'
             mountPath: /secrets
-        env:
-          - name: GOOGLE_APPLICATION_CREDENTIALS
-            value: /secrets/{{inputs.parameters.key-secret-file}}
         resources:
           requests:
             memory: 1Gi
