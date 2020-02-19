@@ -1,11 +1,7 @@
 import org.broadinstitute.monster.sbt.model.JadeIdentifier
 
-val beamVersion = "2.16.0"
 val betterFilesVersion = "3.8.0"
-val logbackVersion = "1.2.3"
 val scioVersion = "0.8.0"
-val uPickleVersion = "0.8.0"
-
 val scalatestVersion = "3.1.0"
 
 lazy val `clinvar-ingest` = project
