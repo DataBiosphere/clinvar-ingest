@@ -1,0 +1,15 @@
+{
+  "name": "release_history",
+  "columns": [
+    {
+      "name": "release_date",
+      "datatype": "date",
+      "type": "primary_key"
+    },
+    {
+      "name": "archive_path",
+      "datatype": "file_ref",
+      "type": "required"
+    }
+  ]
+}

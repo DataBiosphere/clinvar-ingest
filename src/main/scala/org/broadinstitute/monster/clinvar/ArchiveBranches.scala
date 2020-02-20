@@ -17,7 +17,6 @@ case class ArchiveBranches(
   genes: SCollection[Gene],
   geneAssociations: SCollection[GeneAssociation],
   vcvs: SCollection[VariationArchive],
-  vcvReleases: SCollection[VariationArchiveRelease],
   rcvs: SCollection[RcvAccession],
   submitters: SCollection[Submitter],
   submissions: SCollection[Submission],
@@ -52,7 +51,6 @@ object ArchiveBranches {
     val geneOut = SideOutput[Gene]
     val geneAssociationOut = SideOutput[GeneAssociation]
     val vcvOut = SideOutput[VariationArchive]
-    val vcvReleaseOut = SideOutput[VariationArchiveRelease]
     val rcvOut = SideOutput[RcvAccession]
     val submitterOut = SideOutput[Submitter]
     val submissionOut = SideOutput[Submission]
@@ -70,7 +68,6 @@ object ArchiveBranches {
         geneOut,
         geneAssociationOut,
         vcvOut,
-        vcvReleaseOut,
         rcvOut,
         submitterOut,
         submissionOut,
@@ -94,7 +91,6 @@ object ArchiveBranches {
         parsed.variation.genes.foreach(ctx.output(geneOut, _))
         parsed.variation.associations.foreach(ctx.output(geneAssociationOut, _))
         parsed.vcv.foreach(ctx.output(vcvOut, _))
-        parsed.vcvRelease.foreach(ctx.output(vcvReleaseOut, _))
         parsed.rcvs.foreach(ctx.output(rcvOut, _))
         parsed.scvs.foreach { aggregateScv =>
           ctx.output(submitterOut, aggregateScv.submitter)
@@ -118,7 +114,6 @@ object ArchiveBranches {
       genes = sideCtx(geneOut).distinctBy(_.id),
       geneAssociations = sideCtx(geneAssociationOut),
       vcvs = sideCtx(vcvOut),
-      vcvReleases = sideCtx(vcvReleaseOut),
       rcvs = sideCtx(rcvOut),
       submitters = sideCtx(submitterOut).distinctBy(_.id),
       submissions = sideCtx(submissionOut).distinctBy(_.id),

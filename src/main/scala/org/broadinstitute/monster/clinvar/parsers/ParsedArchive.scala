@@ -15,7 +15,6 @@ import upack.{Msg, Str}
   * @param variation        fully-parsed model about the variation described by the archive,
   *                         along with its associated genes
   * @param vcv              info about how `variation` was submitted to ClinVar and reviewed
-  * @param vcvRelease       info about the release history of `vcv`
   * @param rcvs             records describing ClinVar's aggregate knowledge of `variation`
   * @param traitSets        info about collections of `vcvTraits`
   * @param traits           info about traits
@@ -27,7 +26,6 @@ import upack.{Msg, Str}
 case class ParsedArchive(
   variation: ParsedVariation,
   vcv: Option[VariationArchive],
-  vcvRelease: Option[VariationArchiveRelease],
   rcvs: Array[RcvAccession],
   traitSets: Array[TraitSet],
   traits: Array[Trait],
@@ -85,13 +83,7 @@ object ParsedArchive {
     // Since IncludedRecords don't contain meaningful provenance, we only
     // bother to do further processing for InterpretedRecords.
     if (rawArchive.obj.contains(InterpretedRecord)) {
-      // Extract basic info about the archive.
-      val vcvRelease = VariationArchiveRelease(
-        variationArchiveId = rawArchive.extract[String]("@Accession"),
-        version = rawArchive.extract[Long]("@Version"),
-        releaseDate =
-          rawArchive.extract[LocalDate]("ClinVarVariationRelease", "@ReleaseDate")
-      )
+      val vcvId = rawArchive.extract[String]("@Accession")
 
       // Parse the variation's interpretation.
       val interpretation = ParsedInterpretation.fromRawInterpretation(
@@ -105,7 +97,7 @@ object ParsedArchive {
         .map {
           parseRawRcv(
             parsedVariation.variation.id,
-            vcvRelease.variationArchiveId,
+            vcvId,
             interpretation,
             _
           )
@@ -142,7 +134,7 @@ object ParsedArchive {
         .map {
           ParsedScv.fromRawAssertion(
             parsedVariation.variation.id,
-            vcvRelease.variationArchiveId,
+            vcvId,
             rcvs,
             interpretation,
             mappingsByScvId,
@@ -166,8 +158,8 @@ object ParsedArchive {
       // Pull out top-level info about the VCV and combine it with summary
       // interpretation data.
       val vcv = VariationArchive(
-        id = vcvRelease.variationArchiveId,
-        version = vcvRelease.version,
+        id = vcvId,
+        version = rawArchive.extract[Long]("@Version"),
         variationId = parsedVariation.variation.id,
         dateCreated = rawArchive.tryExtract[LocalDate]("@DateCreated"),
         dateLastUpdated = rawArchive.tryExtract[LocalDate]("@DateLastUpdated"),
@@ -188,7 +180,6 @@ object ParsedArchive {
       ParsedArchive(
         variation = parsedVariation,
         vcv = Some(vcv),
-        vcvRelease = Some(vcvRelease),
         rcvs = rcvs,
         scvs = parsedScvs,
         traitSets = interpretation.traitSets,
@@ -199,7 +190,6 @@ object ParsedArchive {
       ParsedArchive(
         variation = parsedVariation,
         vcv = None,
-        vcvRelease = None,
         rcvs = Array.empty,
         traitSets = Array.empty,
         traits = Array.empty,

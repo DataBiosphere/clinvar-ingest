@@ -48,7 +48,8 @@ object ClinVarPipeline {
     // Split apart all of the entities that exist in the archives.
     // Since individual archives are self-contained, nearly all of the pipeline's
     // logic is done in this step.
-    val archiveBranches = ArchiveBranches.fromArchiveStream(fullArchives)
+    val archiveBranches =
+      ArchiveBranches.fromArchiveStream(fullArchives)
 
     // Write everything back to storage.
     StorageIO.writeJsonLists(
@@ -70,11 +71,6 @@ object ClinVarPipeline {
       archiveBranches.vcvs,
       "VCVs",
       s"${args.outputPrefix}/variation_archive"
-    )
-    StorageIO.writeJsonLists(
-      archiveBranches.vcvReleases,
-      "VCV Releases",
-      s"${args.outputPrefix}/variation_archive_release"
     )
     StorageIO.writeJsonLists(
       archiveBranches.rcvs,
