@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "gcs": {
+      "type": "object",
+      "properties": {
+        "bucketName": { "type": "string" }
+      },
+      "required": ["bucketName"]
+    },
+    "serviceAccount": {
+      "type": "object",
+      "properties": {
+        "k8sName": { "type": "string" },
+        "googleName": { "type": "string" }
+      },
+      "required": ["k8sName", "googleName"]
+    }
+  },
+  "required": ["gcs", "serviceAccount"]
+}
