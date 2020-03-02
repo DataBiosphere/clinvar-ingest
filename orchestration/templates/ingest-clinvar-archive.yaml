@@ -11,16 +11,40 @@ spec:
           - name: gcs-prefix
       dag:
         tasks:
-          - name: download-archive
+          # 1) Generate a PVC to hold the raw XML.
+          - name: generate-download-volume
             templateRef:
-              name: download-clinvar-archive
+              name: generate-pvc
               template: main
             arguments:
               parameters:
-                - name: archive-path
-                  value: '{{ "{{inputs.parameters.archive-path}}" }}'
-                - name: download-name
-                  value: ClinVarRelease.xml
+                - name: name-prefix
+                  value: ftp-download
+                - name: size
+                  value: {{ .Values.volumes.downloadSize }}
+                - name: storage-class
+                  value: {{ .Values.volumes.storageClass }}
+          {{- $downloadPvc := "{{tasks.generate-download-volume.outputs.parameters.pvc-name}}" }}
+
+          # 2) Download the raw XML onto the new PVC.
+          {{- $localXmlName := "ClinVarRelease.xml" }}
+          - name: download-archive
+            dependencies: [generate-download-volume]
+            templateRef:
+              name: download-ftp-file
+              template: main
+            arguments:
+              parameters:
+                - name: ftp-site
+                  value: ftp.ncbi.nlm.nih.gov
+                - name: ftp-path
+                  value: pub/clinvar/xml/clinvar_variation/{{ "{{inputs.parameters.archive-path}}" }}
+                - name: local-path
+                  value: {{ $localXmlName }}
+                - name: pvc-name
+                  value: '{{ $downloadPvc }}'
+
+          # 3a) Upload the raw XML to GCS.
           - name: upload-raw-archive
             dependencies: [download-archive]
             templateRef:
@@ -29,31 +53,54 @@ spec:
             arguments:
               parameters:
                 - name: pvc-name
-                  value: '{{ "{{tasks.download-archive.outputs.parameters.pvc-name}}" }}'
+                  value: '{{ $downloadPvc }}'
                 - name: gcs-bucket
                   value: {{ .Values.gcs.bucketName }}
                 - name: gcs-prefix
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw'
-          - name: extract-archive
+
+          # 3b) Generate a PVC to hold extracted JSON-list files.
+          - name: generate-extraction-volume
+            # Don't generate the PVC until we need it.
             dependencies: [download-archive]
             templateRef:
-              name: extract-clinvar-xml
+              name: generate-pvc
               template: main
             arguments:
               parameters:
-                - name: xml-pvc-name
-                  value: '{{ "{{tasks.download-archive.outputs.parameters.pvc-name}}" }}'
-                - name: xml-path
-                  value: ClinVarRelease.xml
+                - name: name-prefix
+                  value: extracted-json
+                - name: size
+                  value: {{ .Values.volumes.extractSize }}
+                - name: storage-class
+                  value: {{ .Values.volumes.storageClass }}
+          {{- $extractionPvc := "{{tasks.generate-extraction-volume.outputs.parameters.pvc-name}}" }}
+
+          # 4) Extract raw XML to JSON-list.
+          - name: extract-xml
+            dependencies: [generate-extraction-volume]
+            templateRef:
+              name: extract-xml-to-json
+              template: main
+            arguments:
+              parameters:
+                - name: input-pvc-name
+                  value: '{{ $downloadPvc }}'
+                - name: input-xml-path
+                  value: {{ $localXmlName }}
+                - name: output-pvc-name
+                  value: '{{ $extractionPvc }}'
+
+          # 5) Upload JSON-list data to GCS.
           - name: upload-extracted-archive
-            dependencies: [extract-archive]
+            dependencies: [extract-xml]
             templateRef:
               name: rsync-to-gcs
               template: main
             arguments:
               parameters:
                 - name: pvc-name
-                  value: '{{ "{{tasks.extract-archive.outputs.parameters.pvc-name}}" }}'
+                  value: '{{ $extractionPvc }}'
                 - name: gcs-bucket
                   value:  {{ .Values.gcs.bucketName }}
                 - name: gcs-prefix

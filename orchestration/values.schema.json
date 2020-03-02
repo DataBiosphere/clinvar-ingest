@@ -16,7 +16,16 @@
         "googleName": { "type": "string" }
       },
       "required": ["k8sName", "googleName"]
+    },
+    "volumes": {
+      "type": "object",
+      "properties": {
+        "storageClass": { "type": "string" },
+        "downloadSize": { "type": "string" },
+        "extractSize": { "type": "string" }
+      },
+      "required": ["storageClass", "downloadSize", "extractSize"]
     }
   },
-  "required": ["gcs", "serviceAccount"]
+  "required": ["gcs", "serviceAccount", "volumes"]
 }

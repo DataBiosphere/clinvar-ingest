@@ -1,0 +1,4 @@
+volumes:
+  storageClass: standard
+  downloadSize: 1Gi
+  extractSize: 10Gi
