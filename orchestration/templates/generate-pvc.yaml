@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: generate-pvc
+spec:
+  templates:
+    - name: main
+      inputs:
+        parameters:
+          - name: name-prefix
+          - name: size
+          - name: storage-class
+      resource:
+        action: create
+        setOwnerReference: true
+        manifest: |
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            generateName: {{ "{{inputs.parameters.name-prefix}}" }}-
+          spec:
+            accessModes:
+              - ReadWriteOnce
+              - ReadOnlyMany
+            storageClassName: {{ "{{inputs.parameters.storage-class}}" }}
+            resources:
+              requests:
+                storage: {{ "{{inputs.parameters.size}}" }}
+      outputs:
+        parameters:
+          - name: pvc-name
+            valueFrom:
+              jsonPath: '{.metadata.name}'

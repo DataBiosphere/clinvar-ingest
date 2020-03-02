@@ -1,0 +1,60 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: ingest-clinvar-archive
+spec:
+  templates:
+    - name: main
+      inputs:
+        parameters:
+          - name: archive-path
+          - name: gcs-prefix
+      dag:
+        tasks:
+          - name: download-archive
+            templateRef:
+              name: download-clinvar-archive
+              template: main
+            arguments:
+              parameters:
+                - name: archive-path
+                  value: '{{ "{{inputs.parameters.archive-path}}" }}'
+                - name: download-name
+                  value: ClinVarRelease.xml
+          - name: upload-raw-archive
+            dependencies: [download-archive]
+            templateRef:
+              name: rsync-to-gcs
+              template: main
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: '{{ "{{tasks.download-archive.outputs.parameters.pvc-name}}" }}'
+                - name: gcs-bucket
+                  value: {{ .Values.gcs.bucketName }}
+                - name: gcs-prefix
+                  value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw'
+          - name: extract-archive
+            dependencies: [download-archive]
+            templateRef:
+              name: extract-clinvar-xml
+              template: main
+            arguments:
+              parameters:
+                - name: xml-pvc-name
+                  value: '{{ "{{tasks.download-archive.outputs.parameters.pvc-name}}" }}'
+                - name: xml-path
+                  value: ClinVarRelease.xml
+          - name: upload-extracted-archive
+            dependencies: [extract-archive]
+            templateRef:
+              name: rsync-to-gcs
+              template: main
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: '{{ "{{tasks.extract-archive.outputs.parameters.pvc-name}}" }}'
+                - name: gcs-bucket
+                  value:  {{ .Values.gcs.bucketName }}
+                - name: gcs-prefix
+                  value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw'
