@@ -21,9 +21,9 @@ spec:
                 - name: name-prefix
                   value: ftp-download
                 - name: size
-                  value: {{ .Values.volumes.downloadSize }}
+                  value: '{{ .Values.volumes.downloadSize }}'
                 - name: storage-class
-                  value: {{ .Values.volumes.storageClass }}
+                  value: '{{ .Values.volumes.storageClass }}'
           {{- $downloadPvc := "{{tasks.generate-download-volume.outputs.parameters.pvc-name}}" }}
 
           # 2) Download the raw XML onto the new PVC.
@@ -36,11 +36,11 @@ spec:
             arguments:
               parameters:
                 - name: ftp-site
-                  value: ftp.ncbi.nlm.nih.gov
+                  value: 'ftp.ncbi.nlm.nih.gov'
                 - name: ftp-path
-                  value: pub/clinvar/xml/clinvar_variation/{{ "{{inputs.parameters.archive-path}}" }}
+                  value: 'pub/clinvar/xml/clinvar_variation/{{ "{{inputs.parameters.archive-path}}" }}'
                 - name: local-path
-                  value: {{ $localXmlName }}
+                  value: '{{ $localXmlName }}'
                 - name: pvc-name
                   value: '{{ $downloadPvc }}'
 
@@ -55,7 +55,7 @@ spec:
                 - name: pvc-name
                   value: '{{ $downloadPvc }}'
                 - name: gcs-bucket
-                  value: {{ .Values.gcs.bucketName }}
+                  value: '{{ .Values.gcs.bucketName }}'
                 - name: gcs-prefix
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw'
 
@@ -71,9 +71,9 @@ spec:
                 - name: name-prefix
                   value: extracted-json
                 - name: size
-                  value: {{ .Values.volumes.extractSize }}
+                  value: '{{ .Values.volumes.extractSize }}'
                 - name: storage-class
-                  value: {{ .Values.volumes.storageClass }}
+                  value: '{{ .Values.volumes.storageClass }}'
           {{- $extractionPvc := "{{tasks.generate-extraction-volume.outputs.parameters.pvc-name}}" }}
 
           # 4) Extract raw XML to JSON-list.
@@ -87,7 +87,7 @@ spec:
                 - name: input-pvc-name
                   value: '{{ $downloadPvc }}'
                 - name: input-xml-path
-                  value: {{ $localXmlName }}
+                  value: '{{ $localXmlName }}'
                 - name: output-pvc-name
                   value: '{{ $extractionPvc }}'
 
@@ -102,6 +102,6 @@ spec:
                 - name: pvc-name
                   value: '{{ $extractionPvc }}'
                 - name: gcs-bucket
-                  value:  {{ .Values.gcs.bucketName }}
+                  value:  '{{ .Values.gcs.bucketName }}'
                 - name: gcs-prefix
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw'
