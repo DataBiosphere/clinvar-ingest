@@ -8,8 +8,9 @@ spec:
   concurrencyPolicy: Deny
   workflowSpec:
     entrypoint: main
-      podGC:
-        strategy: OnWorkflowSuccess
+    serviceAccountName: {{ .Values.serviceAccount.k8sName }}
+    podGC:
+      strategy: OnWorkflowSuccess
     templates:
       - name: main
         templateRef:
