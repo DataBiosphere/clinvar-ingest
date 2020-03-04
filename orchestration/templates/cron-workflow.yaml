@@ -5,7 +5,7 @@ metadata:
 spec:
   suspend: {{ not .Values.cron.enable }}
   schedule: '{{ .Values.cron.schedule }}'
-  concurrencyPolicy: Deny
+  concurrencyPolicy: Forbid
   workflowSpec:
     entrypoint: main
     serviceAccountName: {{ .Values.serviceAccount.k8sName }}
