@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: rsync-to-gcs
+spec:
+  templates:
+    - name: main
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: gcs-bucket
+          - name: gcs-prefix
+      volumes:
+        - name: state
+          persistentVolumeClaim:
+            claimName: '{{ "{{inputs.parameters.pvc-name}}" }}'
+      container:
+        image: google/cloud-sdk:slim
+        command: [gsutil]
+        args:
+          - -m
+          - rsync
+          - -r
+          - /state
+          - gs://{{ "{{inputs.parameters.gcs-bucket}}" }}/{{ "{{inputs.parameters.gcs-prefix}}" }}
+        volumeMounts:
+          - name: state
+            mountPath: /state
+            readOnly: true
+        resources:
+          requests:
+            memory: 1Gi
+            cpu: 1500m
+          limits:
+            memory: 2Gi
+            cpu: 2000m
+      retryStrategy:
+        limit: 32

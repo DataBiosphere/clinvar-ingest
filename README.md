@@ -3,21 +3,20 @@ Batch ETL pipeline to mirror ClinVar releases into the Jade Data Repository.
 
 ### How this ingest process works
 
-1. [Argo Workflow](https://github.com/argoproj/argo)
-    1. Download the latest ClinVar release from the 
-    [ClinVar FTP server](ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/clinvar_variation/) 
-    to a temporary local volume
-    2. Run the compressed download file through our command line 
-    [XML -> JSON tool](https://github.com/broadinstitute/monster-xml-to-json-list) 
-    and store the output to a temporary local volume
-    3. Upload both the raw XML data and the JSON data to GCS using [gsutil](https://github.com/GoogleCloudPlatform/gsutil)
-2. [Dataflow](https://cloud.google.com/dataflow/)
-    1. Transform the JSON input data from GCS into the specified output schema
-    2. Store output part files in GCS
-3. Jade API: Use the Jade API to perform a tabular ingest of the new part files
- into the Data Repo
+Ingest orchestration is driven by [Argo](https://github.com/argoproj/argo). A stand-alone
+WorkflowTemplate defines the steps:
+1. Generate a temporary local volume
+2. Download the latest ClinVar release from the [ClinVar FTP server](ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/clinvar_variation/)
+   to the volume
+3. In parallel:
+   1. Upload the raw release to GCS using [gsutil](https://github.com/GoogleCloudPlatform/gsutil)
+   2. Extract the release into JSON-list:
+      1. Generate another local volume to store extracted data
+      2. Run the compressed XML release through our [XML -> JSON tool](https://github.com/broadinstitute/monster-xml-to-json-list),
+         storing the outputs on the 2nd volume
+      3. Upload the JSON-list files to GCS
 
-Currently, each of these steps (the Argo Workflow, the Dataflow job, and
-hitting the Jade API) is kicked off manually. The plan is to use [Airflow](https://github.com/apache/airflow)
-to schedule a weekly job that runs all of these steps sequentially so that the flow
-of new data into the Data Repo is automated.
+In the near future, we will add additional steps to the workflow:
+1. [Dataflow](https://cloud.google.com/dataflow/) to transform the raw extracted JSON into the desired output schema
+2. BigQuery jobs to diff new data against the rows already in dev
+3. Jade API calls to ingest the raw archive and transformed JSON rows
