@@ -4,7 +4,8 @@ metadata:
   name: clinvar-ingest
 spec:
   suspend: {{ not .Values.cron.enable }}
-  schedule: '{{ .Values.cron.schedule }}'
+  schedule: {{ .Values.cron.schedule | quote }}
+  timezone: {{ .Values.cron.timezone | quote }}
   concurrencyPolicy: Forbid
   workflowSpec:
     entrypoint: main

@@ -31,6 +31,7 @@
       "properties": {
         "enable": { "type": "boolean" },
         "schedule": { "type": "string" },
+        "timezone": { "type": "string" },
         "timestampPattern": { "type": "string" }
       },
       "required": ["enable", "schedule", "timestampPattern"]
