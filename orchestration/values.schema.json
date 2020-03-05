@@ -25,7 +25,17 @@
         "extractSize": { "type": "string" }
       },
       "required": ["storageClass", "downloadSize", "extractSize"]
+    },
+    "cron": {
+      "type": "object",
+      "properties": {
+        "enable": { "type": "boolean" },
+        "schedule": { "type": "string" },
+        "timezone": { "type": "string" },
+        "timestampPattern": { "type": "string" }
+      },
+      "required": ["enable", "schedule", "timestampPattern"]
     }
   },
-  "required": ["gcs", "serviceAccount", "volumes"]
+  "required": ["gcs", "serviceAccount", "volumes", "cron"]
 }
