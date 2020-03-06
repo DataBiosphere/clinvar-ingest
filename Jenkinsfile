@@ -36,6 +36,45 @@ pipeline {
                 sh 'sbt "set ThisBuild/coverageEnabled := true" IntegrationTest/test'
             }
         }
+        stage('Publish') {
+            when {
+                anyOf {
+                    branch 'master'
+                    tag pattern: 'v\\d.*', comparator: 'REGEXP'
+                }
+            }
+            environment {
+                PATH = "${tool('gcloud')}:$PATH"
+            }
+            steps {
+                script {
+                    def saVaultKey = 'secret/dsde/monster/dev/gcr/broad-dsp-gcr-public-sa.json'
+                    def saTmp = '${WORKSPACE}/sa-key.json'
+
+                    def steps = [
+                        '#!/bin/bash',
+                        'set +x -euo pipefail',
+                        'echo Publishing artifacts...',
+                        // Pull the login key for the service account that can publish to GCR.
+                        'export VAULT_TOKEN=$(cat $VAULT_TOKEN_PATH)',
+                        "vault read -format=json $saVaultKey | jq .data > $saTmp",
+                        // Jenkins' home directory is read-only, so we have to set up
+                        // local storage to write temporary gcloud / docker configs.
+                        'export CLOUDSDK_CONFIG=${WORKSPACE}/.gcloud',
+                        'export DOCKER_CONFIG=${WORKSPACE}/.docker',
+                        'mkdir -p ${CLOUDSDK_CONFIG} ${DOCKER_CONFIG}',
+                        'cp -r ${HOME}/.docker/* ${DOCKER_CONFIG}/',
+                        // Log into gcloud, then link Docker to gcloud.
+                        "gcloud auth activate-service-account \$(vault read -field=client_email $saVaultKey) --key-file=$saTmp",
+                        'gcloud auth configure-docker --quiet',
+                        // Push :allthethings: if the setup succeeded.
+                        'sbt publish'
+                    ]
+
+                    sh steps.join('\n')
+                }
+            }
+        }
     }
     post {
         always {
