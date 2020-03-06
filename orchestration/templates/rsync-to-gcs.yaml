@@ -8,6 +8,7 @@ spec:
       inputs:
         parameters:
           - name: pvc-name
+          - name: local-prefix
           - name: gcs-bucket
           - name: gcs-prefix
       volumes:
@@ -21,7 +22,7 @@ spec:
           - -m
           - rsync
           - -r
-          - /state
+          - /state/{{ "{{inputs.parameters.local-prefix}}" }}
           - gs://{{ "{{inputs.parameters.gcs-bucket}}" }}/{{ "{{inputs.parameters.gcs-prefix}}" }}
         volumeMounts:
           - name: state

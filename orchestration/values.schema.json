@@ -31,10 +31,9 @@
       "properties": {
         "enable": { "type": "boolean" },
         "schedule": { "type": "string" },
-        "timezone": { "type": "string" },
-        "timestampPattern": { "type": "string" }
+        "timezone": { "type": "string" }
       },
-      "required": ["enable", "schedule", "timestampPattern"]
+      "required": ["enable", "schedule"]
     }
   },
   "required": ["gcs", "serviceAccount", "volumes", "cron"]

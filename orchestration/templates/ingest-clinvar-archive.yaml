@@ -54,6 +54,8 @@ spec:
               parameters:
                 - name: pvc-name
                   value: '{{ $downloadPvc }}'
+                - name: local-prefix
+                  value: ''
                 - name: gcs-bucket
                   value: '{{ .Values.gcs.bucketName }}'
                 - name: gcs-prefix
@@ -101,7 +103,9 @@ spec:
               parameters:
                 - name: pvc-name
                   value: '{{ $extractionPvc }}'
+                - name: local-prefix
+                  value: VariationArchive
                 - name: gcs-bucket
                   value:  '{{ .Values.gcs.bucketName }}'
                 - name: gcs-prefix
-                  value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw'
+                  value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw/VariationArchive'
