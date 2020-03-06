@@ -7,4 +7,3 @@ cron:
   # Every Sunday at 3:30am
   schedule: '30 3 * * Sun'
   timezone: 'America/New_York'
-  timestampPattern: 'YYYY-mm-dd'

@@ -22,4 +22,4 @@ spec:
             - name: archive-path
               value: weekly_release/ClinVarVariationRelease_00-latest_weekly.xml.gz
             - name: gcs-prefix
-              value: '{{ printf "{{workflow.creationTimestamp.%s}}" .Values.cron.timestampPattern }}'
+              value: '{{ printf "{{workflow.creationTimestamp}}" }}'
