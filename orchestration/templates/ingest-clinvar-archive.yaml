@@ -60,6 +60,8 @@ spec:
                   value: '{{ .Values.gcs.bucketName }}'
                 - name: gcs-prefix
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw'
+                - name: max-concurrent-uploads
+                  value: '1'
 
           # 3b) Generate a PVC to hold extracted JSON-list files.
           - name: generate-extraction-volume
@@ -109,6 +111,8 @@ spec:
                   value:  '{{ .Values.gcs.bucketName }}'
                 - name: gcs-prefix
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw/VariationArchive'
+                - name: max-concurrent-uploads
+                  value: '2'
 
           # Run Dataflow on uploaded JSON.
           - name: process-archive

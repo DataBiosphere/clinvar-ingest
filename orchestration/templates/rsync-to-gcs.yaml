@@ -11,10 +11,12 @@ spec:
           - name: local-prefix
           - name: gcs-bucket
           - name: gcs-prefix
+          - name: max-concurrent-uploads
       volumes:
         - name: state
           persistentVolumeClaim:
             claimName: '{{ "{{inputs.parameters.pvc-name}}" }}'
+            readOnly: true
       container:
         image: google/cloud-sdk:slim
         command: [gsutil]
@@ -27,13 +29,15 @@ spec:
         volumeMounts:
           - name: state
             mountPath: /state
-            readOnly: true
-        resources:
-          requests:
-            memory: 1Gi
-            cpu: 1500m
-          limits:
-            memory: 2Gi
-            cpu: 2000m
+      podSpecPatch: |
+        containers:
+          - name: main
+            resources:
+              requests:
+                memory: {{ "{{inputs.parameters.max-concurrent-uploads}}Gi" }}
+                cpu: {{ "{{inputs.parameters.max-concurrent-uploads}}000m" }}
+              limits:
+                memory: {{ "{{inputs.parameters.max-concurrent-uploads}}Gi" }}
+                cpu: {{ "{{inputs.parameters.max-concurrent-uploads}}000m" }}
       retryStrategy:
         limit: 32
