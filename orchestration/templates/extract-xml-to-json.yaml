@@ -14,10 +14,10 @@ spec:
         - name: in
           persistentVolumeClaim:
             claimName: '{{ "{{inputs.parameters.input-pvc-name}}" }}'
+            readOnly: true
         - name: out
           persistentVolumeClaim:
             claimName: '{{ "{{inputs.parameters.output-pvc-name}}" }}'
-            readOnly: true
       container:
         image: us.gcr.io/broad-dsp-gcr-public/monster-xml-to-json-list:3.0.0
         command: []
