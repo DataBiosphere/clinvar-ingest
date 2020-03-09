@@ -22,7 +22,7 @@ spec:
           - --outputPrefix=gs://{{ $bucket }}/{{ "{{inputs.parameters.output-prefix}}" }}
           - --project={{ .project }}
           - --region={{ .region }}
-          - --tempLocation=gs://{{ .tmpBucketName }}
+          - --tempLocation=gs://{{ .tmpBucketName }}/dataflow
           - --subnetwork={{ .subnetName }}
           - --serviceAccount={{ .workerAccount }}
           - --workerMachineType={{ .workerMachineType }}
