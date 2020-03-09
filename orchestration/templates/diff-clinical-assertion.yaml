@@ -1,0 +1,67 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: diff-clinical-assertion
+spec:
+  templates:
+    - name: main
+      inputs:
+        parameters:
+          - name: gcs-bucket
+          - name: input-prefix
+          - name: staging-bq-project
+          - name: staging-bq-dataset
+          - name: jade-bq-project
+          - name: jade-bq-dataset
+      dag:
+        tasks:
+          - name: join-staging-to-existing
+            template: join-staging-to-existing
+            arguments:
+              parameters:
+                - name: gcs-bucket
+                  value: {{ "{{inputs.parameters.gcs-bucket}}" }}
+                - name: input-prefix
+                  value: {{ "{{inputs.parameters.input-prefix}}" }}
+                - name: staging-bq-project
+                  value: {{ "{{inputs.parameters.staging-bq-project}}" }}
+                - name: staging-bq-dataset
+                  value: {{ "{{inputs.parameters.staging-bq-dataset}}" }}
+                - name: jade-bq-project
+                  value: {{ "{{inputs.parameters.jade-bq-project}}" }}
+                - name: jade-bq-dataset
+                  value: {{ "{{inputs.parameters.jade-bq-dataset}}" }}
+
+    - name: join-staging-to-existing
+      inputs:
+        parameters:
+          - name: gcs-bucket
+          - name: input-prefix
+          - name: staging-bq-project
+          - name: staging-bq-dataset
+          - name: jade-bq-project
+          - name: jade-bq-dataset
+      {{- $YYYY := "{{workflow.creationTimestamp.Y}}" }}
+      {{- $mm := "{{workflow.creationTimestamp.m}}" }}
+      {{- $dd := "{{workflow.creationTimestamp.d}}" }}
+      {{- $HH := "{{workflow.creationTimestamp.H}}" }}
+      {{- $MM := "{{workflow.creationTimestamp.M}}" }}
+      {{- $SS := "{{workflow.creationTimestamp.S}}" }}
+      {{- $stProj := "{{inputs.parameters.staging-bq-project}}" }}
+      {{- $stData := "{{inputs.parameters.staging-bq-dataset}}" }}
+      {{- $jProj := "{{inputs.paramaters.jade-bq-project}}" }}
+      {{- $jData := "{{inputs.parameters.jade-bq-dataset}}" }}
+      {{- $ts := printf "%s_%s_%s_T_%s_%s_%s" $YYYY $mm $dd $HH $MM $SS }}
+      {{- $gs := printf "gs://%s/%s/clinical_assertion/*" "{{inputs.parameters.gcs-bucket}}" "{{inputs.parameters.input-prefix}}" }}
+      container:
+        image: google/cloud-sdk:slim
+        command: [bq]
+        args:
+          - --location=US
+          - --dataset_id='{{ $stProj }}:{{ $stData }}'
+          - --synchronous_mode=true
+          - query
+          - --use_legacy_sql=false
+          - --destination_table='{{ printf "%s:%s.clinical_assertion_%s" $stProj $stData $ts }}'
+          - --external_table_definition=clinical_assertion::id:STRING,version:INT64,internal_id:STRING,variation_archive_id:STRING,variation_id:STRING,submitter_id:STRING,submission_id:STRING,rcv_accession_id:STRING,trait_set_id:STRING,clinical_assertion_trait_set_id:STRING,clinical_assertion_observation_ids:STRING,title:STRING,local_key:STRING,assertion_type:STRING,date_created:STRING,date_last_updated:DATE,submitted_assembly:STRING,record_status:STRING,review_status:STRING,interpretation_description:STRING,interpretation_date_last_evaluated:DATE,content:STRING,interpretation_comments:STRING@NEWLINE_DELIMITED_JSON={{ $gs }}
+          - 'SELECT * FROM clinical_assertion'
