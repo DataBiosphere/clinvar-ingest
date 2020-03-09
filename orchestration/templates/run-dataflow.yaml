@@ -23,7 +23,7 @@ spec:
           - --project={{ .project }}
           - --region={{ .region }}
           - --tempLocation=gs://{{ .tmpBucketName }}/dataflow
-          - --subnetwork={{ .subnetName }}
+          - --subnetwork=regions/{{ .region }}/subnetworks/{{ .subnetName }}
           - --serviceAccount={{ .workerAccount }}
           - --workerMachineType={{ .workerMachineType }}
           {{- with .autoscaling }}
