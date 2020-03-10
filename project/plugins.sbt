@@ -1,4 +1,4 @@
-val sbtPluginsVersion = "0.11.0"
+val sbtPluginsVersion = "0.11.0-1-1a48d01a-SNAPSHOT"
 
 val patternBase =
   "org/broadinstitute/monster/[module](_[scalaVersion])(_[sbtVersion])/[revision]"
