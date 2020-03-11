@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-docker build -t kafka-python .
-docker tag kafka-python us.gcr.io/broad-dsp-gcr-public/monster-kafka-python
-docker push us.gcr.io/broad-dsp-gcr-public/monster-kafka-python
+declare -r VERSION=1.0.0
+
+docker build -t us.gcr.io/broad-dsp-gcr-public/monster-kafka-python:VERSION .
+docker push us.gcr.io/broad-dsp-gcr-public/monster-kafka-python:VERSION
