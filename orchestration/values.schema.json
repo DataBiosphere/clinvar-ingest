@@ -62,6 +62,28 @@
       },
       "required": ["project", "region", "tmpBucketName",  "subnetName", "workerAccount",
                    "workerMachineType", "autoscaling", "useFlexRS"]
+    },
+    "bigquery": {
+      "type": "object",
+      "properties": {
+        "stagingData": {
+          "type": "object",
+          "properties": {
+            "project": { "type": "string" },
+            "dataset": { "type": "string" }
+          },
+          "required": ["project", "dataset"]
+        },
+        "jadeData": {
+          "type": "object",
+          "properties": {
+            "project": { "type": "string" },
+            "dataset": { "type": "string" }
+          },
+          "required": ["project", "dataset"]
+        }
+      },
+      "required": ["stagingData", "jadeData"]
     }
   },
   "required": ["gcs", "serviceAccount", "volumes", "cron", "dataflow"]

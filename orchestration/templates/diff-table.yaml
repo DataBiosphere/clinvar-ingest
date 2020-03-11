@@ -21,19 +21,19 @@ spec:
             arguments:
               parameters:
                 - name: table-name
-                  value: {{ "{{inputs.parameters.table-name}}" }}
+                  value: '{{ "{{inputs.parameters.table-name}}" }}'
                 - name: gcs-bucket
-                  value: {{ "{{inputs.parameters.gcs-bucket}}" }}
+                  value: '{{ "{{inputs.parameters.gcs-bucket}}" }}'
                 - name: input-prefix
-                  value: {{ "{{inputs.parameters.input-prefix}}" }}
+                  value: '{{ "{{inputs.parameters.input-prefix}}" }}'
                 - name: staging-bq-project
-                  value: {{ "{{inputs.parameters.staging-bq-project}}" }}
+                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
                 - name: staging-bq-dataset
-                  value: {{ "{{inputs.parameters.staging-bq-dataset}}" }}
+                  value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
                 - name: jade-bq-project
-                  value: {{ "{{inputs.parameters.jade-bq-project}}" }}
+                  value: '{{ "{{inputs.parameters.jade-bq-project}}" }}'
                 - name: jade-bq-dataset
-                  value: {{ "{{inputs.parameters.jade-bq-dataset}}" }}
+                  value: '{{ "{{inputs.parameters.jade-bq-dataset}}" }}'
 
     - name: join-staging-to-existing
       inputs:
@@ -45,14 +45,23 @@ spec:
           - name: staging-bq-dataset
           - name: jade-bq-project
           - name: jade-bq-dataset
-      {{- $stProj := "{{inputs.parameters.staging-bq-project}}" }}
-      {{- $stData := "{{inputs.parameters.staging-bq-dataset}}" }}
-      {{- $jProj := "{{inputs.paramaters.jade-bq-project}}" }}
-      {{- $jData := "{{inputs.parameters.jade-bq-dataset}}" }}
-      {{- $tbl := "{{inputs.parameters.table-name}}" }}
-      {{- $gs := printf "gs://%s/%s/%s/*" "{{inputs.parameters.gcs-bucket}}" "{{inputs.parameters.input-prefix}}" $tbl }}
       script:
         image: us.gcr.io/broad-dsp-gcr-public/clinvar-schema:{{ default "latest" .Chart.AppVersion }}
+        env:
+          - name: STAGING_PROJECT
+            value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+          - name: STAGING_DATASET
+            value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
+          - name: JADE_PROJECT
+            value: '{{ "{{inputs.paramaters.jade-bq-project}}" }}'
+          - name: JADE_DATASET
+            value: '{{ "{{inputs.parameters.jade-bq-dataset}}" }}'
+          - name: TABLE
+            value: '{{ "{{inputs.parameters.table-name}}" }}'
+          - name: GCS_PREFIX
+            value: '{{ "gs://{{inputs.parameters.gcs-bucket}}/{{inputs.parameters.input-prefix}}" }}'
+          - name: OUTPUT_SUFFIX
+            value: '{{ template "argo.timestamp" }}'
         command: [bash]
         source: |
           set -euo pipefail
@@ -60,7 +69,7 @@ spec:
           # Copy-pasted from StackOverflow.
           function join_by { local d=$1; shift; echo -n "$1"; shift; printf "%s" "${@/#/$d}"; }
 
-          declare -r TABLE_DIR=/bq-metadata/{{ $tbl }}
+          declare -r TABLE_DIR=/bq-metadata/${TABLE}
           declare -r PK_COLS=$(cat ${TABLE_DIR}/primary-keys)
           declare -r COMPARE_COLS=$(cat ${TABLE_DIR}/compare-cols)
           declare -a COMPARISONS=()
@@ -71,10 +80,10 @@ spec:
 
           declare -r FULL_DIFF=$(join_by ' OR ' "${COMPARISONS[@]}")
 
-          bq --location=US --project_id={{ $stProj }}  --synchronous_mode=true --headless=true --format=none query \
+          bq --location=US --project_id=${STAGING_PROJECT} --synchronous_mode=true --headless=true --format=none query \
             --use_legacy_sql=false \
-            --external_table_definition={{ $tbl }}::${TABLE_DIR}/schema.json@NEWLINE_DELIMITED_JSON={{ $gs }} \
-            --destination_table={{ $stProj}}:{{ $stData }}.{{ $tbl }}_{{ template "argo.timestamp" }} \
+            --external_table_definition=${TABLE}::${TABLE_DIR}/schema.json@NEWLINE_DELIMITED_JSON=${GCS_PREFIX}/${TABLE}/* \
+            --destination_table=${STAGING_PROJECT}:${STAGING_DATASET}.${TABLE}_${OUTPUT_SUFFIX} \
             "SELECT J.datarepo_row_id, S.*
-             FROM {{ $tbl }} S FULL JOIN \`{{ $jProj }}.{{ $jData }}.{{ $tbl }}\` J
+             FROM ${TABLE} S FULL JOIN \`${JADE_PROJECT}.${JADE_DATASET}.${TABLE}\` J
              USING (${PK_COLS}) WHERE ${FULL_DIFF}"

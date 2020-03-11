@@ -14,3 +14,6 @@ dataflow:
     minWorkers: 4
     maxWorkers: 8
   useFlexRS: false
+bigquery:
+  jadeData:
+    dataset: datarepo_broad_dsp_clinvar
