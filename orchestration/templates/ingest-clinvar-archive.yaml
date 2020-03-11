@@ -78,8 +78,8 @@ spec:
                   value: '{{ .Values.volumes.extractSize }}'
                 - name: storage-class
                   value: '{{ .Values.volumes.storageClass }}'
-          {{- $extractionPvc := "{{tasks.generate-extraction-volume.outputs.parameters.pvc-name}}" }}
 
+          {{- $extractionPvc := "{{tasks.generate-extraction-volume.outputs.parameters.pvc-name}}" }}
           # 4) Extract raw XML to JSON-list.
           - name: extract-xml
             dependencies: [generate-extraction-volume]
@@ -114,7 +114,7 @@ spec:
                 - name: max-concurrent-uploads
                   value: '2'
 
-          # Run Dataflow on uploaded JSON.
+          # 6) Run Dataflow on uploaded JSON.
           - name: process-archive
             dependencies: [upload-extracted-archive]
             templateRef:
@@ -128,3 +128,46 @@ spec:
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw'
                 - name: output-prefix
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/processed'
+
+          # 7) Diff generated data against existing data
+          - name: diff-tables
+            dependencies: [process-archive]
+            templateRef:
+              name: diff-table
+              template: main
+            arguments:
+              parameters:
+                - name: table-name
+                  value: '{{ "{{item}}" }}'
+                - name: gcs-bucket
+                  value: '{{ .Values.gcs.bucketName }}'
+                - name: input-prefix
+                  value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/processed'
+                {{- with .Values.bigquery.stagingData }}
+                - name: staging-bq-project
+                  value: '{{ .project }}'
+                - name: staging-bq-dataset
+                  value: '{{ .dataset }}'
+                {{- end }}
+                {{- with .Values.bigquery.jadeData }}
+                - name: jade-bq-project
+                  value: '{{ .project }}'
+                - name: jade-bq-dataset
+                  value: '{{ .dataset }}'
+                {{- end }}
+            withItems:
+              - clinical_assertion
+              - clinical_assertion_observation
+              - clinical_assertion_trait
+              - clinical_assertion_trait_set
+              - clinical_assertion_variation
+              - gene
+              - gene_association
+              - rcv_accession
+              - submission
+              - submitter
+              - trait
+              - trait_mapping
+              - trait_set
+              - variation
+              - variation_archive

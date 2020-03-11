@@ -1,9 +1,3 @@
-{{- $YYYY := "{{workflow.creationTimestamp.Y}}" }}
-{{- $mm := "{{workflow.creationTimestamp.m}}" }}
-{{- $dd := "{{workflow.creationTimestamp.d}}" }}
-{{- $HH := "{{workflow.creationTimestamp.H}}" }}
-{{- $MM := "{{workflow.creationTimestamp.M}}" }}
-{{- $SS := "{{workflow.creationTimestamp.S}}" }}
 apiVersion: argoproj.io/v1alpha1
 kind: CronWorkflow
 metadata:
@@ -28,4 +22,4 @@ spec:
             - name: archive-path
               value: weekly_release/ClinVarVariationRelease_00-latest_weekly.xml.gz
             - name: gcs-prefix
-              value: '{{ printf "%s-%s-%sT%s:%s:%s" $YYYY $mm $dd $HH $MM $SS }}'
+              value: '{{ template "argo.timestamp" }}'

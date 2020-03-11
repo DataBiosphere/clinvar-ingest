@@ -1,0 +1,70 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: diff-table
+spec:
+  templates:
+    - name: main
+      inputs:
+        parameters:
+          - name: table-name
+          - name: gcs-bucket
+          - name: input-prefix
+          - name: staging-bq-project
+          - name: staging-bq-dataset
+          - name: jade-bq-project
+          - name: jade-bq-dataset
+      dag:
+        tasks:
+          - name: join-staging-to-existing
+            template: join-staging-to-existing
+            arguments:
+              parameters:
+                - name: table-name
+                  value: '{{ "{{inputs.parameters.table-name}}" }}'
+                - name: gcs-bucket
+                  value: '{{ "{{inputs.parameters.gcs-bucket}}" }}'
+                - name: input-prefix
+                  value: '{{ "{{inputs.parameters.input-prefix}}" }}'
+                - name: staging-bq-project
+                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+                - name: staging-bq-dataset
+                  value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
+                - name: jade-bq-project
+                  value: '{{ "{{inputs.parameters.jade-bq-project}}" }}'
+                - name: jade-bq-dataset
+                  value: '{{ "{{inputs.parameters.jade-bq-dataset}}" }}'
+
+    - name: join-staging-to-existing
+      inputs:
+        parameters:
+          - name: table-name
+          - name: gcs-bucket
+          - name: input-prefix
+          - name: staging-bq-project
+          - name: staging-bq-dataset
+          - name: jade-bq-project
+          - name: jade-bq-dataset
+      script:
+        image: us.gcr.io/broad-dsp-gcr-public/clinvar-schema:{{ default "latest" .Chart.AppVersion }}
+        env:
+          - name: STAGING_PROJECT
+            value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+          - name: STAGING_DATASET
+            value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
+          - name: JADE_PROJECT
+            value: '{{ "{{inputs.parameters.jade-bq-project}}" }}'
+          - name: JADE_DATASET
+            value: '{{ "{{inputs.parameters.jade-bq-dataset}}" }}'
+          - name: TABLE
+            value: '{{ "{{inputs.parameters.table-name}}" }}'
+          - name: GCS_PREFIX
+            value: '{{ "gs://{{inputs.parameters.gcs-bucket}}/{{inputs.parameters.input-prefix}}" }}'
+          - name: OUTPUT_SUFFIX
+            value: '{{ template "argo.timestamp" }}'
+        command: [bash]
+        source: |
+          {{- /* More verbose than I expected, but direct injection is too hard to format. */}}
+          {{- range .Files.Lines "scripts/diff-bq-table.sh" }}
+          {{ . }}
+          {{- end }}

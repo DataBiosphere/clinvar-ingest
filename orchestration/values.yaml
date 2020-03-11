@@ -14,6 +14,6 @@ dataflow:
     minWorkers: 4
     maxWorkers: 8
   useFlexRS: false
-  # TODO: Override this as a pre-processing step
-  # before packaging the chart.
-  pipelineVersion: latest
+bigquery:
+  jadeData:
+    dataset: datarepo_broad_dsp_clinvar

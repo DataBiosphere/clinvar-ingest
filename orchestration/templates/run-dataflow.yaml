@@ -1,3 +1,4 @@
+{{- $version := default "latest" .Chart.AppVersion }}
 {{- with .Values.dataflow }}
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
@@ -12,11 +13,11 @@ spec:
           - name: input-prefix
           - name: output-prefix
       container:
-        image: us.gcr.io/broad-dsp-gcr-public/clinvar-transformation-pipeline:{{ .pipelineVersion }}
+        image: us.gcr.io/broad-dsp-gcr-public/clinvar-transformation-pipeline:{{ $version }}
         command: []
         args:
           - --runner=dataflow
-          {{ $bucket := "{{inputs.parameters.gcs-bucket}}" }}
+          {{- $bucket := "{{inputs.parameters.gcs-bucket}}" }}
           - --inputPrefix=gs://{{ $bucket }}/{{ "{{inputs.parameters.input-prefix}}" }}
           - --outputPrefix=gs://{{ $bucket }}/{{ "{{inputs.parameters.output-prefix}}" }}
           - --project={{ .project }}
