@@ -64,7 +64,7 @@ spec:
             value: '{{ template "argo.timestamp" }}'
         command: [bash]
         source: |
-          {{- /* More verbose than I expected, but direct injection is too hard to format. */ }}
+          {{- /* More verbose than I expected, but direct injection is too hard to format. */}}
           {{- range .Files.Lines "scripts/diff-bq-table.sh" }}
           {{ . }}
           {{- end }}
