@@ -157,5 +157,17 @@ spec:
                 {{- end }}
             withItems:
               - clinical_assertion
+              - clinical_assertion_observation
+              - clinical_assertion_trait
+              - clinical_assertion_trait_set
+              - clinical_assertion_variation
+              - gene
+              - gene_association
+              - rcv_accession
+              - submission
+              - submitter
+              - trait
+              - trait_mapping
+              - trait_set
               - variation
               - variation_archive
