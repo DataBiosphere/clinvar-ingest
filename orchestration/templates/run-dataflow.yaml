@@ -12,7 +12,7 @@ spec:
           - name: input-prefix
           - name: output-prefix
       container:
-        image: us.gcr.io/broad-dsp-gcr-public/clinvar-transformation-pipeline:{{ .pipelineVersion }}
+        image: us.gcr.io/broad-dsp-gcr-public/clinvar-transformation-pipeline:{{ default "latest" .Chart.AppVersion }}
         command: []
         args:
           - --runner=dataflow
