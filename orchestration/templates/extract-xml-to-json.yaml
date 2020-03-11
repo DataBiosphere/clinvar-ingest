@@ -29,6 +29,7 @@ spec:
         volumeMounts:
           - name: in
             mountPath: /in
+            readOnly: true
           - name: out
             mountPath: /out
         env:

@@ -29,6 +29,7 @@ spec:
         volumeMounts:
           - name: state
             mountPath: /state
+            readOnly: true
       podSpecPatch: |
         containers:
           - name: main
