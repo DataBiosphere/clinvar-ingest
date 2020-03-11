@@ -9,7 +9,7 @@
     {
       "name": "version",
       "datatype": "integer",
-      "type": "primary_key"
+      "type": "required"
     },
     {
       "name": "internal_id",
