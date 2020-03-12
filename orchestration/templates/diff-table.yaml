@@ -101,7 +101,7 @@ spec:
                 - name: bq-dataset
                   value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
                 - name: output-format
-                  value: CSV
+                  value: NEWLINE_DELIMITED_JSON
                 - name: gcs-bucket
                   value: '{{ "{{inputs.parameters.gcs-bucket}}" }}'
                 - name: gcs-prefix
