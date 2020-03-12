@@ -51,7 +51,7 @@ spec:
                 - name: bq-project
                   value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
                 - name: bq-dataset
-                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+                  value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
                 - name: output-table-suffix
                   value: '{{ template "argo.timestamp" }}'
           # 3a) Extract the query result to GCS.
@@ -65,7 +65,7 @@ spec:
                 - name: bq-project
                   value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
                 - name: bq-dataset
-                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+                  value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
                 - name: output-format
                   value: CSV
                 - name: gcs-bucket
@@ -85,7 +85,7 @@ spec:
                 - name: bq-project
                   value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
                 - name: bq-dataset
-                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+                  value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
                 - name: output-table-suffix
                   value: '{{ template "argo.timestamp" }}'
           # 3b) Extract the query result to GCS.
@@ -99,7 +99,7 @@ spec:
                 - name: bq-project
                   value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
                 - name: bq-dataset
-                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+                  value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
                 - name: output-format
                   value: CSV
                 - name: gcs-bucket
