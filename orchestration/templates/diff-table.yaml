@@ -10,6 +10,7 @@ spec:
           - name: table-name
           - name: gcs-bucket
           - name: input-prefix
+          - name: output-prefix
           - name: staging-bq-project
           - name: staging-bq-dataset
           - name: jade-bq-project
@@ -37,11 +38,44 @@ spec:
                   value: '{{ "{{inputs.parameters.jade-bq-dataset}}" }}'
                 - name: output-table-suffix
                   value: '{{ template "argo.timestamp" }}'
-
-          # 2a) Extract just the IDs to delete from the join table.
+          # 2a) Query just the IDs to delete from the join table.
+          - name: query-ids-to-delete
+            dependencies: [join-staging-to-existing]
+            template: query-ids-to-delete
+            arguments:
+              parameters:
+                - name: table-name
+                  value: '{{ "{{inputs.parameters.table-name}}" }}'
+                - name: join-table-name
+                  value: '{{ "{{tasks.join-staging-to-existing.outputs.result}}" }}'
+                - name: bq-project
+                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+                - name: bq-dataset
+                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+                - name: output-table-suffix
+                  value: '{{ template "argo.timestamp" }}'
+          # 3a) Extract the query result to GCS.
           - name: extract-ids-to-delete
+            dependencies: [query-ids-to-delete]
+            template: extract-bq-table
+            arguments:
+              parameters:
+                - name: input-table-name
+                  value: '{{ "{{tasks.query-ids-to-delete.outputs.result}}" }}'
+                - name: bq-project
+                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+                - name: bq-dataset
+                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+                - name: output-format
+                  value: CSV
+                - name: gcs-bucket
+                  value: '{{ "{{inputs.parameters.gcs-bucket}}" }}'
+                - name: gcs-prefix
+                  value: '{{ "{{inputs.parameters.output-prefix}}/ids-to-delete" }}'
+          # 2b) Query just the rows to append from the join table.
+          - name: query-rows-to-append
             dependencies: [join-staging-to-existing]
-            template: extract-ids-to-delete
+            template: query-rows-to-append
             arguments:
               parameters:
                 - name: table-name
@@ -54,23 +88,30 @@ spec:
                   value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
                 - name: output-table-suffix
                   value: '{{ template "argo.timestamp" }}'
-
-          # 2b) Extract just the rows to append from the join table.
+          # 3b) Extract the query result to GCS.
           - name: extract-rows-to-append
-            dependencies: [join-staging-to-existing]
-            template: query-values-to-append
+            dependencies: [query-rows-to-append]
+            template: extract-bq-table
             arguments:
               parameters:
-                - name: table-name
-                  value: '{{ "{{inputs.parameters.table-name}}" }}'
-                - name: join-table-name
-                  value: '{{ "{{tasks.join-staging-to-existing.outputs.result}}" }}'
+                - name: input-table-name
+                  value: '{{ "{{tasks.query-rows-to-append.outputs.result}}" }}'
                 - name: bq-project
                   value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
                 - name: bq-dataset
                   value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
-                - name: output-table-suffix
-                  value: '{{ template "argo.timestamp" }}'
+                - name: output-format
+                  value: CSV
+                - name: gcs-bucket
+                  value: '{{ "{{inputs.parameters.gcs-bucket}}" }}'
+                - name: gcs-prefix
+                  value: '{{ "{{inputs.parameters.output-prefix}}/rows-to-append" }}'
+      outputs:
+        parameters:
+          - name: ids-to-delete-prefix
+            value: '{{ "{{inputs.parameters.output-prefix}}/ids-to-delete" }}'
+          - name: rows-to-append-prefix
+            value: '{{ "{{inputs.parameters.output-prefix}}/rows-to-append" }}'
 
     - name: join-staging-to-existing
       inputs:
@@ -134,7 +175,7 @@ spec:
           {{ . }}
           {{- end }}
 
-    - name: query-values-to-append
+    - name: query-rows-to-append
       inputs:
         parameters:
           - name: table-name
@@ -160,3 +201,27 @@ spec:
           {{- range .Files.Lines "scripts/query-non-null-rows.sh" }}
           {{ . }}
           {{- end }}
+
+    - name: extract-bq-table
+      inputs:
+        parameters:
+          - name: input-table-name
+          - name: bq-project
+          - name: bq-dataset
+          - name: output-format
+          - name: gcs-bucket
+          - name: gcs-prefix
+      container:
+        image: us.gcr.io/broad-dsp-gcr-public/clinvar-schema:{{ default "latest" .Chart.AppVersion }}
+        command: [bq]
+        args:
+          - --location=US
+          - --project_id={{ "{{inputs.parameters.bq-project}}" }}
+          - --synchronous_mode=true
+          - --headless=true
+          - --format=none
+          - extract
+          - --destination_format={{ "{{inputs.parameters.output-format}}" }}
+          - --print_header=false
+          - '{{ "{{inputs.parameters.bq-project}}:{{inputs.parameters.bq-dataset}}.{{inputs.parameters.input-table-name}}" }}'
+          - {{ "gs://{{inputs.parameters.gcs-bucket}}/{{inputs.parameters.gcs-prefix}}/*" }}
