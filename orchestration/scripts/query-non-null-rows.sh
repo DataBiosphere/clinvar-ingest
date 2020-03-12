@@ -17,11 +17,11 @@ declare -r FULL_DIFF=$(join_by ' AND ' "${COMPARISONS[@]}")
 # Pull everything but the row ID from rows with non-null primary keys.
 # Store the results in another table because you can't directly export
 # the results of a query to GCS.
-declare -r TARGET_TABLE=${PROJECT}:${DATASET}.${TABLE}_values_${OUTPUT_SUFFIX}
+declare -r TARGET_TABLE=${TABLE}_values_${OUTPUT_SUFFIX}
 
 bq --location=US --project_id=${PROJECT} --synchronous_mode=true --headless=true --format=none query \
   --use_legacy_sql=false \
-  --destination_table=${TARGET_TABLE} \
+  --destination_table=${PROJECT}:${DATASET}.${TARGET_TABLE} \
   "SELECT * EXCEPT (datarepo_row_id)
    FROM \`${PROJECT}.${DATASET}.${INPUT_TABLE}\`
    WHERE ${FULL_DIFF}"
