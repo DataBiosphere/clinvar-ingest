@@ -22,7 +22,7 @@ declare -r TARGET_TABLE=${PROJECT}:${DATASET}.${TABLE}_values_${OUTPUT_SUFFIX}
 bq --location=US --project_id=${PROJECT} --synchronous_mode=true --headless=true --format=none query \
   --use_legacy_sql=false \
   --destination_table=${TARGET_TABLE} \
-  "SELECT * EXCEPT datarepo_row_id
+  "SELECT * EXCEPT (datarepo_row_id)
    FROM \`${PROJECT}.${DATASET}.${INPUT_TABLE}\`
    WHERE ${FULL_DIFF}"
 
