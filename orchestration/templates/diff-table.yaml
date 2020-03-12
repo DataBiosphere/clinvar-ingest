@@ -16,6 +16,7 @@ spec:
           - name: jade-bq-dataset
       dag:
         tasks:
+          # 1) Build a join table containing both IDs to delete and new rows to append.
           - name: join-staging-to-existing
             template: join-staging-to-existing
             arguments:
@@ -34,6 +35,42 @@ spec:
                   value: '{{ "{{inputs.parameters.jade-bq-project}}" }}'
                 - name: jade-bq-dataset
                   value: '{{ "{{inputs.parameters.jade-bq-dataset}}" }}'
+                - name: output-table-suffix
+                  value: '{{ template "argo.timestamp" }}'
+
+          # 2a) Extract just the IDs to delete from the join table.
+          - name: extract-ids-to-delete
+            dependencies: [join-staging-to-existing]
+            template: extract-ids-to-delete
+            arguments:
+              parameters:
+                - name: table-name
+                  value: '{{ "{{inputs.parameters.table-name}}" }}'
+                - name: join-table-name
+                  value: '{{ "{{tasks.join-staging-to-existing.outputs.result}}" }}'
+                - name: bq-project
+                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+                - name: bq-dataset
+                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+                - name: output-table-suffix
+                  value: '{{ template "argo.timestamp" }}'
+
+          # 2b) Extract just the rows to append from the join table.
+          - name: extract-rows-to-append
+            dependencies: [join-staging-to-existing]
+            template: query-values-to-append
+            arguments:
+              parameters:
+                - name: table-name
+                  value: '{{ "{{inputs.parameters.table-name}}" }}'
+                - name: join-table-name
+                  value: '{{ "{{tasks.join-staging-to-existing.outputs.result}}" }}'
+                - name: bq-project
+                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+                - name: bq-dataset
+                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+                - name: output-table-suffix
+                  value: '{{ template "argo.timestamp" }}'
 
     - name: join-staging-to-existing
       inputs:
@@ -45,6 +82,7 @@ spec:
           - name: staging-bq-dataset
           - name: jade-bq-project
           - name: jade-bq-dataset
+          - name: output-table-suffix
       script:
         image: us.gcr.io/broad-dsp-gcr-public/clinvar-schema:{{ default "latest" .Chart.AppVersion }}
         env:
@@ -61,10 +99,64 @@ spec:
           - name: GCS_PREFIX
             value: '{{ "gs://{{inputs.parameters.gcs-bucket}}/{{inputs.parameters.input-prefix}}" }}'
           - name: OUTPUT_SUFFIX
-            value: '{{ template "argo.timestamp" }}'
+            value: '{{ "{{inputs.parameters.output-table-suffix}}" }}'
         command: [bash]
         source: |
           {{- /* More verbose than I expected, but direct injection is too hard to format. */}}
           {{- range .Files.Lines "scripts/diff-bq-table.sh" }}
+          {{ . }}
+          {{- end }}
+
+    - name: query-ids-to-delete
+      inputs:
+        parameters:
+          - name: table-name
+          - name: join-table-name
+          - name: bq-project
+          - name: bq-dataset
+          - name: output-table-suffix
+      script:
+        image: us.gcr.io/broad-dsp-gcr-public/clinvar-schema:{{ default "latest" .Chart.AppVersion }}
+        env:
+          - name: PROJECT
+            value: '{{ "{{inputs.parameters.bq-project}}" }}'
+          - name: DATASET
+            value: '{{ "{{inputs.parameters.bq-dataset}}" }}'
+          - name: INPUT_TABLE
+            value: '{{ "{{inputs.parameters.join-table-name}}" }}'
+          - name: OUTPUT_PREFIX
+            value: '{{ "{{inputs.parameters.table-name}}" }}'
+          - name: OUTPUT_SUFFIX
+            value: '{{ "{{inputs.parameters.output-table-suffix}}" }}'
+        command: [bash]
+        source: |
+          {{- range .Files.Lines "scripts/query-non-null-row-ids.sh" }}
+          {{ . }}
+          {{- end }}
+
+    - name: query-values-to-append
+      inputs:
+        parameters:
+          - name: table-name
+          - name: join-table-name
+          - name: bq-project
+          - name: bq-dataset
+          - name: output-table-suffix
+      script:
+        image: us.gcr.io/broad-dsp-gcr-public/clinvar-schema:{{ default "latest" .Chart.AppVersion }}
+        env:
+          - name: PROJECT
+            value: '{{ "{{inputs.parameters.bq-project}}" }}'
+          - name: DATASET
+            value: '{{ "{{inputs.parameters.bq-dataset}}" }}'
+          - name: INPUT_TABLE
+            value: '{{ "{{inputs.parameters.join-table-name}}" }}'
+          - name: TABLE
+            value: '{{ "{{inputs.parameters.table-name}}" }}'
+          - name: OUTPUT_SUFFIX
+            value: '{{ "{{inputs.parameters.output-table-suffix}}" }}'
+        command: [bash]
+        source: |
+          {{- range .Files.Lines "scripts/query-non-null-rows.sh" }}
           {{ . }}
           {{- end }}
