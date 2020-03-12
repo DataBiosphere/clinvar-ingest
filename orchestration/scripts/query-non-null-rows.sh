@@ -19,7 +19,7 @@ declare -r FULL_DIFF=$(join_by ' AND ' "${COMPARISONS[@]}")
 # the results of a query to GCS.
 declare -r TARGET_TABLE=${TABLE}_values_${OUTPUT_SUFFIX}
 
-bq --location=US --project_id=${PROJECT} --synchronous_mode=true --headless=true --format=none query \
+1>&2 bq --location=US --project_id=${PROJECT} --synchronous_mode=true --headless=true --format=none query \
   --use_legacy_sql=false \
   --destination_table=${PROJECT}:${DATASET}.${TARGET_TABLE} \
   "SELECT * EXCEPT (datarepo_row_id)

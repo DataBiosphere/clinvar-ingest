@@ -19,7 +19,7 @@ declare -r FULL_DIFF=$(join_by ' OR ' "${COMPARISONS[@]}")
 # The result is stored back in BigQuery for subsequent processing.
 declare -r TARGET_TABLE=${TABLE}_joined_${OUTPUT_SUFFIX}
 
-bq --location=US --project_id=${STAGING_PROJECT} --synchronous_mode=true --headless=true --format=none query \
+1>&2 bq --location=US --project_id=${STAGING_PROJECT} --synchronous_mode=true --headless=true --format=none query \
   --use_legacy_sql=false \
   --external_table_definition=${TABLE}::${TABLE_DIR}/schema.json@NEWLINE_DELIMITED_JSON=${GCS_PREFIX}/* \
   --destination_table=${STAGING_PROJECT}:${STAGING_DATASET}.${TARGET_TABLE} \
