@@ -142,9 +142,9 @@ spec:
                 - name: gcs-bucket
                   value: '{{ .Values.gcs.bucketName }}'
                 - name: input-prefix
-                  value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/processed'
+                  value: '{{ "{{inputs.parameters.gcs-prefix}}/processed/{{item}}" }}'
                 - name: output-prefix
-                  value: '{{ "{{inputs.parameters.gcs-prefix}}" }}'
+                  value: '{{ "{{inputs.parameters.gcs-prefix}}/diffed/{{item}}" }}'
                 {{- with .Values.bigquery.stagingData }}
                 - name: staging-bq-project
                   value: '{{ .project }}'

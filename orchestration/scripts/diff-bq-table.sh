@@ -21,7 +21,7 @@ declare -r TARGET_TABLE=${STAGING_PROJECT}:${STAGING_DATASET}.${TABLE}_joined_${
 
 bq --location=US --project_id=${STAGING_PROJECT} --synchronous_mode=true --headless=true --format=none query \
   --use_legacy_sql=false \
-  --external_table_definition=${TABLE}::${TABLE_DIR}/schema.json@NEWLINE_DELIMITED_JSON=${GCS_PREFIX}/${TABLE}/* \
+  --external_table_definition=${TABLE}::${TABLE_DIR}/schema.json@NEWLINE_DELIMITED_JSON=${GCS_PREFIX}/* \
   --destination_table=${TARGET_TABLE} \
   "SELECT J.datarepo_row_id, S.*
     FROM ${TABLE} S FULL JOIN \`${JADE_PROJECT}.${JADE_DATASET}.${TABLE}\` J
