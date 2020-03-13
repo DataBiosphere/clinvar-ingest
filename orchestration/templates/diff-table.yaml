@@ -109,9 +109,11 @@ spec:
       outputs:
         parameters:
           - name: ids-to-delete-prefix
-            value: '{{ "{{inputs.parameters.output-prefix}}/ids-to-delete" }}'
+            valueFrom:
+              parameter: '{{ "{{inputs.parameters.output-prefix}}/ids-to-delete" }}'
           - name: rows-to-append-prefix
-            value: '{{ "{{inputs.parameters.output-prefix}}/rows-to-append" }}'
+            valueFrom:
+              parameter: '{{ "{{inputs.parameters.output-prefix}}/rows-to-append" }}'
 
     - name: join-staging-to-existing
       inputs:
