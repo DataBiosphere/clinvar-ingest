@@ -110,10 +110,10 @@ spec:
         parameters:
           - name: ids-to-delete-prefix
             valueFrom:
-              parameter: '{{ "{{inputs.parameters.output-prefix}}/ids-to-delete" }}'
+              parameter: '{{ "{{tasks.extract-ids-to-delete.outputs.parameters.output-prefix}}" }}'
           - name: rows-to-append-prefix
             valueFrom:
-              parameter: '{{ "{{inputs.parameters.output-prefix}}/rows-to-append" }}'
+              parameter: '{{ "{{tasks.extract-rows-to-append.outputs.parameters.output-prefix}}" }}'
 
     - name: join-staging-to-existing
       inputs:
@@ -227,3 +227,8 @@ spec:
           - --print_header=false
           - '{{ "{{inputs.parameters.bq-project}}:{{inputs.parameters.bq-dataset}}.{{inputs.parameters.input-table-name}}" }}'
           - {{ "gs://{{inputs.parameters.gcs-bucket}}/{{inputs.parameters.gcs-prefix}}/*" }}
+      outputs:
+        parameters:
+          - name: output-prefix
+            valueFrom:
+              parameter: '{{ "{{inputs.parameters.gcs-prefix}}" }}'
