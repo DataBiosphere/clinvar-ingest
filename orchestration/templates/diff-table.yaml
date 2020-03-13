@@ -110,10 +110,10 @@ spec:
         parameters:
           - name: ids-to-delete-prefix
             valueFrom:
-              parameter: '{{ "{{tasks.extract-ids-to-delete.outputs.parameters.output-prefix}}" }}'
+              parameter: '{{ "{{tasks.extract-ids-to-delete.outputs.result}}" }}'
           - name: rows-to-append-prefix
             valueFrom:
-              parameter: '{{ "{{tasks.extract-rows-to-append.outputs.parameters.output-prefix}}" }}'
+              parameter: '{{ "{{tasks.extract-rows-to-append.outputs.result}}" }}'
 
     - name: join-staging-to-existing
       inputs:
@@ -126,6 +126,7 @@ spec:
           - name: jade-bq-project
           - name: jade-bq-dataset
           - name: output-table-suffix
+      {{- include "argo.retry" . | indent 6 }}
       script:
         image: us.gcr.io/broad-dsp-gcr-public/clinvar-schema:{{ default "latest" .Chart.AppVersion }}
         env:
@@ -158,6 +159,7 @@ spec:
           - name: bq-project
           - name: bq-dataset
           - name: output-table-suffix
+      {{- include "argo.retry" . | indent 6 }}
       script:
         image: us.gcr.io/broad-dsp-gcr-public/clinvar-schema:{{ default "latest" .Chart.AppVersion }}
         env:
@@ -185,6 +187,7 @@ spec:
           - name: bq-project
           - name: bq-dataset
           - name: output-table-suffix
+      {{- include "argo.retry" . | indent 6 }}
       script:
         image: us.gcr.io/broad-dsp-gcr-public/clinvar-schema:{{ default "latest" .Chart.AppVersion }}
         env:
@@ -213,22 +216,24 @@ spec:
           - name: output-format
           - name: gcs-bucket
           - name: gcs-prefix
-      container:
+      {{- include "argo.retry" . | indent 6 }}
+      script:
         image: us.gcr.io/broad-dsp-gcr-public/clinvar-schema:{{ default "latest" .Chart.AppVersion }}
-        command: [bq]
-        args:
-          - --location=US
-          - --project_id={{ "{{inputs.parameters.bq-project}}" }}
-          - --synchronous_mode=true
-          - --headless=true
-          - --format=none
-          - extract
-          - --destination_format={{ "{{inputs.parameters.output-format}}" }}
-          - --print_header=false
-          - '{{ "{{inputs.parameters.bq-project}}:{{inputs.parameters.bq-dataset}}.{{inputs.parameters.input-table-name}}" }}'
-          - {{ "gs://{{inputs.parameters.gcs-bucket}}/{{inputs.parameters.gcs-prefix}}/*" }}
-      outputs:
-        parameters:
-          - name: output-prefix
-            valueFrom:
-              parameter: '{{ "{{inputs.parameters.gcs-prefix}}" }}'
+        env:
+          - name: PROJECT
+            value: '{{ "{{inputs.parameters.bq-project}}" }}'
+          - name: DATASET
+            value: '{{ "{{inputs.parameters.bq-dataset}}" }}'
+          - name: TABLE
+            value: '{{ "{{inputs.parameters.input-table-name}}" }}'
+          - name: OUTPUT_FORMAT
+            value: '{{ "{{inputs.parameters.output-format}}" }}'
+          - name: GCS_BUCKET
+            value: '{{ "{{inputs.parameters.gcs-bucket}}" }}'
+          - name: GCS_PREFIX
+            value: '{{ "{{inputs.parameters.gcs-prefix}}" }}'
+        command: [bash]
+        source: |
+          {{- range .Files.Lines "scripts/extract-bq-table.sh" }}
+          {{ . }}
+          {{- end }}

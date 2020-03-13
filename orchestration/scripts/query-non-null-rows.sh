@@ -20,7 +20,7 @@ declare -r FULL_DIFF=$(join_by ' AND ' "${COMPARISONS[@]}")
 declare -r TARGET_TABLE=${TABLE}_values_${OUTPUT_SUFFIX}
 
 1>&2 bq --location=US --project_id=${PROJECT} --synchronous_mode=true --headless=true --format=none query \
-  --use_legacy_sql=false \
+  --use_legacy_sql=false --replace=true \
   --destination_table=${PROJECT}:${DATASET}.${TARGET_TABLE} \
   "SELECT * EXCEPT (datarepo_row_id)
    FROM \`${PROJECT}.${DATASET}.${INPUT_TABLE}\`

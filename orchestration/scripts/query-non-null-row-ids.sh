@@ -5,7 +5,7 @@ set -euo pipefail
 declare -r TARGET_TABLE=${OUTPUT_PREFIX}_rowids_${OUTPUT_SUFFIX}
 
 1>&2 bq --location=US --project_id=${PROJECT} --synchronous_mode=true --headless=true --format=none query \
-  --use_legacy_sql=false \
+  --use_legacy_sql=false --replace=true \
   --destination_table=${PROJECT}:${DATASET}.${TARGET_TABLE} \
   "SELECT datarepo_row_id
    FROM \`${PROJECT}.${DATASET}.${INPUT_TABLE}\`

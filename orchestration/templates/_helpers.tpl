@@ -15,3 +15,14 @@
 {{- $SS := "{{workflow.creationTimestamp.S}}" -}}
 {{ printf "%s%s%sT%s%s%s" $YYYY $mm $dd $HH $MM $SS }}
 {{- end -}}
+
+{{/* Common retry settings to apply to flaky steps. */}}
+{{- define "argo.retry" }}
+retryStrategy:
+  limit: 32
+  retryPolicy: Always
+  backoff:
+    duration: 1s
+    factor: 2
+    maxDuration: 1m
+{{- end -}}
