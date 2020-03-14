@@ -84,7 +84,8 @@
         }
       },
       "required": ["stagingData", "jadeData"]
-    }
+    },
+    "maxParallelism": { "type": "integer" }
   },
-  "required": ["gcs", "serviceAccount", "volumes", "cron", "dataflow"]
+  "required": ["gcs", "serviceAccount", "volumes", "cron", "dataflow", "maxParallelism"]
 }

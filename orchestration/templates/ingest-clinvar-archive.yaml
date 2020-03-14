@@ -24,9 +24,8 @@ spec:
                   value: '{{ .Values.volumes.downloadSize }}'
                 - name: storage-class
                   value: '{{ .Values.volumes.storageClass }}'
-          {{- $downloadPvc := "{{tasks.generate-download-volume.outputs.parameters.pvc-name}}" }}
-
           # 2) Download the raw XML onto the new PVC.
+          {{- $downloadPvc := "{{tasks.generate-download-volume.outputs.parameters.pvc-name}}" }}
           {{- $localXmlName := "ClinVarRelease.xml" }}
           - name: download-archive
             dependencies: [generate-download-volume]
@@ -43,7 +42,6 @@ spec:
                   value: '{{ $localXmlName }}'
                 - name: pvc-name
                   value: '{{ $downloadPvc }}'
-
           # 3a) Upload the raw XML to GCS.
           - name: upload-raw-archive
             dependencies: [download-archive]
@@ -62,7 +60,6 @@ spec:
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw'
                 - name: max-concurrent-uploads
                   value: '1'
-
           # 3b) Generate a PVC to hold extracted JSON-list files.
           - name: generate-extraction-volume
             # Don't generate the PVC until we need it.
@@ -78,7 +75,6 @@ spec:
                   value: '{{ .Values.volumes.extractSize }}'
                 - name: storage-class
                   value: '{{ .Values.volumes.storageClass }}'
-
           {{- $extractionPvc := "{{tasks.generate-extraction-volume.outputs.parameters.pvc-name}}" }}
           # 4) Extract raw XML to JSON-list.
           - name: extract-xml
@@ -94,7 +90,6 @@ spec:
                   value: '{{ $localXmlName }}'
                 - name: output-pvc-name
                   value: '{{ $extractionPvc }}'
-
           # 5) Upload JSON-list data to GCS.
           - name: upload-extracted-archive
             dependencies: [extract-xml]
@@ -113,7 +108,6 @@ spec:
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw/VariationArchive'
                 - name: max-concurrent-uploads
                   value: '2'
-
           # 6) Run Dataflow on uploaded JSON.
           - name: process-archive
             dependencies: [upload-extracted-archive]
@@ -128,7 +122,6 @@ spec:
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw'
                 - name: output-prefix
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/processed'
-
           # 7) Diff generated data against existing data
           - name: diff-tables
             dependencies: [process-archive]
