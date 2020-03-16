@@ -104,7 +104,7 @@ spec:
                   value: '{{ template "argo.timestamp" }}'
           # 3b) Check how many rows there are to append.
           - name: query-row-count
-            dependencies: [query-ids-to-delete]
+            dependencies: [query-rows-to-append]
             template: get-bq-table-size
             arguments:
               parameters:
