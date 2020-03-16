@@ -247,7 +247,7 @@ spec:
           - name: PROJECT
             value: '{{ "{{inputs.parameters.bq-project}}" }}'
           - name: DATASET
-            value: '{{ "{{inputs.parameters.bq-dataset}}"" }}'
+            value: '{{ "{{inputs.parameters.bq-dataset}}" }}'
           - name: TABLE
             value: '{{ "{{inputs.parameters.bq-table}}" }}'
         command: [bash]
