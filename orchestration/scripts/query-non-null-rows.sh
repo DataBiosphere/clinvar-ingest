@@ -14,17 +14,26 @@ for c in ${PK_COLS//,/ }; do
 done
 declare -r FULL_DIFF=$(join_by ' AND ' "${COMPARISONS[@]}")
 
+declare -r TARGET_TABLE=${TABLE}_values_${OUTPUT_SUFFIX}
+
 # Pull everything but the row ID from rows with non-null primary keys.
 # Store the results in another table because you can't directly export
 # the results of a query to GCS.
-declare -r TARGET_TABLE=${TABLE}_values_${OUTPUT_SUFFIX}
-
-1>&2 bq --location=US --project_id=${PROJECT} --synchronous_mode=true --headless=true --format=none query \
-  --use_legacy_sql=false --replace=true \
-  --destination_table=${PROJECT}:${DATASET}.${TARGET_TABLE} \
-  "SELECT * EXCEPT (datarepo_row_id)
-   FROM \`${PROJECT}.${DATASET}.${INPUT_TABLE}\`
-   WHERE ${FULL_DIFF}"
+declare -ra BQ_QUERY=(
+  bq
+  --location=US
+  --project_id=${PROJECT}
+  --synchronous_mode=true
+  --headless=true
+  --format=none
+  query
+  --use_legacy_sql=false
+  --replace=true
+  --destination_table=${PROJECT}:${DATASET}.${TARGET_TABLE}
+)
+1>&2  ${BQ_QUERY[@]} "SELECT * EXCEPT (datarepo_row_id)
+  FROM \`${PROJECT}.${DATASET}.${INPUT_TABLE}\`
+  WHERE ${FULL_DIFF}"
 
 # Echo the output table name so Argo can slurp it into a parameter.
 echo ${TARGET_TABLE}

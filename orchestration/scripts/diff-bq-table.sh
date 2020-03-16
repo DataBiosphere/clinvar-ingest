@@ -15,17 +15,26 @@ for c in ${COMPARE_COLS//,/ }; do
 done
 declare -r FULL_DIFF=$(join_by ' OR ' "${COMPARISONS[@]}")
 
-# Join the data staged in GCS against the existing Jade data, filtering out identical rows.
-# The result is stored back in BigQuery for subsequent processing.
 declare -r TARGET_TABLE=${TABLE}_joined_${OUTPUT_SUFFIX}
 
-1>&2 bq --location=US --project_id=${STAGING_PROJECT} --synchronous_mode=true --headless=true --format=none query \
-  --use_legacy_sql=false --replace=true \
-  --external_table_definition=${TABLE}::${TABLE_DIR}/schema.json@NEWLINE_DELIMITED_JSON=${GCS_PREFIX}/* \
-  --destination_table=${STAGING_PROJECT}:${STAGING_DATASET}.${TARGET_TABLE} \
-  "SELECT J.datarepo_row_id, S.*
-    FROM ${TABLE} S FULL JOIN \`${JADE_PROJECT}.${JADE_DATASET}.${TABLE}\` J
-    USING (${PK_COLS}) WHERE ${FULL_DIFF}"
+# Join the data staged in GCS against the existing Jade data, filtering out identical rows.
+# The result is stored back in BigQuery for subsequent processing.
+declare -ra BQ_QUERY=(
+  bq
+  --location=US
+  --project_id=${STAGING_PROJECT}
+  --synchronous_mode=true
+  --headless=true
+  --format=none
+  query
+  --use_legacy_sql=false
+  --replace=true
+  --external_table_definition=${TABLE}::${TABLE_DIR}/schema.json@NEWLINE_DELIMITED_JSON=${GCS_PREFIX}/*
+  --destination_table=${STAGING_PROJECT}:${STAGING_DATASET}.${TARGET_TABLE}
+)
+1>&2 ${BQ_QUERY[@]} "SELECT J.datarepo_row_id, S.*
+  FROM ${TABLE} S FULL JOIN \`${JADE_PROJECT}.${JADE_DATASET}.${TABLE}\` J
+  USING (${PK_COLS}) WHERE ${FULL_DIFF}"
 
 # Echo the output table name so Argo can slurp it into a parameter.
 echo ${TARGET_TABLE}

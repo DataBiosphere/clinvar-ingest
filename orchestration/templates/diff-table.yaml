@@ -10,7 +10,8 @@ spec:
           - name: table-name
           - name: gcs-bucket
           - name: input-prefix
-          - name: output-prefix
+          - name: old-ids-output-prefix
+          - name: new-rows-output-prefix
           - name: staging-bq-project
           - name: staging-bq-dataset
           - name: jade-bq-project
@@ -54,10 +55,23 @@ spec:
                   value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
                 - name: output-table-suffix
                   value: '{{ template "argo.timestamp" }}'
-          # 3a) Extract the query result to GCS.
-          - name: extract-ids-to-delete
+          # 2b) Check how many IDs there are to delete.
+          - name: query-id-count
             dependencies: [query-ids-to-delete]
+            template: get-bq-table-size
+            arguments:
+              parameters:
+                - name: bq-project
+                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+                - name: bq-dataset
+                  value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
+                - name: bq-table
+                  value: '{{ "{{tasks.query-ids-to-delete.outputs.result}}" }}'
+          # 2c) If there are IDs to delete, extract them to GCS.
+          - name: extract-ids-to-delete
+            dependencies: [query-ids-to-delete, query-id-count]
             template: extract-bq-table
+            when: '{{ "{{tasks.query-id-count.outputs.result}} > 0" }}'
             arguments:
               parameters:
                 - name: input-table-name
@@ -71,8 +85,8 @@ spec:
                 - name: gcs-bucket
                   value: '{{ "{{inputs.parameters.gcs-bucket}}" }}'
                 - name: gcs-prefix
-                  value: '{{ "{{inputs.parameters.output-prefix}}/ids-to-delete" }}'
-          # 2b) Query just the rows to append from the join table.
+                  value: '{{ "{{inputs.parameters.old-ids-output-prefix}}" }}'
+          # 3a) Query just the rows to append from the join table.
           - name: query-rows-to-append
             dependencies: [join-staging-to-existing]
             template: query-rows-to-append
@@ -88,10 +102,23 @@ spec:
                   value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
                 - name: output-table-suffix
                   value: '{{ template "argo.timestamp" }}'
-          # 3b) Extract the query result to GCS.
+          # 3b) Check how many rows there are to append.
+          - name: query-row-count
+            dependencies: [query-ids-to-delete]
+            template: get-bq-table-size
+            arguments:
+              parameters:
+                - name: bq-project
+                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+                - name: bq-dataset
+                  value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
+                - name: bq-table
+                  value: '{{ "{{tasks.query-rows-to-append.outputs.result}}" }}'
+          # 3c) If there are rows to append, extract them to GCS.
           - name: extract-rows-to-append
-            dependencies: [query-rows-to-append]
+            dependencies: [query-rows-to-append, query-row-count]
             template: extract-bq-table
+            when: '{{ "{{tasks.query-row-count.outputs.result}} > 0" }}'
             arguments:
               parameters:
                 - name: input-table-name
@@ -105,15 +132,15 @@ spec:
                 - name: gcs-bucket
                   value: '{{ "{{inputs.parameters.gcs-bucket}}" }}'
                 - name: gcs-prefix
-                  value: '{{ "{{inputs.parameters.output-prefix}}/rows-to-append" }}'
+                  value: '{{ "{{inputs.parameters.new-rows-output-prefix}}" }}'
       outputs:
         parameters:
-          - name: ids-to-delete-prefix
+          - name: ids-to-delete-count
             valueFrom:
-              parameter: '{{ "{{tasks.extract-ids-to-delete.outputs.result}}" }}'
-          - name: rows-to-append-prefix
+              parameter: '{{ "{{tasks.query-id-count.outputs.result}}" }}'
+          - name: rows-to-append-count
             valueFrom:
-              parameter: '{{ "{{tasks.extract-rows-to-append.outputs.result}}" }}'
+              parameter: '{{ "{{tasks.query-row-count.outputs.result}}" }}'
 
     - name: join-staging-to-existing
       inputs:
@@ -204,6 +231,28 @@ spec:
         command: [bash]
         source: |
           {{- range .Files.Lines "scripts/query-non-null-rows.sh" }}
+          {{ . }}
+          {{- end }}
+
+    - name: get-bq-table-size
+      inputs:
+        parameters:
+          - name: bq-project
+          - name: bq-dataset
+          - name: bq-table
+      {{ include "argo.retry" | indent 6 }}
+      script:
+        image: us.gcr.io/broad-dsp-gcr-public/clinvar-schema:{{ default "latest" .Chart.AppVersion }}
+        env:
+          - name: PROJECT
+            value: '{{ "{{inputs.parameters.bq-project}}" }}'
+          - name: DATASET
+            value: '{{ "{{inputs.parameters.bq-dataset}}"" }}'
+          - name: TABLE
+            value: '{{ "{{inputs.parameters.bq-table}}" }}'
+        command: [bash]
+        source: |
+          {{- range .Files.Lines "scripts/get-bq-table-size.sh" }}
           {{ . }}
           {{- end }}
 
