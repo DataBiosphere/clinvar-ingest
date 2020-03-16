@@ -240,7 +240,7 @@ spec:
           - name: bq-project
           - name: bq-dataset
           - name: bq-table
-      {{ include "argo.retry" | indent 6 }}
+      {{ include "argo.retry" . | indent 6 }}
       script:
         image: us.gcr.io/broad-dsp-gcr-public/clinvar-schema:{{ default "latest" .Chart.AppVersion }}
         env:
