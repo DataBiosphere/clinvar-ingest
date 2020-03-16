@@ -15,6 +15,7 @@ spec:
         - name: state
           persistentVolumeClaim:
             claimName: '{{ "{{inputs.parameters.pvc-name}}" }}'
+      {{- include "argo.retry" . | indent 6 }}
       container:
         image: cirrusci/wget
         command: [wget]
@@ -35,5 +36,3 @@ spec:
           limits:
             memory: 512Mi
             cpu: 1000m
-      retryStrategy:
-        limit: 32
