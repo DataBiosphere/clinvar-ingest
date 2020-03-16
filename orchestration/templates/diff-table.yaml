@@ -1,3 +1,4 @@
+{{- $schemaImage := printf "us.gcr.io/broad-dsp-gcr-public/clinvar-schema:%s" (default "latest" .Chart.AppVersion) }}
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
@@ -155,7 +156,7 @@ spec:
           - name: output-table-suffix
       {{- include "argo.retry" . | indent 6 }}
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/clinvar-schema:{{ default "latest" .Chart.AppVersion }}
+        image: {{ $schemaImage }}
         env:
           - name: STAGING_PROJECT
             value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
@@ -173,7 +174,6 @@ spec:
             value: '{{ "{{inputs.parameters.output-table-suffix}}" }}'
         command: [bash]
         source: |
-          {{- /* More verbose than I expected, but direct injection is too hard to format. */}}
           {{- range .Files.Lines "scripts/diff-bq-table.sh" }}
           {{ . }}
           {{- end }}
@@ -188,7 +188,7 @@ spec:
           - name: output-table-suffix
       {{- include "argo.retry" . | indent 6 }}
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/clinvar-schema:{{ default "latest" .Chart.AppVersion }}
+        image: {{ $schemaImage }}
         env:
           - name: PROJECT
             value: '{{ "{{inputs.parameters.bq-project}}" }}'
@@ -216,7 +216,7 @@ spec:
           - name: output-table-suffix
       {{- include "argo.retry" . | indent 6 }}
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/clinvar-schema:{{ default "latest" .Chart.AppVersion }}
+        image: {{ $schemaImage }}
         env:
           - name: PROJECT
             value: '{{ "{{inputs.parameters.bq-project}}" }}'
@@ -242,7 +242,7 @@ spec:
           - name: bq-table
       {{ include "argo.retry" . | indent 6 }}
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/clinvar-schema:{{ default "latest" .Chart.AppVersion }}
+        image: {{ $schemaImage }}
         env:
           - name: PROJECT
             value: '{{ "{{inputs.parameters.bq-project}}" }}'
@@ -267,7 +267,7 @@ spec:
           - name: gcs-prefix
       {{- include "argo.retry" . | indent 6 }}
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/clinvar-schema:{{ default "latest" .Chart.AppVersion }}
+        image: {{ $schemaImage }}
         env:
           - name: PROJECT
             value: '{{ "{{inputs.parameters.bq-project}}" }}'
