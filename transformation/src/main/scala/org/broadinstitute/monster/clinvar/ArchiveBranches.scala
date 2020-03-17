@@ -93,7 +93,7 @@ object ArchiveBranches {
         parsed.vcv.foreach(ctx.output(vcvOut, _))
         parsed.rcvs.foreach(ctx.output(rcvOut, _))
         parsed.scvs.foreach { aggregateScv =>
-          ctx.output(submitterOut, aggregateScv.submitter)
+          aggregateScv.submitters.foreach(ctx.output(submitterOut, _))
           ctx.output(submissionOut, aggregateScv.submission)
           ctx.output(scvOut, aggregateScv.assertion)
           aggregateScv.variations.foreach(ctx.output(scvVariationOut, _))
