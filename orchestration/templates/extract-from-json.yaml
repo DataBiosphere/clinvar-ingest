@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: extract-from-json
+spec:
+  templates:
+    - name: main
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: file-path
+          - name: json-key
+      volumes:
+        - name: state
+          persistentVolumeClaim:
+            claimName: '{{ "{{inputs.parameters.pvc-name}}" }}'
+            readOnly: true
+      {{- include "argo.retry" . | indent 6 }}
+      script:
+        image: python3-slim
+        command: [python]
+        source: |
+          python3 "scripts/extract-json-value.py" \
+          - --file "{{inputs.parameters.file-path}}" \
+          - --key "{{inputs.parameters.json-key}}"
+        volumeMounts:
+          - name: state
+            mountPath: /state
+            readOnly: true
