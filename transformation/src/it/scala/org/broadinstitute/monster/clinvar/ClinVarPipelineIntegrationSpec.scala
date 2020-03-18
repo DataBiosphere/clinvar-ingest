@@ -29,7 +29,7 @@ class ClinVarPipelineIntegrationSpec extends PipelineBuilderSpec[Args] {
   private def compareTruthAndCompSets(subDir: String): Unit = {
     it should s"have written the correct $subDir data" in {
       val expected = readMsgs(truthDir / subDir)
-      val actual = readMsgs(truthDir / subDir)
+      val actual = readMsgs(compareDir / subDir)
       actual should contain theSameElementsAs expected
     }
   }
