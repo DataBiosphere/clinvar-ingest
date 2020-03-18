@@ -17,7 +17,7 @@ spec:
             readOnly: true
       {{- include "argo.retry" . | indent 6 }}
       script:
-        image: python3-slim
+        image: python:3-slim
         command: [python]
         source: |
           python3 "scripts/extract-json-value.py" \
