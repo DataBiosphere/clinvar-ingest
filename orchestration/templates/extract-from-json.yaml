@@ -20,9 +20,10 @@ spec:
         image: python:3-slim
         command: [python]
         source: |
-          python3 "scripts/extract-json-value.py" \
-          - --file "{{inputs.parameters.file-path}}" \
-          - --key "{{inputs.parameters.json-key}}"
+          import json
+          with open("{{inputs.parameters.file-path}}") as f:
+            json_data = json.load(f)
+          print(json_data["{{inputs.parameters.json-key}}"])
         volumeMounts:
           - name: state
             mountPath: /state
