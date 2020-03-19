@@ -1,0 +1,86 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: ingest-xml
+spec:
+  templates:
+    - name: main
+      inputs:
+        parameters:
+          - name: api-url
+          - name: dataset-id
+          - name: profile-id
+          - name: source-path
+          - name: target-path
+      dag:
+        tasks:
+          - name: post-ingest-file
+            template: post-ingest-file
+            arguments:
+              parameters:
+                - name: api-url
+                  value: '{{ "{{inputs.parameters.api-url}}" }}'
+                - name: dataset-id
+                  value: '{{ "{{inputs.parameters.dataset-id}}" }}'
+                - name: profile-id
+                  value: '{{ "{{inputs.parameters.profile-id}}" }}'
+                - name: source-path
+                  value: '{{ "{{inputs.parameters.source-path}}" }}'
+                - name: target-path
+                  value: '{{ "{{inputs.parameters.target-path}}" }}'
+          - name: poll-ingest-job
+            dependencies: [post-ingest-file]
+            template: poll-ingest-job
+            arguments:
+              parameters:
+                - name: api-url
+                  value: '{{ "{{inputs.parameters.api-url}}" }}'
+                - name: job-id
+                  value: '{{ "{{tasks.post-ingest-file.outputs.result}}" }}'
+    ## 1) Make a post request to the Jade API to ingest the xml blob
+    - name: post-ingest-file
+      inputs:
+        parameters:
+          - name: api-url
+          - name: dataset-id
+          - name: profile-id
+          - name: source-path
+          - name: target-path
+      script:
+        image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.0
+        env:
+          - name: API_URL
+            value: '{{ "{{inputs.parameters.api-url}}" }}'
+          - name: DATASET_ID
+            value: '{{ "{{inputs.parameters.dataset-id}}" }}'
+          - name: PROFILE_ID
+            value: '{{ "{{inputs.parameters.profile-id}}" }}'
+          - name: SOURCE_PATH
+            value: '{{ "{{inputs.parameters.source-path}}" }}'
+          - name: TARGET_PATH
+            value: '{{ "{{inputs.parameters.target-path}}" }}'
+        command: [python]
+        source: |
+          {{- /* More verbose than I expected, but direct injection is too hard to format. */}}
+          {{- range .Files.Lines "scripts/post-ingest-file.py" }}
+          {{ . }}
+          {{- end }}
+    ## 2) Poll the ingest job for the file repeatedly until the file has been ingested, then return the fileId
+    - name: poll-ingest-job
+      inputs:
+        parameters:
+          - name: api-url
+          - name: job-id
+      script:
+        image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.0
+        env:
+          - name: API_URL
+            value: '{{ "{{inputs.parameters.api-url}}" }}'
+          - name: JOB_ID
+            value: '{{ "{{inputs.parameters.job-id}}" }}'
+        command: [python]
+        source: |
+          {{- /* More verbose than I expected, but direct injection is too hard to format. */}}
+          {{- range .Files.Lines "scripts/poll-ingest-job.py" }}
+          {{ . }}
+          {{- end }}
