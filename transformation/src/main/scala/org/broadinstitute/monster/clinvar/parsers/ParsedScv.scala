@@ -15,7 +15,7 @@ import scala.util.matching.Regex
   * Wrapper for fully-parsed contents of a single submission to ClinVar.
   *
   * @param assertion info about the suspected impact of a variation
-  * @param submitter organization that submitted the assertion
+  * @param submitters organizations that submitted the assertion
   * @param submission provenance about the batch of assertions containing
   *                   the raw submission
   * @param variations raw variations observed by the submitter
@@ -25,7 +25,7 @@ import scala.util.matching.Regex
   */
 case class ParsedScv(
   assertion: ClinicalAssertion,
-  submitter: Submitter,
+  submitters: Array[Submitter],
   submission: Submission,
   variations: Array[ClinicalAssertionVariation],
   traitSets: Array[ClinicalAssertionTraitSet],
@@ -63,8 +63,11 @@ object ParsedScv {
     rawAssertion: Msg
   ): ParsedScv = {
     // Extract submitter and submission data (easy).
-    val submitter = extractSubmitter(rawAssertion)
-    val submission = extractSubmission(submitter.id, rawAssertion)
+    val submitter = extractSubmitter(rawAssertion.read[Msg]("ClinVarAccession"))
+    val additionalSubmitters = rawAssertion
+      .tryExtract[Array[Msg]]("AdditionalSubmitters", "SubmitterDescription")
+      .fold(Array.empty[Submitter])(_.map(extractSubmitter))
+    val submission = extractSubmission(submitter, additionalSubmitters, rawAssertion)
 
     // Extract the top-level set of traits described by the assertion.
     val assertionId = rawAssertion.extract[String]("@ID")
@@ -154,7 +157,7 @@ object ParsedScv {
 
     ParsedScv(
       assertion = assertion,
-      submitter = submitter,
+      submitters = submitter +: additionalSubmitters,
       submission = submission,
       variations = variations,
       observations = observations,
@@ -165,24 +168,24 @@ object ParsedScv {
 
   /** Extract submitter fields from a raw ClinicalAssertion payload. */
   private def extractSubmitter(rawAssertion: Msg): Submitter = Submitter(
-    id = rawAssertion.extract[String]("ClinVarAccession", "@OrgID"),
-    submitterName = rawAssertion.tryExtract[String]("ClinVarAccession", "@SubmitterName"),
-    orgCategory =
-      rawAssertion.tryExtract[String]("ClinVarAccession", "@OrganizationCategory"),
-    orgAbbrev = rawAssertion.tryExtract[String]("ClinVarAccession", "@OrgAbbreviation")
+    id = rawAssertion.extract[String]("@OrgID"),
+    submitterName = rawAssertion.tryExtract[String]("@SubmitterName"),
+    orgCategory = rawAssertion.tryExtract[String]("@OrganizationCategory"),
+    orgAbbrev = rawAssertion.tryExtract[String]("@OrgAbbreviation")
   )
 
   /** Extract submission fields from a raw ClinicalAssertion payload. */
-  private def extractSubmission(submitterId: String, rawAssertion: Msg): Submission = {
+  private def extractSubmission(
+    submitter: Submitter,
+    additionalSubmitters: Array[Submitter],
+    rawAssertion: Msg
+  ): Submission = {
     val date = rawAssertion.extract[LocalDate]("@SubmissionDate")
-    val additionalSubmitters = rawAssertion
-      .tryExtract[Array[Msg]]("AdditionalSubmitters", "SubmitterDescription")
-      .getOrElse(Array.empty)
 
     Submission(
-      id = s"$submitterId.$date",
-      submitterId = submitterId,
-      additionalSubmitterIds = additionalSubmitters.map(_.extract[String]("@OrgID")),
+      id = s"${submitter.id}.$date",
+      submitterId = submitter.id,
+      additionalSubmitterIds = additionalSubmitters.map(_.id),
       submissionDate = date,
       submissionNames = rawAssertion
         .tryExtract[Array[Msg]]("SubmissionNameList", "SubmissionName")

@@ -1,12 +1,12 @@
-{"id":"61756","submitter_name":"Ambry Genetics","org_category":"laboratory"}
-{"id":"3","submitter_name":"OMIM","org_category":"resource"}
-{"id":"500031","submitter_name":"Invitae","org_category":"laboratory"}
-{"id":"500062","submitter_name":"GeneReviews","org_category":"resource","org_abbrev":"GeneReviews"}
+{"id":"500029","submitter_name":"International Standards For Cytogenomic Arrays Consortium (ISCA)","org_category":"consortium"}
 {"id":"505240","submitter_name":"ISCA site 4","org_category":"laboratory"}
-{"id":"505243","submitter_name":"ISCA site 14","org_category":"laboratory"}
-{"id":"505727","submitter_name":"Department of Pediatrics and Neonatology,Nagoya City University Graduate School of Medical Sciences","org_category":"laboratory"}
-{"id":"3","submitter_name":"OMIM","org_category":"resource"}
-{"id":"500184","submitter_name":"Developmental Genetics Unit,King Faisal Specialist Hospital & Research Centre","org_category":"laboratory","org_abbrev":"DGU-KFSHRC"}
-{"id":"500031","submitter_name":"Invitae","org_category":"laboratory"}
 {"id":"505251","submitter_name":"Institute of Human Genetics,University Medical Center Hamburg-Eppendorf","org_category":"laboratory","org_abbrev":"UKE"}
+{"id":"500031","submitter_name":"Invitae","org_category":"laboratory"}
+{"id":"3","submitter_name":"OMIM","org_category":"resource"}
 {"id":"61756","submitter_name":"Ambry Genetics","org_category":"laboratory"}
+{"id":"505243","submitter_name":"ISCA site 14","org_category":"laboratory"}
+{"id":"500184","submitter_name":"Developmental Genetics Unit,King Faisal Specialist Hospital & Research Centre","org_category":"laboratory","org_abbrev":"DGU-KFSHRC"}
+{"id":"505721","submitter_name":"Medical Research Institute,Tokyo Medical and Dental University","org_category":"other"}
+{"id":"500062","submitter_name":"GeneReviews","org_category":"resource","org_abbrev":"GeneReviews"}
+{"id":"505987","submitter_name":"Department of Genetics,Osaka University Graduate School of Medicine","org_category":"laboratory"}
+{"id":"505727","submitter_name":"Department of Pediatrics and Neonatology,Nagoya City University Graduate School of Medical Sciences","org_category":"laboratory"}

@@ -12,6 +12,7 @@ spec:
     serviceAccountName: {{ .Values.serviceAccount.k8sName }}
     podGC:
       strategy: OnWorkflowSuccess
+    parallelism: {{ .Values.maxParallelism }}
     templates:
       - name: main
         templateRef:
