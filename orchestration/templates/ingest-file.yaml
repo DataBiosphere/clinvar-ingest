@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: ingest-xml
+  name: ingest-file
 spec:
   templates:
     - name: main
@@ -10,7 +10,8 @@ spec:
           - name: api-url
           - name: dataset-id
           - name: profile-id
-          - name: source-path
+          - name: gcs-bucket
+          - name: gcs-file-path
           - name: target-path
       dag:
         tasks:
@@ -25,7 +26,7 @@ spec:
                 - name: profile-id
                   value: '{{ "{{inputs.parameters.profile-id}}" }}'
                 - name: source-path
-                  value: '{{ "{{inputs.parameters.source-path}}" }}'
+                  value: '{{ "gs://{{inputs.parameters.gcs-bucket}}/{{inputs.parameters.gcs-file-path}}/" }}'
                 - name: target-path
                   value: '{{ "{{inputs.parameters.target-path}}" }}'
           - name: poll-ingest-job

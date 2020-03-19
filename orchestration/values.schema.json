@@ -85,7 +85,17 @@
       },
       "required": ["stagingData", "jadeData"]
     },
+    "repo" : {
+      "type": "object",
+      "properties": {
+        "apiUrl": {"type":  "string"},
+        "datasetId": {"type": "string"},
+        "profileId": {"type": "string"},
+        "targetPath": {"type":  "string"}
+        },
+      "required": ["apiUrl", "datasetId", "profileId", "targetPath"]
+    },
     "maxParallelism": { "type": "integer" }
   },
-  "required": ["gcs", "serviceAccount", "volumes", "cron", "dataflow", "maxParallelism"]
+  "required": ["gcs", "serviceAccount", "volumes", "cron", "dataflow", "repo", "maxParallelism"]
 }
