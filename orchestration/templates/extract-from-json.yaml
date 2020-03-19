@@ -23,7 +23,7 @@ spec:
           import json
           with open('/state/{{ "{{inputs.parameters.file-path}}" }}') as f:
             json_data = json.load(f)
-          print(json_data['{{ "{{inputs.parameters.json-key}}" }}'])
+          print(json_data)
         volumeMounts:
           - name: state
             mountPath: /state
