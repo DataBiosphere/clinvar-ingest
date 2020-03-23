@@ -92,7 +92,7 @@ spec:
                 - name: gcs-bucket
                   value: '{{ .Values.gcs.bucketName }}'
                 - name: gcs-file-path
-                  value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw/$localXmlName'
+                  value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw/{{ $localXmlName }}'
                 - name: target-path
                   value: '{{ .Values.repo.targetPath }}'
                 - name: timeout
