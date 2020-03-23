@@ -83,20 +83,22 @@ spec:
               template: main
             arguments:
               parameters:
+                {{ -with .Values.repo }}
                 - name: api-url
-                  value: '{{ .Values.repo.apiUrl }}'
+                  value: '{{ .apiUrl }}'
                 - name: dataset-id
-                  value: '{{ .Values.repo.datasetId }}'
+                  value: '{{ .datasetId }}'
                 - name: profile-id
-                  value: '{{ .Values.repo.profileId }}'
+                  value: '{{ .profileId }}'
+                - name: target-path
+                  value: '{{ .targetPath }}'
+                - name: timeout
+                  value: '{{ .pollTimeout }}'
+                {{ -end }}
                 - name: gcs-bucket
                   value: '{{ .Values.gcs.bucketName }}'
                 - name: gcs-file-path
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw/{{ $localXmlName }}'
-                - name: target-path
-                  value: '{{ .Values.repo.targetPath }}'
-                - name: timeout
-                  value: '{{ .Values.repo.pollTimeout }}'
           {{- $extractionPvc := "{{tasks.generate-extraction-volume.outputs.parameters.pvc-name}}" }}
           # 4b) Extract raw XML to JSON-list.
           - name: extract-xml
