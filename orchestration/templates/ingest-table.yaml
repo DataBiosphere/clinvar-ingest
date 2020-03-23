@@ -10,7 +10,8 @@ spec:
           - name: api-url
           - name: dataset-id
           - name: gcs-bucket
-          - name: gcs-file-path
+          - name: gcs-prefix
+          - name: table-name
           - name: timeout
       dag:
         tasks:
@@ -24,7 +25,7 @@ spec:
                 - name: dataset-id
                   value: '{{ "{{inputs.parameters.dataset-id}}" }}'
                 - name: source-path
-                  value: '{{ "gs://{{inputs.parameters.gcs-bucket}}/{{inputs.parameters.gcs-file-path}}" }}'
+                  value: '{{ "gs://{{inputs.parameters.gcs-bucket}}/{{inputs.parameters.gcs-prefix}}" }}'
                 - name: table-name
                   value: '{{ "{{inputs.parameters.table-name}}" }}'
           ## 2) Poll the ingest job for the table repeatedly until the table has been ingested
