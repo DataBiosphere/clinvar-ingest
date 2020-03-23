@@ -23,4 +23,4 @@ def ingest_file(dataset_id: str, **kwargs):
         raise HTTPError(f"Bad response, got code of: {response.status_code}")
 
 # print the job id to std out
-print(ingest_file(os.environ["DATASET_ID"], profileId=os.environ["PROFILE_ID"], source_path=os.environ["SOURCE_PATH"], target_path=os.environ["TARGET_PATH"]))
+print(ingest_file(dataset_id, profileId=profile_id, source_path=source_path, target_path=target_path))
