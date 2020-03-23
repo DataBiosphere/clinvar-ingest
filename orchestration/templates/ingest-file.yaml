@@ -16,9 +16,21 @@ spec:
           - name: timeout
       dag:
         tasks:
-          ## 1) Make a post request to the Jade API to ingest the xml blob
+          # 1) Make sure that something doesn't already exist at the target path
+          - name: check-existing-file
+            template: check-existing-file
+            arguments:
+              parameters:
+                - name: api-url
+                  value: '{{ "{{inputs.parameters.api-url}}" }}'
+                - name: dataset-id
+                  value: '{{ "{{inputs.parameters.dataset-id}}" }}'
+                - name: target-path
+                  value: '{{ "{{inputs.parameters.target-path}}" }}'
+          # 2) Make a post request to the Jade API to ingest the xml blob
           - name: submit-file-ingest
             template: submit-file-ingest
+            when: '{{ "tasks.check-existing-file.outputs.result}} == 200" }}'
             arguments:
               parameters:
                 - name: api-url
@@ -31,7 +43,7 @@ spec:
                   value: gs://{{ "{{inputs.parameters.gcs-bucket}}" }}/{{ "{{inputs.parameters.gcs-file-path}}" }}
                 - name: target-path
                   value: '{{ "{{inputs.parameters.target-path}}" }}'
-          ## 2) Poll the ingest job for the file repeatedly until the file has been ingested
+          # 3) Poll the ingest job for the file repeatedly until the file has been ingested
           - name: poll-ingest-job
             dependencies: [submit-file-ingest]
             template: poll-ingest-job
@@ -43,7 +55,7 @@ spec:
                   value: '{{ "{{tasks.submit-file-ingest.outputs.result}}" }}'
                 - name: timeout
                   value: '{{ "{{inputs.parameters.timeout}}" }}'
-          ## 3) Return the fileId
+          # 4) Return the fileId
           - name: get-job-result
             dependencies: [poll-ingest-job]
             template: get-job-result
@@ -54,6 +66,26 @@ spec:
                   value: '{{ "{{inputs.parameters.api-url}}" }}'
                 - name: job-id
                   value: '{{ "{{tasks.submit-file-ingest.outputs.result}}" }}'
+    - name: check-existing-file
+      inputs:
+        parameters:
+          - name: api-url
+          - name: dataset-id
+          - name: target-path
+        script:
+          image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.0
+          env:
+            - name: API_URL
+              value: '{{ "{{inputs.parameters.api-url}}" }}'
+            - name: DATASET_ID
+              value: '{{ "{{inputs.parameters.dataset-id}}" }}'
+            - name: TARGET_PATH
+              value: '{{ "{{inputs.parameters.target-path}}" }}'
+          command: [python]
+          source: |
+            {{- range .Files.Lines "scripts/check-existing-file.py" }}
+            {{ . }}
+            {{- end }}
     - name: submit-file-ingest
       inputs:
         parameters:
