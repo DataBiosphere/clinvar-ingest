@@ -14,6 +14,7 @@ spec:
           - name: timeout
       dag:
         tasks:
+          ## 1) Make a post request to the Jade API to ingest the xml blob
           - name: submit-table-ingest
             template: submit-table-ingest
             arguments:
@@ -26,6 +27,7 @@ spec:
                   value: '{{ "gs://{{inputs.parameters.gcs-bucket}}/{{inputs.parameters.gcs-file-path}}" }}'
                 - name: table-name
                   value: '{{ "{{inputs.parameters.table-name}}" }}'
+          ## 2) Poll the ingest job for the table repeatedly until the table has been ingested
           - name: poll-ingest-job
             dependencies: [submit-table-ingest]
             template: poll-ingest-job
@@ -38,7 +40,6 @@ spec:
                 - name: timeout
                   value: '{{ "{{inputs.parameters.timeout}}" }}'
 
-    ## 1) Make a post request to the Jade API to ingest the xml blob
     - name: submit-table-ingest
       inputs:
         parameters:
@@ -62,7 +63,6 @@ spec:
           {{- range .Files.Lines "scripts/submit-table-ingest.py" }}
           {{ . }}
           {{- end }}
-    ## 2) Poll the ingest job for the table repeatedly until the table has been ingested
     - name: poll-ingest-job
       inputs:
         parameters:
