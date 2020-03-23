@@ -1,0 +1,85 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: ingest-table
+spec:
+  templates:
+    - name: main
+      inputs:
+        parameters:
+          - name: api-url
+          - name: dataset-id
+          - name: gcs-bucket
+          - name: gcs-file-path
+          - name: timeout
+      dag:
+        tasks:
+          - name: submit-table-ingest
+            template: submit-table-ingest
+            arguments:
+              parameters:
+                - name: api-url
+                  value: '{{ "{{inputs.parameters.api-url}}" }}'
+                - name: dataset-id
+                  value: '{{ "{{inputs.parameters.dataset-id}}" }}'
+                - name: source-path
+                  value: '{{ "gs://{{inputs.parameters.gcs-bucket}}/{{inputs.parameters.gcs-file-path}}" }}'
+                - name: table-name
+                  value: '{{ "{{inputs.parameters.table-name}}" }}'
+          - name: poll-ingest-job
+            dependencies: [submit-table-ingest]
+            template: poll-ingest-job
+            arguments:
+              parameters:
+                - name: api-url
+                  value: '{{ "{{inputs.parameters.api-url}}" }}'
+                - name: job-id
+                  value: '{{ "{{tasks.submit-table-ingest.outputs.result}}" }}'
+                - name: timeout
+                  value: '{{ "{{inputs.parameters.timeout}}" }}'
+
+    ## 1) Make a post request to the Jade API to ingest the xml blob
+    - name: submit-table-ingest
+      inputs:
+        parameters:
+          - name: api-url
+          - name: dataset-id
+          - name: source-path
+          - name: table-name
+      script:
+        image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.0
+        env:
+          - name: API_URL
+            value: '{{ "{{inputs.parameters.api-url}}" }}'
+          - name: DATASET_ID
+            value: '{{ "{{inputs.parameters.dataset-id}}" }}'
+          - name: SOURCE_PATH
+            value: '{{ "{{inputs.parameters.source-path}}" }}'
+          - name: TABLE_NAME
+            value: '{{ "{{inputs.parameters.table-name}}" }}'
+        command: [python]
+        source: |
+          {{- range .Files.Lines "scripts/submit-table-ingest.py" }}
+          {{ . }}
+          {{- end }}
+    ## 2) Poll the ingest job for the table repeatedly until the table has been ingested
+    - name: poll-ingest-job
+      inputs:
+        parameters:
+          - name: api-url
+          - name: job-id
+          - name: timeout
+      script:
+        image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.0
+        env:
+          - name: API_URL
+            value: '{{ "{{inputs.parameters.api-url}}" }}'
+          - name: JOB_ID
+            value: '{{ "{{inputs.parameters.job-id}}" }}'
+          - name: TIMEOUT
+            value: '{{ "{{inputs.parameters.timeout}}" }}'
+        command: [python]
+        source: |
+          {{- range .Files.Lines "scripts/poll-ingest-job.py" }}
+          {{ . }}
+          {{- end }}
