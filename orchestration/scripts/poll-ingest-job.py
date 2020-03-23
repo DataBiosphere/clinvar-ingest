@@ -24,19 +24,10 @@ def check_job_status(job_id: str):
 def is_done(job_id: str):
     return check_job_status(job_id) == "succeeded"
 
-def get_job_result(job_id: str):
-    response = authed_session.get(base_url + f"jobs/{job_id}/result", headers=headers)
-    if response.ok:
-        return response.json()["fileId"]
-    else:
-        raise HTTPError(f"Bad response, got code of: {response.status_code}")
-
 try:
     polling.poll(lambda: is_done(job_id), step=10, timeout=int(timeout))
+    print(True)
 except polling.TimeoutException as te:
     while not te.values.empty():
         # Print all of the values that did not meet the exception
         print(te.values.get(), file=sys.stderr)
-
-# only gets here if poll eventually gets a "succeeded" status return
-print(get_job_result(job_id))

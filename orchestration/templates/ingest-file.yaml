@@ -30,11 +30,21 @@ spec:
                   value: '{{ "gs://{{inputs.parameters.gcs-bucket}}/{{inputs.parameters.gcs-file-path}}/" }}'
                 - name: target-path
                   value: '{{ "{{inputs.parameters.target-path}}" }}'
-                - name: timout
-                  value: '{{ "{{inputs.parameters.timeout}}" }}'
           - name: poll-ingest-job
             dependencies: [post-ingest-file]
             template: poll-ingest-job
+            arguments:
+              parameters:
+                - name: api-url
+                  value: '{{ "{{inputs.parameters.api-url}}" }}'
+                - name: job-id
+                  value: '{{ "{{tasks.post-ingest-file.outputs.result}}" }}'
+                - name: timeout
+                  value: '{{ "{{inputs.parameters.timeout}}" }}'
+          - name: get-job-result
+            dependencies: [poll-ingest-job]
+            template: get-job-result
+            when: '{{ "tasks.poll-ingest-job.outputs.result}} == True" }}'
             arguments:
               parameters:
                 - name: api-url
@@ -50,7 +60,6 @@ spec:
           - name: profile-id
           - name: source-path
           - name: target-path
-          - name: timeout
       script:
         image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.0
         env:
@@ -64,15 +73,34 @@ spec:
             value: '{{ "{{inputs.parameters.source-path}}" }}'
           - name: TARGET_PATH
             value: '{{ "{{inputs.parameters.target-path}}" }}'
-          - name: TIMEOUT
-            value: '{{ "{{inputs.parameters.timeout}}" }}'
         command: [python]
         source: |
           {{- range .Files.Lines "scripts/post-ingest-file.py" }}
           {{ . }}
           {{- end }}
-    ## 2) Poll the ingest job for the file repeatedly until the file has been ingested, then return the fileId
+    ## 2) Poll the ingest job for the file repeatedly until the file has been ingested
     - name: poll-ingest-job
+      inputs:
+        parameters:
+          - name: api-url
+          - name: job-id
+          - name: timeout
+      script:
+        image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.0
+        env:
+          - name: API_URL
+            value: '{{ "{{inputs.parameters.api-url}}" }}'
+          - name: JOB_ID
+            value: '{{ "{{inputs.parameters.job-id}}" }}'
+          - name: TIMEOUT
+            value: '{{ "{{inputs.parameters.timeout}}" }}'
+        command: [python]
+        source: |
+          {{- range .Files.Lines "scripts/poll-ingest-job.py" }}
+          {{ . }}
+          {{- end }}
+    ## 3) Return the fileId
+    - name: get-job-result
       inputs:
         parameters:
           - name: api-url
@@ -84,8 +112,10 @@ spec:
             value: '{{ "{{inputs.parameters.api-url}}" }}'
           - name: JOB_ID
             value: '{{ "{{inputs.parameters.job-id}}" }}'
+          - name: RESULT_FIELD
+            value: fileId
         command: [python]
         source: |
-          {{- range .Files.Lines "scripts/poll-ingest-job.py" }}
+          {{- range .Files.Lines "scripts/get-job-result.py" }}
           {{ . }}
           {{- end }}
