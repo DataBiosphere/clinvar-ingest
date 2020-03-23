@@ -15,7 +15,6 @@ spec:
           persistentVolumeClaim:
             claimName: '{{ "{{inputs.parameters.pvc-name}}" }}'
             readOnly: true
-      {{- include "argo.retry" . | indent 6 }}
       script:
         image: python:3-slim
         command: [python]
