@@ -16,6 +16,7 @@ spec:
           - name: timeout
       dag:
         tasks:
+          ## 1) Make a post request to the Jade API to ingest the xml blob
           - name: submit-file-ingest
             template: submit-file-ingest
             arguments:
@@ -30,6 +31,7 @@ spec:
                   value: gs://{{ "{{inputs.parameters.gcs-bucket}}" }}/{{ "{{inputs.parameters.gcs-file-path}}" }}
                 - name: target-path
                   value: '{{ "{{inputs.parameters.target-path}}" }}'
+          ## 2) Poll the ingest job for the file repeatedly until the file has been ingested
           - name: poll-ingest-job
             dependencies: [submit-file-ingest]
             template: poll-ingest-job
@@ -41,6 +43,7 @@ spec:
                   value: '{{ "{{tasks.submit-file-ingest.outputs.result}}" }}'
                 - name: timeout
                   value: '{{ "{{inputs.parameters.timeout}}" }}'
+          ## 3) Return the fileId
           - name: get-job-result
             dependencies: [poll-ingest-job]
             template: get-job-result
@@ -51,7 +54,6 @@ spec:
                   value: '{{ "{{inputs.parameters.api-url}}" }}'
                 - name: job-id
                   value: '{{ "{{tasks.submit-file-ingest.outputs.result}}" }}'
-    ## 1) Make a post request to the Jade API to ingest the xml blob
     - name: submit-file-ingest
       inputs:
         parameters:
@@ -78,7 +80,6 @@ spec:
           {{- range .Files.Lines "scripts/submit-file-ingest.py" }}
           {{ . }}
           {{- end }}
-    ## 2) Poll the ingest job for the file repeatedly until the file has been ingested
     - name: poll-ingest-job
       inputs:
         parameters:
@@ -99,7 +100,6 @@ spec:
           {{- range .Files.Lines "scripts/poll-ingest-job.py" }}
           {{ . }}
           {{- end }}
-    ## 3) Return the fileId
     - name: get-job-result
       inputs:
         parameters:
