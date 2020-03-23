@@ -95,6 +95,8 @@ spec:
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw/$localXmlName'
                 - name: target-path
                   value: '{{ .Values.repo.targetPath }}'
+                - name: timeout
+                  value: '{{ .Values.repo.pollTimeout }}'
           {{- $extractionPvc := "{{tasks.generate-extraction-volume.outputs.parameters.pvc-name}}" }}
           # 4b) Extract raw XML to JSON-list.
           - name: extract-xml

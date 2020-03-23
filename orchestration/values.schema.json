@@ -91,9 +91,10 @@
         "apiUrl": {"type":  "string"},
         "datasetId": {"type": "string"},
         "profileId": {"type": "string"},
-        "targetPath": {"type":  "string"}
+        "targetPath": {"type":  "string"},
+        "pollTimeout": {"type":  "integer"}
         },
-      "required": ["apiUrl", "datasetId", "profileId", "targetPath"]
+      "required": ["apiUrl", "datasetId", "profileId", "targetPath", "pollTimeout"]
     },
     "maxParallelism": { "type": "integer" }
   },

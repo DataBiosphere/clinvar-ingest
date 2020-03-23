@@ -13,6 +13,7 @@ spec:
           - name: gcs-bucket
           - name: gcs-file-path
           - name: target-path
+          - name: timeout
       dag:
         tasks:
           - name: post-ingest-file
@@ -29,6 +30,8 @@ spec:
                   value: '{{ "gs://{{inputs.parameters.gcs-bucket}}/{{inputs.parameters.gcs-file-path}}/" }}'
                 - name: target-path
                   value: '{{ "{{inputs.parameters.target-path}}" }}'
+                - name: timout
+                  value: '{{ "{{inputs.parameters.timeout}}" }}'
           - name: poll-ingest-job
             dependencies: [post-ingest-file]
             template: poll-ingest-job
@@ -47,6 +50,7 @@ spec:
           - name: profile-id
           - name: source-path
           - name: target-path
+          - name: timeout
       script:
         image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.0
         env:
@@ -60,9 +64,10 @@ spec:
             value: '{{ "{{inputs.parameters.source-path}}" }}'
           - name: TARGET_PATH
             value: '{{ "{{inputs.parameters.target-path}}" }}'
+          - name: TIMEOUT
+            value: '{{ "{{inputs.parameters.timeout}}" }}'
         command: [python]
         source: |
-          {{- /* More verbose than I expected, but direct injection is too hard to format. */}}
           {{- range .Files.Lines "scripts/post-ingest-file.py" }}
           {{ . }}
           {{- end }}
@@ -81,7 +86,6 @@ spec:
             value: '{{ "{{inputs.parameters.job-id}}" }}'
         command: [python]
         source: |
-          {{- /* More verbose than I expected, but direct injection is too hard to format. */}}
           {{- range .Files.Lines "scripts/poll-ingest-job.py" }}
           {{ . }}
           {{- end }}

@@ -17,4 +17,6 @@ dataflow:
 bigquery:
   jadeData:
     dataset: datarepo_broad_dsp_clinvar
+repo:
+  pollTimeout: 86400
 maxParallelism: 16
