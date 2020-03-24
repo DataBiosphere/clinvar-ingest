@@ -121,7 +121,7 @@ spec:
                 - name: file-path
                   value: 'ClinVarVariationRelease/part-1.json'
                 - name: json-key
-                  value: '@ReleaseDate'
+                  value: '["ClinVarVariationRelease"]["@ReleaseDate"]'
           # 6) Run Dataflow on uploaded JSON.
           - name: process-archive
             dependencies: [upload-extracted-archive]

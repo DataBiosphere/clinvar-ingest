@@ -22,7 +22,7 @@ spec:
           import json
           with open('/state/{{ "{{inputs.parameters.file-path}}" }}') as f:
             json_data = json.load(f)
-          print(json_data["ClinVarVariationRelease"]["@ReleaseDate"])
+          print(json_data'{{ "{{inputs.parameters.json-key}}" }}')
         volumeMounts:
           - name: state
             mountPath: /state
