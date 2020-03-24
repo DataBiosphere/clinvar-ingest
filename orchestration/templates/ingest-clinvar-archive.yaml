@@ -112,7 +112,7 @@ spec:
           - name: extract-release-date
             dependencies: [extract-xml]
             templateRef:
-              name: extract-from-json
+              name: extract-clinvar-release-date
               template: main
             arguments:
               parameters:
@@ -120,8 +120,6 @@ spec:
                   value: '{{ $extractionPvc }}'
                 - name: file-path
                   value: 'ClinVarVariationRelease/part-1.json'
-                - name: json-key
-                  value: '["ClinVarVariationRelease"]["@ReleaseDate"]'
           # 6) Run Dataflow on uploaded JSON.
           - name: process-archive
             dependencies: [upload-extracted-archive]

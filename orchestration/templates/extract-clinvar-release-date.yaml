@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: extract-from-json
+  name: extract-clinvar-release-date
 spec:
   templates:
     - name: main
@@ -9,7 +9,6 @@ spec:
         parameters:
           - name: pvc-name
           - name: file-path
-          - name: json-key
       volumes:
         - name: state
           persistentVolumeClaim:
@@ -22,7 +21,7 @@ spec:
           import json
           with open('/state/{{ "{{inputs.parameters.file-path}}" }}') as f:
             json_data = json.load(f)
-          print(json_data'{{ "{{inputs.parameters.json-key}}" }}')
+          print(json_data["ClinVarVariationRelease"]["@ReleaseDate"])
         volumeMounts:
           - name: state
             mountPath: /state
