@@ -88,12 +88,12 @@
     "repo" : {
       "type": "object",
       "properties": {
-        "apiUrl": {"type":  "string"},
+        "url": {"type":  "string"},
         "datasetId": {"type": "string"},
         "profileId": {"type": "string"},
         "pollTimeout": {"type":  "integer"}
         },
-      "required": ["apiUrl", "datasetId", "profileId", "pollTimeout"]
+      "required": ["url", "datasetId", "profileId", "pollTimeout"]
     },
     "maxParallelism": { "type": "integer" }
   },

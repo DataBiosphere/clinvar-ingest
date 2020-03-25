@@ -129,8 +129,8 @@ spec:
             arguments:
               parameters:
                 {{ -with .Values.repo }}
-                - name: api-url
-                  value: '{{ .apiUrl }}'
+                - name: url
+                  value: '{{ .url }}'
                 - name: dataset-id
                   value: '{{ .datasetId }}'
                 - name: profile-id

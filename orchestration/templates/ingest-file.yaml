@@ -7,7 +7,7 @@ spec:
     - name: main
       inputs:
         parameters:
-          - name: api-url
+          - name: url
           - name: dataset-id
           - name: profile-id
           - name: gcs-bucket
@@ -22,7 +22,7 @@ spec:
             arguments:
               parameters:
                 - name: api-url
-                  value: '{{ "{{inputs.parameters.api-url}}" }}'
+                  value: '{{ "{{inputs.parameters.url}}/api/v1" }}'
                 - name: dataset-id
                   value: '{{ "{{inputs.parameters.dataset-id}}" }}'
                 - name: target-path
@@ -34,7 +34,7 @@ spec:
             arguments:
               parameters:
                 - name: api-url
-                  value: '{{ "{{inputs.parameters.api-url}}" }}'
+                  value: '{{ "{{inputs.parameters.url}}/api/v1" }}'
                 - name: dataset-id
                   value: '{{ "{{inputs.parameters.dataset-id}}" }}'
                 - name: profile-id
@@ -50,7 +50,7 @@ spec:
             arguments:
               parameters:
                 - name: api-url
-                  value: '{{ "{{inputs.parameters.api-url}}" }}'
+                  value: '{{ "{{inputs.parameters.url}}/api/v1" }}'
                 - name: job-id
                   value: '{{ "{{tasks.submit-file-ingest.outputs.result}}" }}'
                 - name: timeout
@@ -63,9 +63,10 @@ spec:
             arguments:
               parameters:
                 - name: api-url
-                  value: '{{ "{{inputs.parameters.api-url}}" }}'
+                  value: '{{ "{{inputs.parameters.url}}/api/v1" }}'
                 - name: job-id
                   value: '{{ "{{tasks.submit-file-ingest.outputs.result}}" }}'
+    # SubTemplates
     - name: check-existing-file
       inputs:
         parameters:
