@@ -30,7 +30,7 @@ spec:
           # 2) Make a post request to the Jade API to ingest the xml blob
           - name: submit-file-ingest
             template: submit-file-ingest
-            when: '{{ "tasks.check-existing-file.outputs.result}} == 200" }}'
+            when: '{{ "tasks.check-existing-file.outputs.result}} == false" }}'
             arguments:
               parameters:
                 - name: api-url

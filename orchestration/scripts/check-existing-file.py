@@ -15,9 +15,11 @@ def check_file_existence(target_path: str):
     response = authed_session.get(f"{base_url}/datasets/{dataset_id}/filesystem/objects",
                                   params={"path": target_path},
                                   headers=headers)
-    if response.ok:
-        return response.status_code
+    if response.status_code == 200:
+        return "true"
+    elif response.status_code == 404:
+        return "false"
     else:
-        raise HTTPError(f"Bad response, got code of: {response.status_code}")
+        raise HTTPError(f"Unexpected response, got code of: {response.status_code}")
 
 print(check_file_existence(target_path))
