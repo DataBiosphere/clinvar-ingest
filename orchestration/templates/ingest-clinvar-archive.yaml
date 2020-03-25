@@ -139,7 +139,7 @@ spec:
                   value: '{{ .pollTimeout }}'
                 {{ -end }}
                 - name: target-path
-                  value: '/{{ "{{tasks.extract-release-date.outputs.result}}" }}.xml'
+                  value: '{{ "/{{tasks.extract-release-date.outputs.result}}.xml" }}'
                 - name: gcs-bucket
                   value: '{{ .Values.gcs.bucketName }}'
                 - name: gcs-file-path
