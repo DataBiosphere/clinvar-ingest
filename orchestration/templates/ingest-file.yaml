@@ -59,7 +59,7 @@ spec:
           - name: get-job-result
             dependencies: [poll-ingest-job]
             template: get-job-result
-            when: '{{ "tasks.poll-ingest-job.outputs.result}} == True" }}'
+            when: '{{ "tasks.poll-ingest-job.outputs.result}} == true" }}'
             arguments:
               parameters:
                 - name: api-url

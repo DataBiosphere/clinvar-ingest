@@ -26,7 +26,7 @@ def is_done(job_id: str):
 
 try:
     polling.poll(lambda: is_done(job_id), step=10, timeout=int(timeout))
-    print(True)
+    print("true")
 except polling.TimeoutException as te:
     while not te.values.empty():
         # Print all of the values that did not meet the exception
