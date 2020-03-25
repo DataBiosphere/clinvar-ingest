@@ -12,7 +12,7 @@ headers = {"accept": "application/json"}
 
 
 def check_file_existence(target_path: str):
-    response = authed_session.get(base_url + f"datasets/{dataset_id}/filesystem/objects",
+    response = authed_session.get(f"{base_url}/datasets/{dataset_id}/filesystem/objects",
                                   params={"path": target_path},
                                   headers=headers)
     if response.ok:

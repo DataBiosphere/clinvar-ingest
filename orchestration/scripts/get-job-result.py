@@ -14,7 +14,7 @@ headers = {"accept": "application/json"}
 
 
 def get_job_result(job_id: str):
-    response = authed_session.get(base_url + f"jobs/{job_id}/result", headers=headers)
+    response = authed_session.get(f"{base_url}/jobs/{job_id}/result", headers=headers)
     if response.ok:
         return response.json()[result_field]
     else:
