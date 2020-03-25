@@ -114,7 +114,7 @@ spec:
                   value: '{{ $localXmlName }}'
                 - name: output-pvc-name
                   value: '{{ $extractionPvc }}'
-          # 5) Upload JSON-list data to GCS.
+          # 5a) Upload JSON-list data to GCS.
           - name: upload-extracted-archive
             dependencies: [extract-xml]
             templateRef:
@@ -132,6 +132,18 @@ spec:
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw/VariationArchive'
                 - name: max-concurrent-uploads
                   value: '2'
+          # 5b) Extract clinvar release date.
+          - name: extract-release-date
+            dependencies: [extract-xml]
+            templateRef:
+              name: extract-clinvar-release-date
+              template: main
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: '{{ $extractionPvc }}'
+                - name: file-path
+                  value: 'ClinVarVariationRelease/part-1.json'
           # 6) Run Dataflow on uploaded JSON.
           - name: process-archive
             dependencies: [upload-extracted-archive]
