@@ -29,6 +29,7 @@ spec:
                   value: '{{ "{{inputs.parameters.target-path}}" }}'
           # 2) Make a post request to the Jade API to ingest the xml blob
           - name: submit-file-ingest
+            dependencies: [check-existing-file]
             template: submit-file-ingest
             when: '{{ "tasks.check-existing-file.outputs.result}} == false" }}'
             arguments:
@@ -66,6 +67,15 @@ spec:
                   value: '{{ "{{inputs.parameters.url}}/api/v1" }}'
                 - name: job-id
                   value: '{{ "{{tasks.submit-file-ingest.outputs.result}}" }}'
+      outputs:
+        parameters:
+          - name: file-exists
+            valueFrom:
+              parameter: '{{ "{{tasks.check-existing-file.outputs.result}}" }}'
+          - name: file-id
+            valueFrom:
+              parameter: '{{ "{{tasks.get-job-result.outputs.result}}" }}'
+              default: ''
     # SubTemplates
     - name: check-existing-file
       inputs:
