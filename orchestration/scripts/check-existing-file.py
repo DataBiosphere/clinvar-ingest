@@ -1,6 +1,7 @@
 import google.auth
 from google.auth.transport.requests import AuthorizedSession
 from requests.exceptions import HTTPError
+import os
 
 credentials, project = google.auth.default(scopes=['openid', 'email', 'profile'])
 
