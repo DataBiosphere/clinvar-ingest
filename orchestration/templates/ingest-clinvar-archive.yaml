@@ -128,7 +128,7 @@ spec:
               template: main
             arguments:
               parameters:
-                {{ - with .Values.repo }}
+                {{- with .Values.repo }}
                 - name: url
                   value: '{{ .url }}'
                 - name: dataset-id
@@ -137,7 +137,7 @@ spec:
                   value: '{{ .profileId }}'
                 - name: timeout
                   value: '{{ .pollTimeout }}'
-                {{ -end }}
+                {{- end }}
                 - name: target-path
                   value: '{{ "/{{tasks.extract-release-date.outputs.result}}.xml" }}'
                 - name: gcs-bucket
