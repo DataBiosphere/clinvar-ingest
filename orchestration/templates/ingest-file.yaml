@@ -94,7 +94,7 @@ spec:
               value: '{{ "{{inputs.parameters.target-path}}" }}'
           command: [python]
           source: |
-            {{- range .Files.Lines "scripts/check-existing-file.py" }}
+            {{- range .Files.Lines "scripts/submit-file-ingest.py" }}
             {{ . }}
             {{- end }}
     - name: submit-file-ingest

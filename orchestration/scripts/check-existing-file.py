@@ -10,6 +10,7 @@ dataset_id = os.environ["DATASET_ID"]
 target_path = os.environ["TARGET_PATH"]
 headers = {"accept": "application/json"}
 
+
 def check_file_existence(target_path: str):
     response = authed_session.get(f"{base_url}/datasets/{dataset_id}/filesystem/objects",
                                   params={"path": target_path},
