@@ -83,20 +83,20 @@ spec:
           - name: api-url
           - name: dataset-id
           - name: target-path
-        script:
-          image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.0
-          env:
-            - name: API_URL
-              value: '{{ "{{inputs.parameters.api-url}}" }}'
-            - name: DATASET_ID
-              value: '{{ "{{inputs.parameters.dataset-id}}" }}'
-            - name: TARGET_PATH
-              value: '{{ "{{inputs.parameters.target-path}}" }}'
-          command: [python]
-          source: |
-            {{- range .Files.Lines "scripts/submit-file-ingest.py" }}
-            {{ . }}
-            {{- end }}
+      script:
+        image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.0
+        env:
+          - name: API_URL
+            value: '{{ "{{inputs.parameters.api-url}}" }}'
+          - name: DATASET_ID
+            value: '{{ "{{inputs.parameters.dataset-id}}" }}'
+          - name: TARGET_PATH
+            value: '{{ "{{inputs.parameters.target-path}}" }}'
+        command: [python]
+        source: |
+          {{- range .Files.Lines "scripts/check-existing-file.py" }}
+          {{ . }}
+          {{- end }}
     - name: submit-file-ingest
       inputs:
         parameters:
