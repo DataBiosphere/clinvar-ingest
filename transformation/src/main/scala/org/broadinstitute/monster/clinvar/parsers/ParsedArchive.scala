@@ -166,8 +166,7 @@ object ParsedArchive {
         numSubmissions = rawArchive.tryExtract[Long]("@NumberOfSubmissions"),
         numSubmitters = rawArchive.tryExtract[Long]("@NumberOfSubmitters"),
         recordStatus = rawArchive.tryExtract[String]("RecordStatus", "$"),
-        reviewStatus =
-          rawArchive.tryExtract[String]("InterpretedRecord", "ReviewStatus", "$"),
+        reviewStatus = rawArchive.tryExtract[String]("InterpretedRecord", "ReviewStatus", "$"),
         species = rawArchive.tryExtract[String]("Species", "$"),
         interpDateLastEvaluated = interpretation.dateLastEvaluated,
         interpType = interpretation.`type`,

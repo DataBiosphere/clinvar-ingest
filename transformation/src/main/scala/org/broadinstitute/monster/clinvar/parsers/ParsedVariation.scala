@@ -1,11 +1,7 @@
 package org.broadinstitute.monster.clinvar.parsers
 
 import org.broadinstitute.monster.clinvar.{Constants, Content}
-import org.broadinstitute.monster.clinvar.jadeschema.table.{
-  Gene,
-  GeneAssociation,
-  Variation
-}
+import org.broadinstitute.monster.clinvar.jadeschema.table.{Gene, GeneAssociation, Variation}
 import upack.Msg
 
 /**
