@@ -22,7 +22,7 @@ spec:
             arguments:
               parameters:
                 - name: api-url
-                  value: '{{ "{{inputs.parameters.url}}/api/v1" }}'
+                  value: '{{ "{{inputs.parameters.url}}" }}'
                 - name: dataset-id
                   value: '{{ "{{inputs.parameters.dataset-id}}" }}'
                 - name: target-path
@@ -35,7 +35,7 @@ spec:
             arguments:
               parameters:
                 - name: api-url
-                  value: '{{ "{{inputs.parameters.url}}/api/v1" }}'
+                  value: '{{ "{{inputs.parameters.url}}" }}'
                 - name: dataset-id
                   value: '{{ "{{inputs.parameters.dataset-id}}" }}'
                 - name: profile-id
@@ -51,7 +51,7 @@ spec:
             arguments:
               parameters:
                 - name: api-url
-                  value: '{{ "{{inputs.parameters.url}}/api/v1" }}'
+                  value: '{{ "{{inputs.parameters.url}}" }}'
                 - name: job-id
                   value: '{{ "{{tasks.submit-file-ingest.outputs.result}}" }}'
                 - name: timeout
@@ -64,7 +64,7 @@ spec:
             arguments:
               parameters:
                 - name: api-url
-                  value: '{{ "{{inputs.parameters.url}}/api/v1" }}'
+                  value: '{{ "{{inputs.parameters.url}}" }}'
                 - name: job-id
                   value: '{{ "{{tasks.submit-file-ingest.outputs.result}}" }}'
       outputs:

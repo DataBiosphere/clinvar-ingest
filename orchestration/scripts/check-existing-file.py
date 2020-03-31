@@ -12,7 +12,7 @@ target_path = os.environ["TARGET_PATH"]
 
 
 def check_file_existence(target_path: str):
-    response = authed_session.get(f"{base_url}/datasets/{dataset_id}/filesystem/objects",
+    response = authed_session.get(f"{base_url}/api/repository/v1/datasets/{dataset_id}/filesystem/objects",
                                   params={"path": target_path})
     if response.status_code == 200:
         return "true"

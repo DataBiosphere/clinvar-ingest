@@ -16,7 +16,7 @@ headers = {"accept": "application/json",
            "Content-Type": "application/json"}
 
 def ingest_file(dataset_id: str, **kwargs):
-    response = authed_session.post(f"{base_url}/datasets/{dataset_id}/files", json=kwargs, headers=headers)
+    response = authed_session.post(f"{base_url}/api/repository/v1/datasets/{dataset_id}/files", json=kwargs, headers=headers)
     if response.ok:
         return response.json()["id"]
     else:

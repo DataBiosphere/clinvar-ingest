@@ -14,7 +14,7 @@ timeout = os.environ["TIMEOUT"]
 headers = {"accept": "application/json"}
 
 def check_job_status(job_id: str):
-    response = authed_session.get(f"{base_url}/jobs/{job_id}", headers=headers)
+    response = authed_session.get(f"{base_url}/api/repository/v1/jobs/{job_id}", headers=headers)
     if response.ok:
         return response.json()["job_status"]
     else:
