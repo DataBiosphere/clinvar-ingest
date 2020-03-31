@@ -5,7 +5,9 @@ import org.broadinstitute.monster.common.PipelineBuilderSpec
 
 class ClinVarPipelineIntegrationSpec extends PipelineBuilderSpec[Args] {
   private val truthDir = File.currentWorkingDirectory / "src" / "it" / "test-files" / "outputs"
-  private val compareDir = File.currentWorkingDirectory / "src" / "it" / "test-files" / "outputs-to-compare"
+
+  private val compareDir =
+    File.currentWorkingDirectory / "src" / "it" / "test-files" / "outputs-to-compare"
   private val inputDirString = s"${File.currentWorkingDirectory}/src/it/test-files/inputs"
   private val compareDirString = compareDir.pathAsString
 
@@ -26,13 +28,12 @@ class ClinVarPipelineIntegrationSpec extends PipelineBuilderSpec[Args] {
     * @param subDir The sub-directory of the outputs dir containing the files to read
     * @return A tuple of Set of Json, where the first one is the Set-to-test and the second one is the truth-Set
     */
-  private def compareTruthAndCompSets(subDir: String): Unit = {
+  private def compareTruthAndCompSets(subDir: String): Unit =
     it should s"have written the correct $subDir data" in {
       val expected = readMsgs(truthDir / subDir)
       val actual = readMsgs(compareDir / subDir)
       actual should contain theSameElementsAs expected
     }
-  }
 
   behavior of "ClinVarPipeline"
 
