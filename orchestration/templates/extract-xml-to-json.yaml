@@ -19,7 +19,7 @@ spec:
           persistentVolumeClaim:
             claimName: '{{ "{{inputs.parameters.output-pvc-name}}" }}'
       container:
-        image: us.gcr.io/broad-dsp-gcr-public/monster-xml-to-json-list:3.1.1
+        image: us.gcr.io/broad-dsp-gcr-public/monster-xml-to-json-list:3.2.1
         command: []
         args:
           - --input=/in/{{ "{{inputs.parameters.input-xml-path}}" }}
