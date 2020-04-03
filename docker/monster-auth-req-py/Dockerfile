@@ -1,2 +1,5 @@
 FROM python:3-slim
-RUN pip install google-auth requests polling
+ARG GOOGLE_AUTH_VERSION
+ARG REQUESTS_VERSION
+ARG POLLING_VERSION
+RUN pip install google-auth==${GOOGLE_AUTH_VERSION} requests==${REQUESTS_VERSION} polling==${POLLING_VERSION}
