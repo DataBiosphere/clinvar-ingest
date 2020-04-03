@@ -21,7 +21,6 @@ def check_file_existence(target_path: str):
     elif response.status_code == 404:
         return "false"
     else:
-        raise HTTPError(f"Unexpected response, got code of: {response.status_code}"
-                        f"and the client_id is {credentials.client_id}")
+        raise HTTPError(f"Unexpected response, got code of: {response.status_code}")
 
 print(check_file_existence(target_path))
