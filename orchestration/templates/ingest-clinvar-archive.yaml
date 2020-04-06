@@ -122,7 +122,7 @@ spec:
                   value: 'ClinVarVariationRelease/part-1.json'
           # 6) Stage a release_history object in GCS
           - name: stage-release-history
-            dependencies: [extract-release-date]
+            dependencies: [upload-raw-archive, extract-release-date]
             templateRef:
               name: create-json-object
               template: main
