@@ -8,8 +8,12 @@
     },
     {
       "name": "archive_path",
-      "datatype": "file_ref",
+      "datatype": "fileref",
       "type": "required"
     }
-  ]
+  ],
+  "partitioning": {
+    "mode": "date_from_column",
+    "column": "release_date"
+  }
 }
