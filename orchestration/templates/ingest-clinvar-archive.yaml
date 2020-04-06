@@ -128,8 +128,6 @@ spec:
               template: main
             arguments:
               parameters:
-                - name: pvc-name
-                  value: '{{ $extractionPvc }}'
                 - name: release-date
                   value: '{{ "/{{tasks.extract-release-date.outputs.result}}.xml" }}'
                 - name: archive-path
