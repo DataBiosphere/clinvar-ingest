@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: create-json-object
+spec:
+  templates:
+    - name: main
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: release-date # release date (store to json object)
+          - name: archive-path # archive path (store to json object)
+          - name: upload-path # upload to this gs: path
+      volumes:
+        - name: state
+          persistentVolumeClaim:
+            claimName: '{{ "{{inputs.parameters.pvc-name}}" }}'
+            readOnly: true
+      {{- include "argo.retry" . | indent 6 }}
+      script:
+        image: google/cloud-sdk:slim
+        command: [bash]
+        source: |
+        json='{"@release_date":"'{{ "{{inputs.parameters.release-date}}" }}'","@archive_path":"'{{ "{{inputs.parameters.archive-path}}" }}'"}'
+        echo "$json" > release_history.json
+      container:
+        image: google/cloud-sdk:slim
+        command: [gsutil]
+        args:
+          - -m
+          - rsync
+          - -r
+          - /state/release_history.json
+          - {{ "{{inputs.parameters.upload-path}}" }} # upload the file to this path
+        volumeMounts:
+          - name: state
+            mountPath: /state
+            readOnly: true
