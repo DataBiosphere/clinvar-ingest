@@ -17,4 +17,4 @@ spec:
         source: |
             json='{"release_date":"'{{ "{{inputs.parameters.release-date}}" }}'","archive_path":"'{{ "{{inputs.parameters.archive-path}}" }}'"}'
             echo "$json" > release_history.json
-            gsutil -m rsync -r /state/release_history.json {{ "{{inputs.parameters.upload-path}}" }}
+            gsutil -m cp /state/release_history.json {{ "{{inputs.parameters.upload-path}}" }}
