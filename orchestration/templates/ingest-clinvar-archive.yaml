@@ -129,7 +129,7 @@ spec:
             arguments:
               parameters:
                 - name: release-date
-                  value: '{{ "/{{tasks.extract-release-date.outputs.result}}.xml" }}'
+                  value: '{{ "{{tasks.extract-release-date.outputs.result}}" }}'
                 - name: archive-path
                   value: '{{ printf "gs://%s/{{inputs.parameters.gcs-prefix}}/raw/%s" .Values.gcs.bucketName $localXmlName }}'
                 - name: upload-path
