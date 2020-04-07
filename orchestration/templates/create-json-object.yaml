@@ -15,10 +15,6 @@ spec:
         image: google/cloud-sdk:slim
         command: [bash]
         source: |
-        json='{"release_date":"'{{ "{{inputs.parameters.release-date}}" }}'","archive_path":"'{{ "{{inputs.parameters.archive-path}}" }}'"}'
-        echo "$json" > release_history.json
-        gsutil -m rsync -r /state/release_history.json {{ "{{inputs.parameters.upload-path}}" }}
-        volumeMounts:
-          - name: state
-            mountPath: /state
-            readOnly: true
+            json='{"release_date":"'{{ "{{inputs.parameters.release-date}}" }}'","archive_path":"'{{ "{{inputs.parameters.archive-path}}" }}'"}'
+            echo "$json" > release_history.json
+            gsutil -m rsync -r /state/release_history.json {{ "{{inputs.parameters.upload-path}}" }}
