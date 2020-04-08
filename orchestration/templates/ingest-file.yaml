@@ -37,7 +37,7 @@ spec:
           - name: submit-file-ingest
             dependencies: [check-existing-file]
             template: submit-file-ingest
-            when: '{{ "tasks.check-existing-file.outputs.result}} == false" }}'
+            when: '{{ "{{tasks.check-existing-file.outputs.result}} == false" }}'
             arguments:
               parameters:
                 - name: api-url
@@ -74,7 +74,7 @@ spec:
           - name: get-job-result
             dependencies: [poll-ingest-job]
             template: get-job-result
-            when: '{{ "tasks.poll-ingest-job.outputs.result}} == true" }}'
+            when: '{{ "{{tasks.poll-ingest-job.outputs.result}} == true" }}'
             arguments:
               parameters:
                 - name: api-url
