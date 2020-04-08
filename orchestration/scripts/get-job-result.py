@@ -1,16 +1,15 @@
-from google.auth import compute_engine
-import google.auth.transport.requests
+import google.auth
 from google.auth.transport.requests import AuthorizedSession
 from requests.exceptions import HTTPError
 import os
+
+credentials, project = google.auth.default(scopes=['openid', 'email', 'profile'])
 
 base_url = os.environ["API_URL"]
 job_id = os.environ["JOB_ID"]
 # this is the field to pull; for a file ingest, should be "fileId"
 result_field = os.environ["RESULT_FIELD"]
 
-request = google.auth.transport.requests.Request()
-credentials = compute_engine.IDTokenCredentials(request, base_url, use_metadata_identity_endpoint=True)
 authed_session = AuthorizedSession(credentials)
 
 
