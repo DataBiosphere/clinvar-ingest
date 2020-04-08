@@ -134,8 +134,7 @@ spec:
                   value: '{{ printf "gs://%s/{{inputs.parameters.gcs-prefix}}/raw/%s" .Values.gcs.bucketName $localXmlName }}'
                 - name: upload-path
                   value: '{{ printf "gs://%s/{{inputs.parameters.gcs-prefix}}/processed/release_history/" .Values.gcs.bucketName }}'
-          #  7) Run Dataflow on uploaded JSON.
-          # 6a) Ingest raw XML blob from GCS to Jade Data Repo.
+          # 7a) Ingest raw XML blob from GCS to Jade Data Repo.
           - name: ingest-raw-xml
             dependencies: [upload-raw-archive, extract-release-date]
             templateRef:
@@ -164,7 +163,7 @@ spec:
                 - name: sa-secret-key
                   value: '{{ .Values.saCreds.saSecretKey }}'
           {{- $extractionPvc := "{{tasks.generate-extraction-volume.outputs.parameters.pvc-name}}" }}
-          # 6b) Run Dataflow on uploaded JSON.
+          # 7b) Run Dataflow on uploaded JSON.
           - name: process-archive
             dependencies: [upload-extracted-archive]
             templateRef:
