@@ -108,7 +108,7 @@ spec:
       volumes:
         - name: '{{ $secretVolume }}'
           secret:
-            secretName: '{{ .Values.saCreds.saSecret }}'
+            secretName: '{{ .Values.repo.accessKey.secretName }}'
       script:
         image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.1
         env:
@@ -141,7 +141,7 @@ spec:
       volumes:
         - name: '{{ $secretVolume }}'
           secret:
-            secretName: '{{ .Values.saCreds.saSecret }}'
+            secretName: '{{ .Values.repo.accessKey.secretName }}'
       script:
         image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.1
         env:
@@ -176,7 +176,7 @@ spec:
       volumes:
         - name: '{{ $secretVolume }}'
           secret:
-            secretName: '{{ .Values.saCreds.saSecret }}'
+            secretName: '{{ .Values.repo.accessKey.secretName }}'
       script:
         image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.1
         env:
@@ -206,7 +206,7 @@ spec:
       volumes:
         - name: '{{ $secretVolume }}'
           secret:
-            secretName: '{{ .Values.saCreds.saSecret }}'
+            secretName: '{{ .Values.repo.accessKey.secretName }}'
       script:
         image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.1
         env:
