@@ -106,14 +106,14 @@ spec:
           - name: TARGET_PATH
             value: '{{ "{{inputs.parameters.target-path}}" }}'
           - name: GOOGLE_APPLICATION_CREDENTIALS
-            value: '{{ /secret/key.json }}'
+            value: '{{ "/secret/key.json" }}'
 #            valueFrom:
 #              secretKeyRef:
 #                name: '{{ "{{inputs.parameters.sa-secret}}" }}'
 #                key: '{{ "{{inputs.parameters.sa-secret-key}}" }}'
         volumeMounts:
           - name: '{{ $secretVolume }}'
-            mountPath: '{{ /secret }}'
+            mountPath: '{{ "/secret" }}'
         command: [python]
         source: |
           {{- range .Files.Lines "scripts/check-existing-file.py" }}
