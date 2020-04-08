@@ -91,18 +91,19 @@
         "url": {"type":  "string"},
         "datasetId": {"type": "string"},
         "profileId": {"type": "string"},
-        "pollTimeout": {"type":  "integer"}
-        },
-      "required": ["url", "datasetId", "profileId", "pollTimeout"]
+        "pollTimeout": {"type":  "integer"},
+        "accessKey": {
+          "type": "object",
+          "properties": {
+            "secretName": {"type": "string"},
+            "secretKey": {"type": "string"}
+          },
+          "required": ["secretName", "secretKey"]
+        }
+      },
+      "required": ["url", "datasetId", "profileId", "pollTimeout", "accessKey"]
     },
-    "maxParallelism": { "type": "integer" },
-    "saCreds": {
-      "type": "object",
-      "properties": {
-        "saSecret": {"type": "string"},
-        "saSecretKey": {"type": "string"}
-      }
-    }
+    "maxParallelism": { "type": "integer" }
   },
-  "required": ["gcs", "serviceAccount", "volumes", "cron", "dataflow", "repo", "maxParallelism", "saCreds"]
+  "required": ["gcs", "serviceAccount", "volumes", "cron", "dataflow", "repo", "maxParallelism"]
 }
