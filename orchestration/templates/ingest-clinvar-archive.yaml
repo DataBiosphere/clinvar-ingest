@@ -120,6 +120,21 @@ spec:
                   value: '{{ $extractionPvc }}'
                 - name: file-path
                   value: 'ClinVarVariationRelease/part-1.json'
+          # 6) Stage a release_history object in GCS
+          - name: stage-release-history
+            dependencies: [extract-release-date]
+            templateRef:
+              name: create-json-object
+              template: main
+            arguments:
+              parameters:
+                - name: release-date
+                  value: '{{ "{{tasks.extract-release-date.outputs.result}}" }}'
+                - name: archive-path
+                  value: '{{ printf "gs://%s/{{inputs.parameters.gcs-prefix}}/raw/%s" .Values.gcs.bucketName $localXmlName }}'
+                - name: upload-path
+                  value: '{{ printf "gs://%s/{{inputs.parameters.gcs-prefix}}/processed/release_history/" .Values.gcs.bucketName }}'
+          #  7) Run Dataflow on uploaded JSON.
           # 6a) Ingest raw XML blob from GCS to Jade Data Repo.
           - name: ingest-raw-xml
             dependencies: [upload-raw-archive, extract-release-date]
@@ -163,7 +178,7 @@ spec:
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw'
                 - name: output-prefix
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/processed'
-          # 7) Diff generated data against existing data
+          # 8) Diff generated data against existing data
           - name: diff-tables
             dependencies: [process-archive]
             templateRef:
