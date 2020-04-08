@@ -3,6 +3,11 @@ kind: WorkflowTemplate
 metadata:
   name: ingest-file
 spec:
+  {{- secretVolume := "sa-secret-volume" }}
+  volumes:
+    - name: '{{ $secretVolume }}'
+      secret:
+        secretName: '{{ .Values.saCreds.saSecret }}'
   templates:
     - name: main
       inputs:
@@ -14,6 +19,8 @@ spec:
           - name: gcs-file-path
           - name: target-path
           - name: timeout
+          - name: sa-secret
+          - name: sa-secret-key
       dag:
         tasks:
           # 1) Make sure that something doesn't already exist at the target path
@@ -27,6 +34,10 @@ spec:
                   value: '{{ "{{inputs.parameters.dataset-id}}" }}'
                 - name: target-path
                   value: '{{ "{{inputs.parameters.target-path}}" }}'
+                - name: sa-secret
+                  value: '{{ "{{inputs.parameters.sa-secret}}" }}'
+                - name: sa-secret-key
+                  value: '{{ "{{inputs.parameters.sa-secret-key}}" }}'
           # 2) Make a post request to the Jade API to ingest the xml blob
           - name: submit-file-ingest
             dependencies: [check-existing-file]
@@ -83,6 +94,8 @@ spec:
           - name: api-url
           - name: dataset-id
           - name: target-path
+          - name: sa-secret
+          - name: sa-secret-key
       script:
         image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.1
         env:
@@ -92,6 +105,15 @@ spec:
             value: '{{ "{{inputs.parameters.dataset-id}}" }}'
           - name: TARGET_PATH
             value: '{{ "{{inputs.parameters.target-path}}" }}'
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: '{{ /secret/key.json }}'
+#            valueFrom:
+#              secretKeyRef:
+#                name: '{{ "{{inputs.parameters.sa-secret}}" }}'
+#                key: '{{ "{{inputs.parameters.sa-secret-key}}" }}'
+        volumeMounts:
+          - name: '{{ $secretVolume }}'
+            mountPath: '{{ /secret }}'
         command: [python]
         source: |
           {{- range .Files.Lines "scripts/check-existing-file.py" }}

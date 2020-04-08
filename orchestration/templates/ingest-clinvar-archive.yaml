@@ -144,6 +144,10 @@ spec:
                   value: '{{ .Values.gcs.bucketName }}'
                 - name: gcs-file-path
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw/{{ $localXmlName }}'
+                - name: sa-secret
+                  value: '{{ .Values.saCreds.saSecret }}'
+                - name: sa-secret-key
+                  value: '{{ .Values.saCreds.saSecretKey }}'
           {{- $extractionPvc := "{{tasks.generate-extraction-volume.outputs.parameters.pvc-name}}" }}
           # 6b) Run Dataflow on uploaded JSON.
           - name: process-archive

@@ -95,7 +95,14 @@
         },
       "required": ["url", "datasetId", "profileId", "pollTimeout"]
     },
-    "maxParallelism": { "type": "integer" }
+    "maxParallelism": { "type": "integer" },
+    "saCreds": {
+      "type": "object",
+      "properties": {
+        "saSecret": {"type": "string"},
+        "saSecretKey": {"type": "string"}
+      }
+    }
   },
-  "required": ["gcs", "serviceAccount", "volumes", "cron", "dataflow", "repo", "maxParallelism"]
+  "required": ["gcs", "serviceAccount", "volumes", "cron", "dataflow", "repo", "maxParallelism", "saCreds"]
 }
