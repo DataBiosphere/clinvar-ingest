@@ -98,6 +98,7 @@ spec:
           - name: sa-secret-key
       script:
         image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.1
+        {{- $mountPath := "/secret" }}
         env:
           - name: API_URL
             value: '{{ "{{inputs.parameters.api-url}}" }}'
@@ -106,14 +107,14 @@ spec:
           - name: TARGET_PATH
             value: '{{ "{{inputs.parameters.target-path}}" }}'
           - name: GOOGLE_APPLICATION_CREDENTIALS
-            value: '{{ "/secret/key.json" }}'
+            value: '{{ printf "%s/key.json" $mountPath }}'
 #            valueFrom:
 #              secretKeyRef:
 #                name: '{{ "{{inputs.parameters.sa-secret}}" }}'
 #                key: '{{ "{{inputs.parameters.sa-secret-key}}" }}'
         volumeMounts:
           - name: '{{ $secretVolume }}'
-            mountPath: '{{ "/secret" }}'
+            mountPath: '{{ $mountPath }}'
         command: [python]
         source: |
           {{- range .Files.Lines "scripts/check-existing-file.py" }}
