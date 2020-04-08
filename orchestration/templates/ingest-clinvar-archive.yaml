@@ -134,7 +134,36 @@ spec:
                   value: '{{ printf "gs://%s/{{inputs.parameters.gcs-prefix}}/raw/%s" .Values.gcs.bucketName $localXmlName }}'
                 - name: upload-path
                   value: '{{ printf "gs://%s/{{inputs.parameters.gcs-prefix}}/processed/release_history/" .Values.gcs.bucketName }}'
-          #  7) Run Dataflow on uploaded JSON.
+          # 7a) Ingest raw XML blob from GCS to Jade Data Repo.
+          - name: ingest-raw-xml
+            dependencies: [upload-raw-archive, extract-release-date]
+            templateRef:
+              name: ingest-file
+              template: main
+            arguments:
+              parameters:
+                {{- with .Values.repo }}
+                - name: url
+                  value: '{{ .url }}'
+                - name: dataset-id
+                  value: '{{ .datasetId }}'
+                - name: profile-id
+                  value: '{{ .profileId }}'
+                - name: timeout
+                  value: '{{ .pollTimeout }}'
+                - name: sa-secret
+                  value: '{{ .accessKey.secretName }}'
+                - name: sa-secret-key
+                  value: '{{ .accessKey.secretKey }}'
+                {{- end }}
+                - name: target-path
+                  value: '{{ "/{{tasks.extract-release-date.outputs.result}}.xml" }}'
+                - name: gcs-bucket
+                  value: '{{ .Values.gcs.bucketName }}'
+                - name: gcs-file-path
+                  value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw/{{ $localXmlName }}'
+          {{- $extractionPvc := "{{tasks.generate-extraction-volume.outputs.parameters.pvc-name}}" }}
+          # 7b) Run Dataflow on uploaded JSON.
           - name: process-archive
             dependencies: [upload-extracted-archive]
             templateRef:

@@ -1,0 +1,228 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: ingest-file
+spec:
+  templates:
+    - name: main
+      inputs:
+        parameters:
+          - name: url
+          - name: dataset-id
+          - name: profile-id
+          - name: gcs-bucket
+          - name: gcs-file-path
+          - name: target-path
+          - name: timeout
+          - name: sa-secret
+          - name: sa-secret-key
+      dag:
+        tasks:
+          # 1) Make sure that something doesn't already exist at the target path
+          - name: check-existing-file
+            template: check-existing-file
+            arguments:
+              parameters:
+                - name: api-url
+                  value: '{{ "{{inputs.parameters.url}}" }}'
+                - name: dataset-id
+                  value: '{{ "{{inputs.parameters.dataset-id}}" }}'
+                - name: target-path
+                  value: '{{ "{{inputs.parameters.target-path}}" }}'
+                - name: sa-secret
+                  value: '{{ "{{inputs.parameters.sa-secret}}" }}'
+                - name: sa-secret-key
+                  value: '{{ "{{inputs.parameters.sa-secret-key}}" }}'
+          # 2) Make a post request to the Jade API to ingest the xml blob
+          - name: submit-file-ingest
+            dependencies: [check-existing-file]
+            template: submit-file-ingest
+            when: '{{ "{{tasks.check-existing-file.outputs.result}} == false" }}'
+            arguments:
+              parameters:
+                - name: api-url
+                  value: '{{ "{{inputs.parameters.url}}" }}'
+                - name: dataset-id
+                  value: '{{ "{{inputs.parameters.dataset-id}}" }}'
+                - name: profile-id
+                  value: '{{ "{{inputs.parameters.profile-id}}" }}'
+                - name: source-path
+                  value: gs://{{ "{{inputs.parameters.gcs-bucket}}" }}/{{ "{{inputs.parameters.gcs-file-path}}" }}
+                - name: target-path
+                  value: '{{ "{{inputs.parameters.target-path}}" }}'
+                - name: sa-secret
+                  value: '{{ "{{inputs.parameters.sa-secret}}" }}'
+                - name: sa-secret-key
+                  value: '{{ "{{inputs.parameters.sa-secret-key}}" }}'
+          # 3) Poll the ingest job for the file repeatedly until the file has been ingested
+          - name: poll-ingest-job
+            dependencies: [submit-file-ingest]
+            template: poll-ingest-job
+            arguments:
+              parameters:
+                - name: api-url
+                  value: '{{ "{{inputs.parameters.url}}" }}'
+                - name: job-id
+                  value: '{{ "{{tasks.submit-file-ingest.outputs.result}}" }}'
+                - name: timeout
+                  value: '{{ "{{inputs.parameters.timeout}}" }}'
+                - name: sa-secret
+                  value: '{{ "{{inputs.parameters.sa-secret}}" }}'
+                - name: sa-secret-key
+                  value: '{{ "{{inputs.parameters.sa-secret-key}}" }}'
+          # 4) Return the fileId
+          - name: get-job-result
+            dependencies: [poll-ingest-job]
+            template: get-job-result
+            when: '{{ "{{tasks.poll-ingest-job.outputs.result}} == true" }}'
+            arguments:
+              parameters:
+                - name: api-url
+                  value: '{{ "{{inputs.parameters.url}}" }}'
+                - name: job-id
+                  value: '{{ "{{tasks.submit-file-ingest.outputs.result}}" }}'
+                - name: sa-secret
+                  value: '{{ "{{inputs.parameters.sa-secret}}" }}'
+                - name: sa-secret-key
+                  value: '{{ "{{inputs.parameters.sa-secret-key}}" }}'
+      outputs:
+        parameters:
+          - name: file-exists
+            valueFrom:
+              parameter: '{{ "{{tasks.check-existing-file.outputs.result}}" }}'
+          - name: file-id
+            valueFrom:
+              parameter: '{{ "{{tasks.get-job-result.outputs.result}}" }}'
+              default: ''
+    {{- $secretVolume := "sa-secret-volume" }}
+    {{- $mountPath := "/secret" }}
+    # SubTemplates
+    - name: check-existing-file
+      inputs:
+        parameters:
+          - name: api-url
+          - name: dataset-id
+          - name: target-path
+          - name: sa-secret
+          - name: sa-secret-key
+      volumes:
+        - name: '{{ $secretVolume }}'
+          secret:
+            secretName: '{{ .Values.repo.accessKey.secretName }}'
+      script:
+        image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.1
+        env:
+          - name: API_URL
+            value: '{{ "{{inputs.parameters.api-url}}" }}'
+          - name: DATASET_ID
+            value: '{{ "{{inputs.parameters.dataset-id}}" }}'
+          - name: TARGET_PATH
+            value: '{{ "{{inputs.parameters.target-path}}" }}'
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: '{{ printf "%s/key.json" $mountPath }}'
+        volumeMounts:
+          - name: '{{ $secretVolume }}'
+            mountPath: '{{ $mountPath }}'
+        command: [python]
+        source: |
+          {{- range .Files.Lines "scripts/check-existing-file.py" }}
+          {{ . }}
+          {{- end }}
+    - name: submit-file-ingest
+      inputs:
+        parameters:
+          - name: api-url
+          - name: dataset-id
+          - name: profile-id
+          - name: source-path
+          - name: target-path
+          - name: sa-secret
+          - name: sa-secret-key
+      volumes:
+        - name: '{{ $secretVolume }}'
+          secret:
+            secretName: '{{ .Values.repo.accessKey.secretName }}'
+      script:
+        image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.1
+        env:
+          - name: API_URL
+            value: '{{ "{{inputs.parameters.api-url}}" }}'
+          - name: DATASET_ID
+            value: '{{ "{{inputs.parameters.dataset-id}}" }}'
+          - name: PROFILE_ID
+            value: '{{ "{{inputs.parameters.profile-id}}" }}'
+          - name: SOURCE_PATH
+            value: '{{ "{{inputs.parameters.source-path}}" }}'
+          - name: TARGET_PATH
+            value: '{{ "{{inputs.parameters.target-path}}" }}'
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: '{{ printf "%s/key.json" $mountPath }}'
+        volumeMounts:
+          - name: '{{ $secretVolume }}'
+            mountPath: '{{ $mountPath }}'
+        command: [python]
+        source: |
+          {{- range .Files.Lines "scripts/submit-file-ingest.py" }}
+          {{ . }}
+          {{- end }}
+    - name: poll-ingest-job
+      inputs:
+        parameters:
+          - name: api-url
+          - name: job-id
+          - name: timeout
+          - name: sa-secret
+          - name: sa-secret-key
+      volumes:
+        - name: '{{ $secretVolume }}'
+          secret:
+            secretName: '{{ .Values.repo.accessKey.secretName }}'
+      script:
+        image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.1
+        env:
+          - name: API_URL
+            value: '{{ "{{inputs.parameters.api-url}}" }}'
+          - name: JOB_ID
+            value: '{{ "{{inputs.parameters.job-id}}" }}'
+          - name: TIMEOUT
+            value: '{{ "{{inputs.parameters.timeout}}" }}'
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: '{{ printf "%s/key.json" $mountPath }}'
+        volumeMounts:
+          - name: '{{ $secretVolume }}'
+            mountPath: '{{ $mountPath }}'
+        command: [python]
+        source: |
+          {{- range .Files.Lines "scripts/poll-ingest-job.py" }}
+          {{ . }}
+          {{- end }}
+    - name: get-job-result
+      inputs:
+        parameters:
+          - name: api-url
+          - name: job-id
+          - name: sa-secret
+          - name: sa-secret-key
+      volumes:
+        - name: '{{ $secretVolume }}'
+          secret:
+            secretName: '{{ .Values.repo.accessKey.secretName }}'
+      script:
+        image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.1
+        env:
+          - name: API_URL
+            value: '{{ "{{inputs.parameters.api-url}}" }}'
+          - name: JOB_ID
+            value: '{{ "{{inputs.parameters.job-id}}" }}'
+          - name: RESULT_FIELD
+            value: fileId
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: '{{ printf "%s/key.json" $mountPath }}'
+        volumeMounts:
+          - name: '{{ $secretVolume }}'
+            mountPath: '{{ $mountPath }}'
+        command: [python]
+        source: |
+          {{- range .Files.Lines "scripts/get-job-result.py" }}
+          {{ . }}
+          {{- end }}
