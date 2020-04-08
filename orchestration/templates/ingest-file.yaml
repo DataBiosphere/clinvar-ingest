@@ -3,7 +3,7 @@ kind: WorkflowTemplate
 metadata:
   name: ingest-file
 spec:
-  {{- secretVolume := "sa-secret-volume" }}
+  {{- $secretVolume := "sa-secret-volume" }}
   volumes:
     - name: '{{ $secretVolume }}'
       secret:
