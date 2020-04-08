@@ -120,7 +120,21 @@ spec:
                   value: '{{ $extractionPvc }}'
                 - name: file-path
                   value: 'ClinVarVariationRelease/part-1.json'
-          # 6) Run Dataflow on uploaded JSON.
+          # 6) Stage a release_history object in GCS
+          - name: stage-release-history
+            dependencies: [extract-release-date]
+            templateRef:
+              name: create-json-object
+              template: main
+            arguments:
+              parameters:
+                - name: release-date
+                  value: '{{ "{{tasks.extract-release-date.outputs.result}}" }}'
+                - name: archive-path
+                  value: '{{ printf "gs://%s/{{inputs.parameters.gcs-prefix}}/raw/%s" .Values.gcs.bucketName $localXmlName }}'
+                - name: upload-path
+                  value: '{{ printf "gs://%s/{{inputs.parameters.gcs-prefix}}/processed/release_history/" .Values.gcs.bucketName }}'
+          #  7) Run Dataflow on uploaded JSON.
           - name: process-archive
             dependencies: [upload-extracted-archive]
             templateRef:
@@ -134,7 +148,7 @@ spec:
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw'
                 - name: output-prefix
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/processed'
-          # 7) Diff generated data against existing data
+          # 8) Diff generated data against existing data
           - name: diff-tables
             dependencies: [process-archive]
             templateRef:
