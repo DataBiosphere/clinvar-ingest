@@ -75,32 +75,7 @@ spec:
                   value: '{{ .Values.volumes.extractSize }}'
                 - name: storage-class
                   value: '{{ .Values.volumes.storageClass }}'
-          # 4a) Ingest raw XML blob from GCS to Jade Data Repo.
-          - name: ingest-raw-xml
-            dependencies: [upload-raw-archive]
-            templateRef:
-              name: ingest-file
-              template: main
-            arguments:
-              parameters:
-                {{ -with .Values.repo }}
-                - name: api-url
-                  value: '{{ .apiUrl }}'
-                - name: dataset-id
-                  value: '{{ .datasetId }}'
-                - name: profile-id
-                  value: '{{ .profileId }}'
-                - name: target-path
-                  value: '{{ .targetPath }}'
-                - name: timeout
-                  value: '{{ .pollTimeout }}'
-                {{ -end }}
-                - name: gcs-bucket
-                  value: '{{ .Values.gcs.bucketName }}'
-                - name: gcs-file-path
-                  value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw/{{ $localXmlName }}'
-          {{- $extractionPvc := "{{tasks.generate-extraction-volume.outputs.parameters.pvc-name}}" }}
-          # 4b) Extract raw XML to JSON-list.
+          # 4) Extract raw XML to JSON-list.
           - name: extract-xml
             dependencies: [generate-extraction-volume]
             templateRef:
