@@ -7,7 +7,7 @@ spec:
     - name: main
       inputs:
         parameters:
-          - name: api-url
+          - name: url
           - name: dataset-id
           - name: gcs-bucket
           - name: gcs-prefix
@@ -20,8 +20,8 @@ spec:
             template: submit-table-ingest
             arguments:
               parameters:
-                - name: api-url
-                  value: '{{ "{{inputs.parameters.api-url}}" }}'
+                - name: url
+                  value: '{{ "{{inputs.parameters.url}}" }}'
                 - name: dataset-id
                   value: '{{ "{{inputs.parameters.dataset-id}}" }}'
                 - name: source-path
@@ -34,8 +34,8 @@ spec:
             template: poll-ingest-job
             arguments:
               parameters:
-                - name: api-url
-                  value: '{{ "{{inputs.parameters.api-url}}" }}'
+                - name: url
+                  value: '{{ "{{inputs.parameters.url}}" }}'
                 - name: job-id
                   value: '{{ "{{tasks.submit-table-ingest.outputs.result}}" }}'
                 - name: timeout
@@ -44,7 +44,7 @@ spec:
     - name: submit-table-ingest
       inputs:
         parameters:
-          - name: api-url
+          - name: url
           - name: dataset-id
           - name: source-path
           - name: table-name
@@ -52,7 +52,7 @@ spec:
         image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.0
         env:
           - name: API_URL
-            value: '{{ "{{inputs.parameters.api-url}}" }}'
+            value: '{{ "{{inputs.parameters.url}}" }}'
           - name: DATASET_ID
             value: '{{ "{{inputs.parameters.dataset-id}}" }}'
           - name: SOURCE_PATH
@@ -67,14 +67,14 @@ spec:
     - name: poll-ingest-job
       inputs:
         parameters:
-          - name: api-url
+          - name: url
           - name: job-id
           - name: timeout
       script:
         image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.0
         env:
           - name: API_URL
-            value: '{{ "{{inputs.parameters.api-url}}" }}'
+            value: '{{ "{{inputs.parameters.url}}" }}'
           - name: JOB_ID
             value: '{{ "{{inputs.parameters.job-id}}" }}'
           - name: TIMEOUT
