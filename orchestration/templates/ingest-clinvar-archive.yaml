@@ -120,21 +120,7 @@ spec:
                   value: '{{ $extractionPvc }}'
                 - name: file-path
                   value: 'ClinVarVariationRelease/part-1.json'
-          # 6) Stage a release_history object in GCS
-          - name: stage-release-history
-            dependencies: [extract-release-date]
-            templateRef:
-              name: create-json-object
-              template: main
-            arguments:
-              parameters:
-                - name: release-date
-                  value: '{{ "{{tasks.extract-release-date.outputs.result}}" }}'
-                - name: archive-path
-                  value: '{{ printf "gs://%s/{{inputs.parameters.gcs-prefix}}/raw/%s" .Values.gcs.bucketName $localXmlName }}'
-                - name: upload-path
-                  value: '{{ printf "gs://%s/{{inputs.parameters.gcs-prefix}}/processed/release_history/" .Values.gcs.bucketName }}'
-          # 7a) Ingest raw XML blob from GCS to Jade Data Repo.
+          # 6) Ingest raw XML blob from GCS to Jade Data Repo.
           - name: ingest-raw-xml
             dependencies: [upload-raw-archive, extract-release-date]
             templateRef:
@@ -162,8 +148,23 @@ spec:
                   value: '{{ .Values.gcs.bucketName }}'
                 - name: gcs-file-path
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw/{{ $localXmlName }}'
-          {{- $extractionPvc := "{{tasks.generate-extraction-volume.outputs.parameters.pvc-name}}" }}
-          # 7b) Run Dataflow on uploaded JSON.
+          # 7) Stage a release_history object in GCS
+          - name: stage-release-history
+            dependencies: [extract-release-date, ingest-raw-xml]
+            templateRef:
+              name: create-json-object
+              template: main
+            # WHEN the file does not already exist in the repo, THEN we can expect a drs-id for a file
+            when: '{{ "{{tasks.ingest-raw-xml.outputs.file-exists}} == false" }}'
+            arguments:
+              parameters:
+                - name: release-date
+                  value: '{{ "{{tasks.extract-release-date.outputs.result}}" }}'
+                - name: archive-path
+                  value: '{{ "{{tasks.ingest-raw-xml.outputs.file-id}}" }}'
+                - name: upload-path
+                  value: '{{ printf "gs://%s/{{inputs.parameters.gcs-prefix}}/processed/release_history/" .Values.gcs.bucketName }}'
+          # 8) Run Dataflow on uploaded JSON.
           - name: process-archive
             dependencies: [upload-extracted-archive]
             templateRef:
@@ -177,7 +178,7 @@ spec:
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw'
                 - name: output-prefix
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/processed'
-          # 8) Diff generated data against existing data
+          # 9) Diff generated data against existing data
           - name: diff-tables
             dependencies: [process-archive]
             templateRef:
