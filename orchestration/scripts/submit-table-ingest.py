@@ -25,6 +25,6 @@ print(ingest_table(dataset_id,
                    format="json",
                    ignore_unknown_values=False,
                    max_bad_records=0,
-                   path=source_path,
+                   path=f"{source_path}/*",
                    table=table_name
                    ))

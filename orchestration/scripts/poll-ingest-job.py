@@ -22,12 +22,22 @@ def check_job_status(job_id: str):
         raise HTTPError("Bad response, got code of: {}".format(response.status_code))
 
 
-def is_done(job_id: str):
-    return check_job_status(job_id) == "succeeded"
+def is_done(job_id: str) -> bool:
+    # if "running" then we want to keep polling, so false
+    # if "succeeded" then we want to stop polling, so true
+    # if "failed" then we want to stop polling, so true
+    status = check_job_status(job_id)
+    print(status)
+    return status in ["succeeded", "failed"]
+
+
+def is_success(job_id: str):
+    # need to spit out the lowercase strings instead of real bools, allows the workflow to know if it succeeded or not
+    return "true" if check_job_status(job_id) == "succeeded" else "false"
 
 try:
     polling.poll(lambda: is_done(job_id), step=10, timeout=int(timeout))
-    print("true")
+    print(is_success(job_id))
 except polling.TimeoutException as te:
     while not te.values.empty():
         # Print all of the values that did not meet the exception
