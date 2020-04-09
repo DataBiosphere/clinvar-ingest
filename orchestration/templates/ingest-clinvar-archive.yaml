@@ -75,6 +75,7 @@ spec:
                   value: '{{ .Values.volumes.extractSize }}'
                 - name: storage-class
                   value: '{{ .Values.volumes.storageClass }}'
+          {{- $extractionPvc := "{{tasks.generate-extraction-volume.outputs.parameters.pvc-name}}" }}
           # 4) Extract raw XML to JSON-list.
           - name: extract-xml
             dependencies: [generate-extraction-volume]
