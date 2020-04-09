@@ -244,31 +244,30 @@ object ParsedScv {
 
     // Traverse the tree of SCV variations, parsing each one and adding it to a buffer.
     def extractAndAccumulateDescendants(variationWrapper: Msg): VariationDescendants =
-      VariationDescendants.fromVariationWrapper(variationWrapper) {
-        (subtype, rawVariation) =>
-          val baseVariation = ClinicalAssertionVariation(
-            id = s"$assertionAccession.${counter.getAndIncrement()}",
-            clinicalAssertionId = assertionAccession,
-            subclassType = subtype,
-            childIds = Array.empty,
-            descendantIds = Array.empty,
-            variationType = rawVariation
-              .tryExtract[String]("VariantType", "$")
-              .orElse(rawVariation.tryExtract[String]("VariationType", "$")),
-            // NOTE: Left `None` here on purpose; it gets filled in later once the
-            // child variations have been extracted out.
-            content = None
+      VariationDescendants.fromVariationWrapper(variationWrapper) { (subtype, rawVariation) =>
+        val baseVariation = ClinicalAssertionVariation(
+          id = s"$assertionAccession.${counter.getAndIncrement()}",
+          clinicalAssertionId = assertionAccession,
+          subclassType = subtype,
+          childIds = Array.empty,
+          descendantIds = Array.empty,
+          variationType = rawVariation
+            .tryExtract[String]("VariantType", "$")
+            .orElse(rawVariation.tryExtract[String]("VariationType", "$")),
+          // NOTE: Left `None` here on purpose; it gets filled in later once the
+          // child variations have been extracted out.
+          content = None
+        )
+        val descendants = extractAndAccumulateDescendants(rawVariation)
+        val allAncestry = descendants.childIds ::: descendants.descendantIds
+        buffer.append {
+          baseVariation.copy(
+            childIds = descendants.childIds.toArray,
+            descendantIds = allAncestry.toArray,
+            content = Content.encode(rawVariation)
           )
-          val descendants = extractAndAccumulateDescendants(rawVariation)
-          val allAncestry = descendants.childIds ::: descendants.descendantIds
-          buffer.append {
-            baseVariation.copy(
-              childIds = descendants.childIds.toArray,
-              descendantIds = allAncestry.toArray,
-              content = Content.encode(rawVariation)
-            )
-          }
-          (baseVariation.id, allAncestry)
+        }
+        (baseVariation.id, allAncestry)
       }
 
     // Build up the buffer of variations while traversing the tree.

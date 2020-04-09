@@ -1,11 +1,7 @@
 package org.broadinstitute.monster.clinvar.parsers
 
 import org.broadinstitute.monster.clinvar.{Constants, Content}
-import org.broadinstitute.monster.clinvar.jadeschema.table.{
-  Gene,
-  GeneAssociation,
-  Variation
-}
+import org.broadinstitute.monster.clinvar.jadeschema.table.{Gene, GeneAssociation, Variation}
 import upack.Msg
 
 /**
@@ -49,7 +45,7 @@ object ParsedVariation {
           id = rawGene.extract[String]("@GeneID"),
           symbol = rawGene.tryExtract[String]("@Symbol"),
           hgncId = rawGene.tryExtract[String]("@HGNC_ID"),
-          fullName = rawGene.tryExtract[String]("FullName", "$")
+          fullName = rawGene.tryExtract[String]("@FullName")
         )
         val geneAssociation = GeneAssociation(
           geneId = gene.id,

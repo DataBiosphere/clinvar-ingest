@@ -114,7 +114,7 @@ spec:
                   value: '{{ $localXmlName }}'
                 - name: output-pvc-name
                   value: '{{ $extractionPvc }}'
-          # 5) Upload JSON-list data to GCS.
+          # 5a) Upload JSON-list data to GCS.
           - name: upload-extracted-archive
             dependencies: [extract-xml]
             templateRef:
@@ -132,7 +132,62 @@ spec:
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw/VariationArchive'
                 - name: max-concurrent-uploads
                   value: '2'
-          # 6) Run Dataflow on uploaded JSON.
+          # 5b) Extract clinvar release date.
+          - name: extract-release-date
+            dependencies: [extract-xml]
+            templateRef:
+              name: extract-clinvar-release-date
+              template: main
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: '{{ $extractionPvc }}'
+                - name: file-path
+                  value: 'ClinVarVariationRelease/part-1.json'
+          # 6) Stage a release_history object in GCS
+          - name: stage-release-history
+            dependencies: [extract-release-date]
+            templateRef:
+              name: create-json-object
+              template: main
+            arguments:
+              parameters:
+                - name: release-date
+                  value: '{{ "{{tasks.extract-release-date.outputs.result}}" }}'
+                - name: archive-path
+                  value: '{{ printf "gs://%s/{{inputs.parameters.gcs-prefix}}/raw/%s" .Values.gcs.bucketName $localXmlName }}'
+                - name: upload-path
+                  value: '{{ printf "gs://%s/{{inputs.parameters.gcs-prefix}}/processed/release_history/" .Values.gcs.bucketName }}'
+          # 7a) Ingest raw XML blob from GCS to Jade Data Repo.
+          - name: ingest-raw-xml
+            dependencies: [upload-raw-archive, extract-release-date]
+            templateRef:
+              name: ingest-file
+              template: main
+            arguments:
+              parameters:
+                {{- with .Values.repo }}
+                - name: url
+                  value: '{{ .url }}'
+                - name: dataset-id
+                  value: '{{ .datasetId }}'
+                - name: profile-id
+                  value: '{{ .profileId }}'
+                - name: timeout
+                  value: '{{ .pollTimeout }}'
+                - name: sa-secret
+                  value: '{{ .accessKey.secretName }}'
+                - name: sa-secret-key
+                  value: '{{ .accessKey.secretKey }}'
+                {{- end }}
+                - name: target-path
+                  value: '{{ "/{{tasks.extract-release-date.outputs.result}}.xml" }}'
+                - name: gcs-bucket
+                  value: '{{ .Values.gcs.bucketName }}'
+                - name: gcs-file-path
+                  value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw/{{ $localXmlName }}'
+          {{- $extractionPvc := "{{tasks.generate-extraction-volume.outputs.parameters.pvc-name}}" }}
+          # 7b) Run Dataflow on uploaded JSON.
           - name: process-archive
             dependencies: [upload-extracted-archive]
             templateRef:
@@ -146,7 +201,7 @@ spec:
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw'
                 - name: output-prefix
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/processed'
-          # 7) Diff generated data against existing data
+          # 8) Diff generated data against existing data
           - name: diff-tables
             dependencies: [process-archive]
             templateRef:

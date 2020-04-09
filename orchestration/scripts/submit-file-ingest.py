@@ -5,18 +5,17 @@ import os
 
 credentials, project = google.auth.default(scopes=['openid', 'email', 'profile'])
 
-authed_session = AuthorizedSession(credentials)
 base_url = os.environ["API_URL"]
 dataset_id = os.environ["DATASET_ID"]
 profile_id = os.environ["PROFILE_ID"]
 source_path = os.environ["SOURCE_PATH"]
 target_path = os.environ["TARGET_PATH"]
 
-headers = {"accept": "application/json",
-           "Content-Type": "application/json"}
+authed_session = AuthorizedSession(credentials)
+
 
 def ingest_file(dataset_id: str, **kwargs):
-    response = authed_session.post(base_url + f"datasets/{dataset_id}/files", json=kwargs, headers=headers)
+    response = authed_session.post(f"{base_url}/api/repository/v1/datasets/{dataset_id}/files", json=kwargs)
     if response.ok:
         return response.json()["id"]
     else:

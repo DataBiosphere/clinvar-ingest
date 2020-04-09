@@ -7,14 +7,15 @@ import sys
 
 credentials, project = google.auth.default(scopes=['openid', 'email', 'profile'])
 
-authed_session = AuthorizedSession(credentials)
 base_url = os.environ["API_URL"]
 job_id = os.environ["JOB_ID"]
 timeout = os.environ["TIMEOUT"]
-headers = {"accept": "application/json"}
+
+authed_session = AuthorizedSession(credentials)
+
 
 def check_job_status(job_id: str):
-    response = authed_session.get(base_url + "jobs/" + job_id, headers=headers)
+    response = authed_session.get(f"{base_url}/api/repository/v1/jobs/{job_id}")
     if response.ok:
         return response.json()["job_status"]
     else:
@@ -26,7 +27,7 @@ def is_done(job_id: str):
 
 try:
     polling.poll(lambda: is_done(job_id), step=10, timeout=int(timeout))
-    print(True)
+    print("true")
 except polling.TimeoutException as te:
     while not te.values.empty():
         # Print all of the values that did not meet the exception

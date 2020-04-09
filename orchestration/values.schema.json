@@ -88,13 +88,20 @@
     "repo" : {
       "type": "object",
       "properties": {
-        "apiUrl": {"type":  "string"},
+        "url": {"type":  "string"},
         "datasetId": {"type": "string"},
         "profileId": {"type": "string"},
-        "targetPath": {"type":  "string"},
-        "pollTimeout": {"type":  "integer"}
-        },
-      "required": ["apiUrl", "datasetId", "profileId", "targetPath", "pollTimeout"]
+        "pollTimeout": {"type":  "integer"},
+        "accessKey": {
+          "type": "object",
+          "properties": {
+            "secretName": {"type": "string"},
+            "secretKey": {"type": "string"}
+          },
+          "required": ["secretName", "secretKey"]
+        }
+      },
+      "required": ["url", "datasetId", "profileId", "pollTimeout", "accessKey"]
     },
     "maxParallelism": { "type": "integer" }
   },
