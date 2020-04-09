@@ -27,7 +27,6 @@ def is_done(job_id: str) -> bool:
     # if "succeeded" then we want to stop polling, so true
     # if "failed" then we want to stop polling, so true
     status = check_job_status(job_id)
-    print(status)
     return status in ["succeeded", "failed"]
 
 
