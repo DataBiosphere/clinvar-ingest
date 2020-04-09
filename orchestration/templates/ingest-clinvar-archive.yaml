@@ -248,7 +248,7 @@ spec:
               - trait_set
               - variation
               - variation_archive
-          # 9) Ingest tables into the Jade Data Repo
+          # 10) Ingest tables into the Jade Data Repo
           - name: ingest-tables
             dependencies: [diff-tables]
             templateRef:
@@ -257,12 +257,16 @@ spec:
             arguments:
               parameters:
                 {{- with .Values.repo }}
-                - name: urk
+                - name: url
                   value: '{{ .url }}'
                 - name: dataset-id
                   value: '{{ .datasetId }}'
                 - name: timeout
                   value: '{{ .pollTimeout }}'
+                - name: sa-secret
+                  value: '{{ .accessKey.secretName }}'
+                - name: sa-secret-key
+                  value: '{{ .accessKey.secretKey }}'
                 {{- end }}
                 - name: gcs-bucket
                   value: '{{ .Values.gcs.bucketName }}'

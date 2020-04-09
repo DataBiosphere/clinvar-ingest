@@ -5,17 +5,16 @@ import os
 
 credentials, project = google.auth.default(scopes=['openid', 'email', 'profile'])
 
-authed_session = AuthorizedSession(credentials)
 base_url = os.environ["API_URL"]
 dataset_id = os.environ["DATASET_ID"]
 source_path = os.environ["SOURCE_PATH"]
 table_name = os.environ["TABLE_NAME"]
 
-headers = {"accept": "application/json",
-           "Content-Type": "application/json"}
+authed_session = AuthorizedSession(credentials)
+
 
 def ingest_table(dataset_id: str, **kwargs):
-    response = authed_session.post(base_url + f"datasets/{dataset_id}/ingest", json=kwargs, headers=headers)
+    response = authed_session.post(base_url + f"datasets/{dataset_id}/ingest", json=kwargs)
     if response.ok:
         return response.json()["id"]
     else:

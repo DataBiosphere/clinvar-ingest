@@ -13,9 +13,11 @@ spec:
           - name: gcs-prefix
           - name: table-name
           - name: timeout
+          - name: sa-secret
+          - name: sa-secret-key
       dag:
         tasks:
-          ## 1) Make a post request to the Jade API to ingest the xml blob
+          # 1) Make a post request to the Jade API to ingest the table
           - name: submit-table-ingest
             template: submit-table-ingest
             arguments:
@@ -28,7 +30,11 @@ spec:
                   value: '{{ "gs://{{inputs.parameters.gcs-bucket}}/{{inputs.parameters.gcs-prefix}}" }}'
                 - name: table-name
                   value: '{{ "{{inputs.parameters.table-name}}" }}'
-          ## 2) Poll the ingest job for the table repeatedly until the table has been ingested
+                - name: sa-secret
+                  value: '{{ "{{inputs.parameters.sa-secret}}" }}'
+                - name: sa-secret-key
+                  value: '{{ "{{inputs.parameters.sa-secret-key}}" }}'
+          # 2) Poll the ingest job for the table repeatedly until the table has been ingested
           - name: poll-ingest-job
             dependencies: [submit-table-ingest]
             template: poll-ingest-job
@@ -40,7 +46,13 @@ spec:
                   value: '{{ "{{tasks.submit-table-ingest.outputs.result}}" }}'
                 - name: timeout
                   value: '{{ "{{inputs.parameters.timeout}}" }}'
-
+                - name: sa-secret
+                  value: '{{ "{{inputs.parameters.sa-secret}}" }}'
+                - name: sa-secret-key
+                  value: '{{ "{{inputs.parameters.sa-secret-key}}" }}'
+    {{- $secretVolume := "sa-secret-volume" }}
+    {{- $mountPath := "/secret" }}
+    # SubTemplates
     - name: submit-table-ingest
       inputs:
         parameters:
@@ -48,6 +60,12 @@ spec:
           - name: dataset-id
           - name: source-path
           - name: table-name
+          - name: sa-secret
+          - name: sa-secret-key
+      volumes:
+        - name: '{{ $secretVolume }}'
+          secret:
+            secretName: '{{ .Values.repo.accessKey.secretName }}'
       script:
         image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.0
         env:
@@ -59,6 +77,11 @@ spec:
             value: '{{ "{{inputs.parameters.source-path}}" }}'
           - name: TABLE_NAME
             value: '{{ "{{inputs.parameters.table-name}}" }}'
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: '{{ printf "%s/key.json" $mountPath }}'
+        volumeMounts:
+          - name: '{{ $secretVolume }}'
+            mountPath: '{{ $mountPath }}'
         command: [python]
         source: |
           {{- range .Files.Lines "scripts/submit-table-ingest.py" }}
@@ -70,6 +93,12 @@ spec:
           - name: url
           - name: job-id
           - name: timeout
+          - name: sa-secret
+          - name: sa-secret-key
+      volumes:
+        - name: '{{ $secretVolume }}'
+          secret:
+            secretName: '{{ .Values.repo.accessKey.secretName }}'
       script:
         image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.0
         env:
@@ -79,6 +108,11 @@ spec:
             value: '{{ "{{inputs.parameters.job-id}}" }}'
           - name: TIMEOUT
             value: '{{ "{{inputs.parameters.timeout}}" }}'
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: '{{ printf "%s/key.json" $mountPath }}'
+        volumeMounts:
+          - name: '{{ $secretVolume }}'
+            mountPath: '{{ $mountPath }}'
         command: [python]
         source: |
           {{- range .Files.Lines "scripts/poll-ingest-job.py" }}
