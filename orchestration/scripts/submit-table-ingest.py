@@ -14,7 +14,7 @@ authed_session = AuthorizedSession(credentials)
 
 
 def ingest_table(dataset_id: str, **kwargs):
-    response = authed_session.post(base_url + f"datasets/{dataset_id}/ingest", json=kwargs)
+    response = authed_session.post(f"{base_url}/api/repository/v1/datasets/{dataset_id}/ingest", json=kwargs)
     if response.ok:
         return response.json()["id"]
     else:
