@@ -97,11 +97,14 @@ object ParsedScvTraitSet {
       referenceTraits.headOption
     } else {
       // Look through the reference traits to see if there are any with aligned medgen IDs.
-      val medgenDirectMatch = referenceTraits.find(_.medgenId == metadata.medgenId)
+      // NOTE: The flatMap is _required_ here to prevent a false match on None == None.
+      val medgenDirectMatch = metadata.medgenId.flatMap { knownMedgenId =>
+        referenceTraits.find(_.medgenId.contains(knownMedgenId))
+      }
 
       // Look to see if there are any with aligned XRefs.
       val xrefDirectMatch =
-        referenceTraits.find(!_.xrefs.intersect(metadata.xrefs).isEmpty)
+        referenceTraits.find(_.xrefs.intersect(metadata.xrefs).nonEmpty)
 
       // Find the reference trait with the matching MedGen ID if it's defined.
       // Otherwise match on preferred name.
