@@ -155,13 +155,13 @@ spec:
               name: create-json-object
               template: main
             # WHEN the file does not already exist in the repo, THEN we can expect a drs-id for a file
-            when: '{{ "{{tasks.ingest-raw-xml.outputs.file-exists}} == false" }}'
+            when: '{{ "{{tasks.ingest-raw-xml.outputs.parameters.file-exists}} == false" }}'
             arguments:
               parameters:
                 - name: release-date
                   value: '{{ "{{tasks.extract-release-date.outputs.result}}" }}'
                 - name: archive-path
-                  value: '{{ "{{tasks.ingest-raw-xml.outputs.file-id}}" }}'
+                  value: '{{ "{{tasks.ingest-raw-xml.outputs.parameters.file-id}}" }}'
                 - name: upload-path
                   value: '{{ printf "gs://%s/{{inputs.parameters.gcs-prefix}}/processed/release_history/" .Values.gcs.bucketName }}'
           # 8) Run Dataflow on uploaded JSON.
