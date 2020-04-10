@@ -224,3 +224,45 @@ spec:
               - trait_set
               - variation
               - variation_archive
+          # 10) Ingest tables into the Jade Data Repo
+          - name: ingest-tables
+            dependencies: [diff-tables]
+            templateRef:
+              name: ingest-table
+              template: main
+            arguments:
+              parameters:
+                {{- with .Values.repo }}
+                - name: url
+                  value: '{{ .url }}'
+                - name: dataset-id
+                  value: '{{ .datasetId }}'
+                - name: timeout
+                  value: '{{ .pollTimeout }}'
+                - name: sa-secret
+                  value: '{{ .accessKey.secretName }}'
+                - name: sa-secret-key
+                  value: '{{ .accessKey.secretKey }}'
+                {{- end }}
+                - name: gcs-bucket
+                  value: '{{ .Values.gcs.bucketName }}'
+                - name: gcs-prefix
+                  value: '{{ "{{inputs.parameters.gcs-prefix}}/new-rows/{{item}}" }}'
+                - name: table-name
+                  value: '{{ "{{item}}" }}'
+            withItems:
+              - clinical_assertion
+              - clinical_assertion_observation
+              - clinical_assertion_trait
+              - clinical_assertion_trait_set
+              - clinical_assertion_variation
+              - gene
+              - gene_association
+              - rcv_accession
+              - submission
+              - submitter
+              - trait
+              - trait_mapping
+              - trait_set
+              - variation
+              - variation_archive
