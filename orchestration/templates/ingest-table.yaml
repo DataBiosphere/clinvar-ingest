@@ -67,7 +67,7 @@ spec:
           secret:
             secretName: '{{ .Values.repo.accessKey.secretName }}'
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.0
+        image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.1
         env:
           - name: API_URL
             value: '{{ "{{inputs.parameters.url}}" }}'
@@ -100,7 +100,7 @@ spec:
           secret:
             secretName: '{{ .Values.repo.accessKey.secretName }}'
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.0
+        image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.1
         env:
           - name: API_URL
             value: '{{ "{{inputs.parameters.url}}" }}'
