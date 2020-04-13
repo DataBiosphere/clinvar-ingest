@@ -1,4 +1,4 @@
-val sbtPluginsVersion = "0.15.0"
+val sbtPluginsVersion = "0.16.0-0-1cd988d5-20200413-1614-SNAPSHOT"
 
 val patternBase =
   "org/broadinstitute/monster/[module](_[scalaVersion])(_[sbtVersion])/[revision]"
@@ -15,3 +15,4 @@ resolvers += Resolver.url(
 
 addSbtPlugin("org.broadinstitute.monster" % "sbt-plugins-jade" % sbtPluginsVersion)
 addSbtPlugin("org.broadinstitute.monster" % "sbt-plugins-scio" % sbtPluginsVersion)
+addSbtPlugin("org.broadinstitute.monster" % "sbt-plugins-helm" % sbtPluginsVersion)
