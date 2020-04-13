@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: broadinstitute/setup-chart-releaser@v0
+      - uses: broadinstitute/setup-chart-releaser@v0.1
         with:
           version: 'latest'
       - run: which cr
