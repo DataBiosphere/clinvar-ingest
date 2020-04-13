@@ -20,3 +20,7 @@ jobs:
       - name: Aggregate coverage reports
         run: sbt coverageAggregate
       - uses: codecov/codecov-action@v1
+      - uses: broadinstitute/setup-chart-releaser@v0
+        with:
+          version: '1.0.0-beta.1'
+      - run: which cr
