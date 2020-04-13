@@ -1,0 +1,5 @@
+target/
+.scalafmt.conf
+.bloop/
+.metals/
+metals.sbt
