@@ -1,6 +1,6 @@
 set -euo pipefail
 
-declare -r TARGET_TABLE=${OUTPUT_PREFIX}_rowids_${OUTPUT_SUFFIX}
+declare -r TARGET_TABLE=${OUTPUT_PREFIX}_rowids
 
 # Pull just the non-null row IDs out of a table. We need the results in
 # a table because you can't directly export the results of a query to GCS.

@@ -38,8 +38,6 @@ spec:
                   value: '{{ "{{inputs.parameters.jade-bq-project}}" }}'
                 - name: jade-bq-dataset
                   value: '{{ "{{inputs.parameters.jade-bq-dataset}}" }}'
-                - name: output-table-suffix
-                  value: '{{ template "argo.timestamp" }}'
           # 2a) Query just the IDs to delete from the join table.
           - name: query-ids-to-delete
             dependencies: [join-staging-to-existing]
@@ -54,8 +52,6 @@ spec:
                   value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
                 - name: bq-dataset
                   value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
-                - name: output-table-suffix
-                  value: '{{ template "argo.timestamp" }}'
           # 2b) Check how many IDs there are to delete.
           - name: query-id-count
             dependencies: [query-ids-to-delete]
@@ -101,8 +97,6 @@ spec:
                   value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
                 - name: bq-dataset
                   value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
-                - name: output-table-suffix
-                  value: '{{ template "argo.timestamp" }}'
           # 3b) Check how many rows there are to append.
           - name: query-row-count
             dependencies: [query-rows-to-append]
@@ -153,7 +147,6 @@ spec:
           - name: staging-bq-dataset
           - name: jade-bq-project
           - name: jade-bq-dataset
-          - name: output-table-suffix
       {{- include "argo.retry" . | indent 6 }}
       script:
         image: {{ $schemaImage }}
@@ -170,8 +163,6 @@ spec:
             value: '{{ "{{inputs.parameters.table-name}}" }}'
           - name: GCS_PREFIX
             value: '{{ "gs://{{inputs.parameters.gcs-bucket}}/{{inputs.parameters.input-prefix}}" }}'
-          - name: OUTPUT_SUFFIX
-            value: '{{ "{{inputs.parameters.output-table-suffix}}" }}'
         command: [bash]
         source: |
           {{- range .Files.Lines "scripts/diff-bq-table.sh" }}
@@ -185,7 +176,6 @@ spec:
           - name: join-table-name
           - name: bq-project
           - name: bq-dataset
-          - name: output-table-suffix
       {{- include "argo.retry" . | indent 6 }}
       script:
         image: {{ $schemaImage }}
@@ -198,8 +188,6 @@ spec:
             value: '{{ "{{inputs.parameters.join-table-name}}" }}'
           - name: OUTPUT_PREFIX
             value: '{{ "{{inputs.parameters.table-name}}" }}'
-          - name: OUTPUT_SUFFIX
-            value: '{{ "{{inputs.parameters.output-table-suffix}}" }}'
         command: [bash]
         source: |
           {{- range .Files.Lines "scripts/query-non-null-row-ids.sh" }}
@@ -213,7 +201,6 @@ spec:
           - name: join-table-name
           - name: bq-project
           - name: bq-dataset
-          - name: output-table-suffix
       {{- include "argo.retry" . | indent 6 }}
       script:
         image: {{ $schemaImage }}
@@ -226,8 +213,6 @@ spec:
             value: '{{ "{{inputs.parameters.join-table-name}}" }}'
           - name: TABLE
             value: '{{ "{{inputs.parameters.table-name}}" }}'
-          - name: OUTPUT_SUFFIX
-            value: '{{ "{{inputs.parameters.output-table-suffix}}" }}'
         command: [bash]
         source: |
           {{- range .Files.Lines "scripts/query-non-null-rows.sh" }}

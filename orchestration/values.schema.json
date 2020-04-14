@@ -69,10 +69,9 @@
         "stagingData": {
           "type": "object",
           "properties": {
-            "project": { "type": "string" },
-            "dataset": { "type": "string" }
+            "project": { "type": "string" }
           },
-          "required": ["project", "dataset"]
+          "required": ["project"]
         },
         "jadeData": {
           "type": "object",

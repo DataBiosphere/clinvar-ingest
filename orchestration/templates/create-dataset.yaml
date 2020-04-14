@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: create-dataset
+spec:
+  templates:
+    - name: main
+      inputs:
+        parameters:
+          - name: dataset-name
+          - name: bq-project
+      container:
+        image: google/cloud-sdk:slim
+        env:
+          - name: PROJECT
+            value: '{{ "{{inputs.parameters.bq-project}}" }}'
+          - name: DATASET
+            value: '{{ "{{inputs.parameters.dataset-name}}" }}'
+        command: [bash]
+        source: |
+          {{- range .Files.Lines "scripts/create-bq-dataset.sh" }}
+          {{ . }}
+          {{- end }}
