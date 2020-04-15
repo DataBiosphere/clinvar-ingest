@@ -9,7 +9,7 @@ spec:
         parameters:
           - name: dataset-name
           - name: bq-project
-      container:
+      script:
         image: google/cloud-sdk:slim
         env:
           - name: PROJECT
