@@ -178,7 +178,7 @@ spec:
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw'
                 - name: output-prefix
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/processed'
-          {{- $datasetName := printf "%s-%s" "monster_staging_data" (include "argo.timestamp") }}
+          {{- $datasetName := printf "%s-%s" "monster_staging_data" (include "argo.timestamp" .) }}
           # 9) Create a dataset
           - name: create-dataset
             dependencies: [process-archive]
