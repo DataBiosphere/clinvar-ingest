@@ -9,6 +9,8 @@ spec:
         parameters:
           - name: dataset-name
           - name: bq-project
+          - name: dataset-description
+          - name: dataset-expiration
       script:
         image: google/cloud-sdk:slim
         env:
@@ -16,6 +18,10 @@ spec:
             value: '{{ "{{inputs.parameters.bq-project}}" }}'
           - name: DATASET
             value: '{{ "{{inputs.parameters.dataset-name}}" }}'
+          - name: DESCRIPTION
+            value: '{{ "{{inputs.parameters.dataset-description}}" }}'
+          - name: EXPIRATION
+            value: '{{ "{{inputs.parameters.dataset-expiration}}" }}'
         command: [bash]
         source: |
           {{- range .Files.Lines "scripts/create-bq-dataset.sh" }}

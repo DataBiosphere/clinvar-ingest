@@ -191,6 +191,10 @@ spec:
                   value: {{ $datasetName }}
                 - name: bq-project
                   value: '{{ .Values.bigquery.stagingData.project }}'
+                - name: dataset-description
+                  value: 'Dataset used by the Monster team for ingest ETL'
+                - name: dataset-expiration
+                  value: 604800000
           # 10) Diff generated data against existing data
           - name: diff-tables
             dependencies: [process-archive, create-dataset]
