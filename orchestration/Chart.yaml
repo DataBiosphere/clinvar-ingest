@@ -4,3 +4,8 @@ description: Top-level orchestration workflow for ClinVar
 type: application
 # TODO: This needs to auto-update on every merge
 version: 0.0.0
+dependencies:
+  - name: xml-to-json-list-template
+    version: ~3.2.4
+    repository: https://broadinstitute.github.io/monster-xml-to-json-list
+    alias: xmlToJsonList

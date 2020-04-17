@@ -80,7 +80,7 @@ spec:
           - name: extract-xml
             dependencies: [generate-extraction-volume]
             templateRef:
-              name: extract-xml-to-json
+              name: {{ .Values.xmlToJsonList.templateName }}
               template: main
             arguments:
               parameters:
@@ -90,6 +90,14 @@ spec:
                   value: '{{ $localXmlName }}'
                 - name: output-pvc-name
                   value: '{{ $extractionPvc }}'
+                - name: objects-per-part
+                  value: '1024'
+                - name: gunzip
+                  value: 'true'
+                - name: memory-mib
+                  value: '2560'
+                - name: cpu-m
+                  value: '1500'
           # 5a) Upload JSON-list data to GCS.
           - name: upload-extracted-archive
             dependencies: [extract-xml]
