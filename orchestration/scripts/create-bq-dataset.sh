@@ -6,8 +6,8 @@ declare -ra BQ_CREATE=(
   --location=US
   mk
   --dataset
-  --description=${DESCRIPTION}
+  "--description=${DESCRIPTION}"
   --default_table_expiration=${EXPIRATION}
   ${PROJECT}:${DATASET}
 )
-1>&2 ${BQ_CREATE[@]}
+1>&2 "${BQ_CREATE[@]}"
