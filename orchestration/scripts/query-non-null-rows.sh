@@ -14,7 +14,7 @@ for c in ${PK_COLS//,/ }; do
 done
 declare -r FULL_DIFF=$(join_by ' AND ' "${COMPARISONS[@]}")
 
-declare -r TARGET_TABLE=${TABLE}_values_${OUTPUT_SUFFIX}
+declare -r TARGET_TABLE=${TABLE}_values
 
 # Pull everything but the row ID from rows with non-null primary keys.
 # Store the results in another table because you can't directly export

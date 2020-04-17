@@ -15,7 +15,7 @@ for c in ${COMPARE_COLS//,/ }; do
 done
 declare -r FULL_DIFF=$(join_by ' OR ' "${COMPARISONS[@]}")
 
-declare -r TARGET_TABLE=${TABLE}_joined_${OUTPUT_SUFFIX}
+declare -r TARGET_TABLE=${TABLE}_joined
 
 # Join the data staged in GCS against the existing Jade data, filtering out identical rows.
 # The result is stored back in BigQuery for subsequent processing.
