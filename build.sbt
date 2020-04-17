@@ -21,3 +21,11 @@ lazy val `clinvar-transformation-pipeline` = project
   .in(file("transformation"))
   .enablePlugins(MonsterScioPipelinePlugin)
   .dependsOn(`clinvar-schema`)
+
+lazy val `clinvar-orchestration-workflow` = project
+  .in(file("orchestration"))
+  .enablePlugins(MonsterHelmPlugin)
+  .settings(
+    helmChartOrganization := "DataBiosphere",
+    helmChartRepository := "clinvar-ingest"
+  )
