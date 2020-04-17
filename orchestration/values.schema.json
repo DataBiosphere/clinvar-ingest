@@ -69,9 +69,12 @@
         "stagingData": {
           "type": "object",
           "properties": {
-            "project": { "type": "string" }
+            "project": { "type": "string" },
+            "datasetPrefix": {"type": "string"},
+            "description": {"type": "string"},
+            "expiration": {"type": "integer"}
           },
-          "required": ["project"]
+          "required": ["project", "datasetPrefix", "description", "expiration"]
         },
         "jadeData": {
           "type": "object",

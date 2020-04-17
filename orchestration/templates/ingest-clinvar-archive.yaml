@@ -178,7 +178,7 @@ spec:
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw'
                 - name: output-prefix
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/processed'
-          {{- $datasetName := printf "%s_%s" "monster_staging_data" (include "argo.timestamp" .) }}
+          {{- $datasetName := printf "%s_%s" "{{.Values.bigquery.stagingData.datasetPrefix}}" (include "argo.timestamp" .) }}
           # 9) Create a dataset
           - name: create-dataset
             dependencies: [process-archive]
@@ -192,9 +192,9 @@ spec:
                 - name: bq-project
                   value: '{{ .Values.bigquery.stagingData.project }}'
                 - name: dataset-description
-                  value: 'Dataset used by the Monster team for ingest ETL'
+                  value: '{{ .Values.bigquery.stagingData.description }}'
                 - name: dataset-expiration
-                  value: '604800000'
+                  value: '{{ .Values.bigquery.stagingData.expiration }}'
           # 10) Diff generated data against existing data
           - name: diff-tables
             dependencies: [process-archive, create-dataset]
