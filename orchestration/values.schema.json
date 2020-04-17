@@ -72,7 +72,7 @@
             "project": { "type": "string" },
             "datasetPrefix": {"type": "string"},
             "description": {"type": "string"},
-            "expiration": {"type": "integer"}
+            "expiration": {"type": "string"}
           },
           "required": ["project", "datasetPrefix", "description", "expiration"]
         },
