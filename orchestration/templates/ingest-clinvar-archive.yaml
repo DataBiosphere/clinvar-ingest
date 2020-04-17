@@ -179,7 +179,7 @@ spec:
                 - name: output-prefix
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/processed'
           {{- with .Values.bigquery.stagingData }}
-          {{- $datasetName := printf "%s_%s" .Values.bigquery.stagingData.datasetPrefix (include "argo.timestamp" .) }}
+          {{- $datasetName := printf "%s_%s" .datasetPrefix (include "argo.timestamp" .) }}
           # 9) Create a dataset
           - name: create-dataset
             dependencies: [process-archive]
