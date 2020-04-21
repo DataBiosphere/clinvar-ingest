@@ -23,3 +23,13 @@ repo:
 maxParallelism: 16
 xmlToJsonList:
   templateName: extract-xml-to-json
+argoTemplates:
+  generatePVC:
+    create: true
+    name: generate-pvc
+  downloadFTPFile:
+    create: true
+    name: download-ftp-file
+  gsutilRsync:
+    create: true
+    name: rsync-to-gcs

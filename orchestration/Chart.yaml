@@ -9,3 +9,7 @@ dependencies:
     version: ~3.2.4
     repository: https://broadinstitute.github.io/monster-xml-to-json-list
     alias: xmlToJsonList
+  - name: argo-templates
+    version: ~0.0.1
+    repository: https://broadinstitute.github.io/monster-helm
+    alias: argoTemplates
