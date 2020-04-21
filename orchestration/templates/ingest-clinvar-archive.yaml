@@ -14,7 +14,7 @@ spec:
           # 1) Generate a PVC to hold the raw XML.
           - name: generate-download-volume
             templateRef:
-              name: generate-pvc
+              name: {{ .Values.argoTemplates.generatePVC.name }}
               template: main
             arguments:
               parameters:
@@ -30,7 +30,7 @@ spec:
           - name: download-archive
             dependencies: [generate-download-volume]
             templateRef:
-              name: download-ftp-file
+              name: {{ .Values.argoTemplates.downloadFTPFile.name }}
               template: main
             arguments:
               parameters:
@@ -42,11 +42,15 @@ spec:
                   value: '{{ $localXmlName }}'
                 - name: pvc-name
                   value: '{{ $downloadPvc }}'
+                - name: memory
+                  value: '512Mi'
+                - name: cpu
+                  value: '1000m'
           # 3a) Upload the raw XML to GCS.
           - name: upload-raw-archive
             dependencies: [download-archive]
             templateRef:
-              name: rsync-to-gcs
+              name: {{ .Values.argoTemplates.gsutilRsync.name }}
               template: main
             arguments:
               parameters:
@@ -58,8 +62,10 @@ spec:
                   value: '{{ .Values.gcs.bucketName }}'
                 - name: gcs-prefix
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw'
-                - name: max-concurrent-uploads
-                  value: '1'
+                - name: memory
+                  value: '1Gi'
+                - name: cpu
+                  value: '1000m'
           # 3b) Generate a PVC to hold extracted JSON-list files.
           - name: generate-extraction-volume
             # Don't generate the PVC until we need it.
@@ -102,7 +108,7 @@ spec:
           - name: upload-extracted-archive
             dependencies: [extract-xml]
             templateRef:
-              name: rsync-to-gcs
+              name: {{ .Values.argoTemplates.gsutilRsync.name }}
               template: main
             arguments:
               parameters:
@@ -114,8 +120,10 @@ spec:
                   value:  '{{ .Values.gcs.bucketName }}'
                 - name: gcs-prefix
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw/VariationArchive'
-                - name: max-concurrent-uploads
-                  value: '2'
+                - name: memory
+                  value: '2Gi'
+                - name: cpu
+                  value: '2000m'
           # 5b) Extract clinvar release date.
           - name: extract-release-date
             dependencies: [extract-xml]
