@@ -75,7 +75,7 @@ spec:
           - name: get-job-result
             dependencies: [poll-ingest-job]
             template: get-job-result
-            when: '{{ "{{tasks.poll-ingest-job.outputs.result}} == true && {{tasks.check-existing-file.outputs.result}} == false" }}'
+            when: '{{ "{{tasks.check-existing-file.outputs.result}} == false" }}'
             arguments:
               parameters:
                 - name: api-url
