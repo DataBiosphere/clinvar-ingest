@@ -200,7 +200,7 @@ spec:
           - name: create-dataset
             dependencies: [process-archive]
             templateRef:
-              name: create-dataset
+              name: {{ .Values.argoTemplates.createBQDataset.name }}
               template: main
             arguments:
               parameters:
@@ -217,7 +217,7 @@ spec:
           - name: diff-tables
             dependencies: [process-archive, create-dataset]
             templateRef:
-              name: diff-table
+              name: {{ .Values.argoTemplates.diffBQTable.name }}
               template: main
             arguments:
               parameters:
