@@ -33,3 +33,10 @@ argoTemplates:
   gsutilRsync:
     create: true
     name: rsync-to-gcs
+  createBQDataset:
+    create: true
+    name: create-dataset
+  diffBQTable:
+    create: true
+    name: diff-table
+    schemaImageName: clinvar-schema
