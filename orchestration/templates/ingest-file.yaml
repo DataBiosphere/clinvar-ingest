@@ -58,6 +58,7 @@ spec:
           - name: poll-ingest-job
             dependencies: [submit-file-ingest]
             template: poll-ingest-job
+            when: '{{ "{{tasks.check-existing-file.outputs.result}} == false" }}'
             arguments:
               parameters:
                 - name: api-url
@@ -74,7 +75,7 @@ spec:
           - name: get-job-result
             dependencies: [poll-ingest-job]
             template: get-job-result
-            when: '{{ "{{tasks.poll-ingest-job.outputs.result}} == true" }}'
+            when: '{{ "{{tasks.check-existing-file.outputs.result}} == false" }}'
             arguments:
               parameters:
                 - name: api-url
@@ -93,7 +94,7 @@ spec:
           - name: file-id
             valueFrom:
               parameter: '{{ "{{tasks.get-job-result.outputs.result}}" }}'
-              default: ''
+              default: 'null'
     {{- $secretVolume := "sa-secret-volume" }}
     {{- $mountPath := "/secret" }}
     # SubTemplates

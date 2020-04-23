@@ -32,7 +32,10 @@ def is_done(job_id: str) -> bool:
 
 def is_success(job_id: str):
     # need to spit out the lowercase strings instead of real bools, allows the workflow to know if it succeeded or not
-    return "true" if check_job_status(job_id) == "succeeded" else "false"
+    if check_job_status(job_id) == "succeeded":
+     return "true"
+    else:
+        raise Error("Ingest job ran but did not succeed, file was not ingested.")
 
 try:
     polling.poll(lambda: is_done(job_id), step=10, timeout=int(timeout))

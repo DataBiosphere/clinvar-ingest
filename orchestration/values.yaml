@@ -39,4 +39,4 @@ argoTemplates:
   diffBQTable:
     create: true
     name: diff-table
-    schemaImageName: clinvar-schema
+    schemaImageName: us.gcr.io/broad-dsp-gcr-public/clinvar-schema

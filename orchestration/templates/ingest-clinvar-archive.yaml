@@ -195,7 +195,6 @@ spec:
                 - name: output-prefix
                   value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/processed'
           {{- $datasetName := printf "%s_%s" .Values.bigquery.stagingData.datasetPrefix (include "argo.timestamp" .) }}
-          {{- with .Values.bigquery.stagingData }}
           # 9) Create a dataset
           - name: create-dataset
             dependencies: [process-archive]
@@ -203,6 +202,7 @@ spec:
               name: {{ .Values.argoTemplates.createBQDataset.name }}
               template: main
             arguments:
+            {{- with .Values.bigquery.stagingData }}
               parameters:
                 - name: dataset-name
                   value: {{ $datasetName }}
@@ -212,7 +212,7 @@ spec:
                   value: '{{ .description }}'
                 - name: dataset-expiration
                   value: '{{ .expiration }}'
-          {{- end }}
+            {{- end }}
           # 10) Diff generated data against existing data
           - name: diff-tables
             dependencies: [process-archive, create-dataset]
