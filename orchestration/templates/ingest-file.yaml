@@ -197,12 +197,6 @@ spec:
           {{- range .Files.Lines "scripts/poll-ingest-job.py" }}
           {{ . }}
           {{- end }}
-      outputs:
-        parameters:
-          - name: is-ingested
-            valueFrom:
-              parameter: '{{ "{{.outputs.result}}" }}'
-              default: 'false'
     - name: get-job-result
       inputs:
         parameters:
