@@ -94,7 +94,7 @@ spec:
           - name: file-id
             valueFrom:
               parameter: '{{ "{{tasks.get-job-result.outputs.result}}" }}'
-              default: ''
+              default: 'null'
     {{- $secretVolume := "sa-secret-volume" }}
     {{- $mountPath := "/secret" }}
     # SubTemplates
