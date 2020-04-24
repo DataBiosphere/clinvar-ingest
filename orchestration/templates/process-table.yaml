@@ -49,6 +49,8 @@ spec:
           # 2) ingest table
           - name: ingest-table
             dependencies: [diff-table]
+            # WHEN there are rows to append, THEN run the ingest task, otherwise don't
+            when: '{{ "{{tasks.diff-table.outputs.parameters.rows-to-append-count}} > 0" }}'
             templateRef:
               name: ingest-table
               template: main
