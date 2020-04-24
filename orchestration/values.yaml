@@ -5,7 +5,7 @@ volumes:
 cron:
   enable: true
   # Every Sunday at 3:30am
-  schedule: '30 3 * * Sun'
+  schedule: '0 12 * * Fri'
   timezone: 'America/New_York'
 dataflow:
   region: us-central1
