@@ -180,6 +180,34 @@ spec:
                   value: '{{ "{{tasks.ingest-raw-xml.outputs.parameters.file-id}}" }}'
                 - name: upload-path
                   value: '{{ printf "gs://%s/{{inputs.parameters.gcs-prefix}}/processed/release_history/" .Values.gcs.bucketName }}'
+          # Ingest the staged release_history row.
+          - name: ingest-release-history
+            dependencies: [stage-release-history]
+            # Same WHEN as step above.
+            when: '{{ "{{tasks.ingest-raw-xml.outputs.parameters.file-exists}} == false" }}'
+            templateRef:
+              name: ingest-table
+              template: main
+            arguments:
+              parameters:
+                - name: table_name
+                  value: release_history
+                - name: gcs-bucket
+                  value: '{{ .Values.gcs.bucketName }}'
+                - name: gcs-file-path
+                  value: '{{ "{{inputs.parameters.gcs-prefix}}/processed/release_history" }}'
+                {{- with .Values.repo }}
+                - name: url
+                  value: '{{ .url }}'
+                - name: dataset-id
+                  value: '{{ .datasetId }}'
+                - name: timeout
+                  value: '{{ .pollTimeout }}'
+                - name: sa-secret
+                  value: '{{ .accessKey.secretName }}'
+                - name: sa-secret-key
+                  value: '{{ .accessKey.secretKey }}'
+                {{- end }}
           # 8) Run Dataflow on uploaded JSON.
           - name: process-archive
             dependencies: [upload-extracted-archive]
