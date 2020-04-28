@@ -35,7 +35,7 @@ spec:
                 - name: sa-secret-key
                   value: '{{ "{{inputs.parameters.sa-secret-key}}" }}'
           # 2) Poll the ingest job for the table repeatedly until the table has been ingested
-          - name: poll-job
+          - name: poll-delete-job
             dependencies: [submit-soft-delete]
             template: poll-job
             arguments:
@@ -43,7 +43,7 @@ spec:
                 - name: url
                   value: '{{ "{{inputs.parameters.url}}" }}'
                 - name: job-id
-                  value: '{{ "{{tasks.submit-table-ingest.outputs.result}}" }}'
+                  value: '{{ "{{tasks.submit-soft-delete.outputs.result}}" }}'
                 - name: timeout
                   value: '{{ "{{inputs.parameters.timeout}}" }}'
                 - name: sa-secret
