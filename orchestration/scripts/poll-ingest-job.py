@@ -3,6 +3,7 @@ from google.auth.transport.requests import AuthorizedSession
 from requests.exceptions import HTTPError
 import polling
 import os
+import random
 import sys
 
 credentials, project = google.auth.default(scopes=['openid', 'email', 'profile'])
@@ -33,12 +34,17 @@ def is_done(job_id: str) -> bool:
 def is_success(job_id: str):
     # need to spit out the lowercase strings instead of real bools, allows the workflow to know if it succeeded or not
     if check_job_status(job_id) == "succeeded":
-     return "true"
+        return "true"
     else:
-        raise Error("Ingest job ran but did not succeed, file was not ingested.")
+        raise ValueError("Ingest job ran but did not succeed, file was not ingested.")
+
+
+def step_function(step: int) -> int:
+    return random.randint(step, step + 10)
+
 
 try:
-    polling.poll(lambda: is_done(job_id), step=10, timeout=int(timeout))
+    polling.poll(lambda: is_done(job_id), step=10, step_function=step_function, timeout=int(timeout))
     print(is_success(job_id))
 except polling.TimeoutException as te:
     while not te.values.empty():
