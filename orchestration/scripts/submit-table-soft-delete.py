@@ -20,7 +20,6 @@ def soft_delete_table(dataset_id: str, **kwargs):
   else:
     raise HTTPError(f"Bad response, got code of: {response.status_code}")
 
-# Print the job ID to std out.
 table_spec = {
   "gcsFileSpec": {
     "fileType": "csv",
@@ -28,4 +27,5 @@ table_spec = {
   },
   "tableName": table_name
 }
+# Print the job ID to std out.
 print(soft_delete_table(dataset_id, deleteType="soft", specType="gcsFile", tables=[table_spec]))
