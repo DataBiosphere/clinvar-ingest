@@ -183,7 +183,7 @@ spec:
           # Ingest the staged release_history row.
           - name: ingest-release-history
             dependencies: [stage-release-history]
-            # Same WHEN as step above.
+            # Same WHEN as `stage-release-history`.
             when: '{{ "{{tasks.ingest-raw-xml.outputs.parameters.file-exists}} == false" }}'
             templateRef:
               name: ingest-table
