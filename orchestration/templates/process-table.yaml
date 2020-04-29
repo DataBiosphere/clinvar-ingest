@@ -46,7 +46,7 @@ spec:
                   value: '{{ "{{inputs.parameters.jade-bq-project}}" }}'
                 - name: jade-bq-dataset
                   value: '{{ "{{inputs.parameters.jade-bq-dataset}}" }}'
-          # 2) ingest table
+          # 2a) Ingest table
           - name: ingest-table
             dependencies: [diff-table]
             # WHEN there are rows to append, THEN run the ingest task, otherwise don't
@@ -70,5 +70,31 @@ spec:
                   value: '{{ "{{inputs.parameters.gcs-bucket}}" }}'
                 - name: gcs-prefix
                   value: '{{ "{{inputs.parameters.gcs-prefix}}/new-rows/{{inputs.parameters.table-name}}" }}'
+                - name: table-name
+                  value: '{{ "{{inputs.parameters.table-name}}" }}'
+          # 2b) Soft-delete table
+          - name: soft-delete-table
+            dependencies: [diff-table]
+            # Only when there are rows to soft-delete
+            when: '{{ "{{tasks.diff-table.outputs.parameters.ids-to-delete-count}} > 0" }}'
+            templateRef:
+              name: soft-delete-table
+              template: main
+            arguments:
+              parameters:
+                - name: url
+                  value: '{{ "{{inputs.parameters.url}}" }}'
+                - name: dataset-id
+                  value: '{{ "{{inputs.parameters.dataset-id}}" }}'
+                - name: timeout
+                  value: '{{ "{{inputs.parameters.timeout}}" }}'
+                - name: sa-secret
+                  value: '{{ "{{inputs.parameters.sa-secret}}" }}'
+                - name: sa-secret-key
+                  value: '{{ "{{inputs.parameters.sa-secret-key}}" }}'
+                - name: gcs-bucket
+                  value: '{{ "{{inputs.parameters.gcs-bucket}}" }}'
+                - name: gcs-prefix
+                  value: '{{ "{{inputs.parameters.gcs-prefix}}/old-ids/{{inputs.parameters.table-name}}" }}'
                 - name: table-name
                   value: '{{ "{{inputs.parameters.table-name}}" }}'
