@@ -36,7 +36,7 @@ def is_success(job_id: str):
     if check_job_status(job_id) == "succeeded":
         return "true"
     else:
-        raise ValueError("Ingest job ran but did not succeed, file was not ingested.")
+        raise ValueError("Job ran but did not succeed.")
 
 
 def step_function(step: int) -> int:
