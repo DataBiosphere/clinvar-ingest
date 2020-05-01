@@ -1,0 +1,100 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: process-table
+spec:
+  templates:
+    - name: main
+      inputs:
+        parameters:
+          - name: table-name
+          - name: gcs-bucket
+          - name: gcs-prefix
+          - name: staging-bq-project
+          - name: staging-bq-dataset
+          - name: jade-bq-project
+          - name: jade-bq-dataset
+          - name: url
+          - name: dataset-id
+          - name: timeout
+          - name: sa-secret
+          - name: sa-secret-key
+      dag:
+        tasks:
+          # 1) diff table
+          - name: diff-table
+            templateRef:
+              name: {{ .Values.argoTemplates.diffBQTable.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: table-name
+                  value: '{{ "{{inputs.parameters.table-name}}" }}'
+                - name: gcs-bucket
+                  value: '{{ "{{inputs.parameters.gcs-bucket}}" }}'
+                - name: input-prefix
+                  value: '{{ "{{inputs.parameters.gcs-prefix}}/processed/{{inputs.parameters.table-name}}" }}'
+                - name: old-ids-output-prefix
+                  value: '{{ "{{inputs.parameters.gcs-prefix}}/old-ids/{{inputs.parameters.table-name}}" }}'
+                - name: new-rows-output-prefix
+                  value: '{{ "{{inputs.parameters.gcs-prefix}}/new-rows/{{inputs.parameters.table-name}}" }}'
+                - name: staging-bq-project
+                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+                - name: staging-bq-dataset
+                  value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
+                - name: jade-bq-project
+                  value: '{{ "{{inputs.parameters.jade-bq-project}}" }}'
+                - name: jade-bq-dataset
+                  value: '{{ "{{inputs.parameters.jade-bq-dataset}}" }}'
+          # 2a) Ingest table
+          - name: ingest-table
+            dependencies: [diff-table]
+            # WHEN there are rows to append, THEN run the ingest task, otherwise don't
+            when: '{{ "{{tasks.diff-table.outputs.parameters.rows-to-append-count}} > 0" }}'
+            templateRef:
+              name: ingest-table
+              template: main
+            arguments:
+              parameters:
+                - name: url
+                  value: '{{ "{{inputs.parameters.url}}" }}'
+                - name: dataset-id
+                  value: '{{ "{{inputs.parameters.dataset-id}}" }}'
+                - name: timeout
+                  value: '{{ "{{inputs.parameters.timeout}}" }}'
+                - name: sa-secret
+                  value: '{{ "{{inputs.parameters.sa-secret}}" }}'
+                - name: sa-secret-key
+                  value: '{{ "{{inputs.parameters.sa-secret-key}}" }}'
+                - name: gcs-bucket
+                  value: '{{ "{{inputs.parameters.gcs-bucket}}" }}'
+                - name: gcs-prefix
+                  value: '{{ "{{inputs.parameters.gcs-prefix}}/new-rows/{{inputs.parameters.table-name}}" }}'
+                - name: table-name
+                  value: '{{ "{{inputs.parameters.table-name}}" }}'
+          # 2b) Soft-delete table
+          - name: soft-delete-table
+            dependencies: [diff-table]
+            # Only when there are rows to soft-delete
+            when: '{{ "{{tasks.diff-table.outputs.parameters.ids-to-delete-count}} > 0" }}'
+            templateRef:
+              name: soft-delete-table
+              template: main
+            arguments:
+              parameters:
+                - name: url
+                  value: '{{ "{{inputs.parameters.url}}" }}'
+                - name: dataset-id
+                  value: '{{ "{{inputs.parameters.dataset-id}}" }}'
+                - name: timeout
+                  value: '{{ "{{inputs.parameters.timeout}}" }}'
+                - name: sa-secret
+                  value: '{{ "{{inputs.parameters.sa-secret}}" }}'
+                - name: sa-secret-key
+                  value: '{{ "{{inputs.parameters.sa-secret-key}}" }}'
+                - name: gcs-bucket
+                  value: '{{ "{{inputs.parameters.gcs-bucket}}" }}'
+                - name: gcs-prefix
+                  value: '{{ "{{inputs.parameters.gcs-prefix}}/old-ids/{{inputs.parameters.table-name}}" }}'
+                - name: table-name
+                  value: '{{ "{{inputs.parameters.table-name}}" }}'

@@ -26,5 +26,4 @@ print(ingest_table(dataset_id,
                    ignore_unknown_values=False,
                    max_bad_records=0,
                    path=f"{source_path}/*",
-                   table=table_name
-                   ))
+                   table=table_name))

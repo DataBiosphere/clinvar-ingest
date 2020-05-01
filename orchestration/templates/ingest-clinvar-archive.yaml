@@ -180,6 +180,34 @@ spec:
                   value: '{{ "{{tasks.ingest-raw-xml.outputs.parameters.file-id}}" }}'
                 - name: upload-path
                   value: '{{ printf "gs://%s/{{inputs.parameters.gcs-prefix}}/processed/release_history/" .Values.gcs.bucketName }}'
+          # Ingest the staged release_history row.
+          - name: ingest-release-history
+            dependencies: [stage-release-history]
+            # Same WHEN as `stage-release-history`.
+            when: '{{ "{{tasks.ingest-raw-xml.outputs.parameters.file-exists}} == false" }}'
+            templateRef:
+              name: ingest-table
+              template: main
+            arguments:
+              parameters:
+                - name: table_name
+                  value: release_history
+                - name: gcs-bucket
+                  value: '{{ .Values.gcs.bucketName }}'
+                - name: gcs-file-path
+                  value: '{{ "{{inputs.parameters.gcs-prefix}}/processed/release_history" }}'
+                {{- with .Values.repo }}
+                - name: url
+                  value: '{{ .url }}'
+                - name: dataset-id
+                  value: '{{ .datasetId }}'
+                - name: timeout
+                  value: '{{ .pollTimeout }}'
+                - name: sa-secret
+                  value: '{{ .accessKey.secretName }}'
+                - name: sa-secret-key
+                  value: '{{ .accessKey.secretKey }}'
+                {{- end }}
           # 8) Run Dataflow on uploaded JSON.
           - name: process-archive
             dependencies: [upload-extracted-archive]
@@ -214,10 +242,10 @@ spec:
                   value: '{{ .expiration }}'
             {{- end }}
           # 10) Diff generated data against existing data
-          - name: diff-tables
+          - name: process-tables
             dependencies: [process-archive, create-dataset]
             templateRef:
-              name: {{ .Values.argoTemplates.diffBQTable.name }}
+              name: process-table
               template: main
             arguments:
               parameters:
@@ -225,12 +253,8 @@ spec:
                   value: '{{ "{{item}}" }}'
                 - name: gcs-bucket
                   value: '{{ .Values.gcs.bucketName }}'
-                - name: input-prefix
-                  value: '{{ "{{inputs.parameters.gcs-prefix}}/processed/{{item}}" }}'
-                - name: old-ids-output-prefix
-                  value: '{{ "{{inputs.parameters.gcs-prefix}}/old-ids/{{item}}" }}'
-                - name: new-rows-output-prefix
-                  value: '{{ "{{inputs.parameters.gcs-prefix}}/new-rows/{{item}}" }}'
+                - name: gcs-prefix
+                  value: '{{ "{{inputs.parameters.gcs-prefix}}" }}'
                 - name: staging-bq-project
                   value: '{{ .Values.bigquery.stagingData.project }}'
                 - name: staging-bq-dataset
@@ -241,30 +265,6 @@ spec:
                 - name: jade-bq-dataset
                   value: '{{ .dataset }}'
                 {{- end }}
-            withItems:
-              - clinical_assertion
-              - clinical_assertion_observation
-              - clinical_assertion_trait
-              - clinical_assertion_trait_set
-              - clinical_assertion_variation
-              - gene
-              - gene_association
-              - rcv_accession
-              - submission
-              - submitter
-              - trait
-              - trait_mapping
-              - trait_set
-              - variation
-              - variation_archive
-          # 11) Ingest tables into the Jade Data Repo
-          - name: ingest-tables
-            dependencies: [diff-tables]
-            templateRef:
-              name: ingest-table
-              template: main
-            arguments:
-              parameters:
                 {{- with .Values.repo }}
                 - name: url
                   value: '{{ .url }}'
@@ -277,12 +277,6 @@ spec:
                 - name: sa-secret-key
                   value: '{{ .accessKey.secretKey }}'
                 {{- end }}
-                - name: gcs-bucket
-                  value: '{{ .Values.gcs.bucketName }}'
-                - name: gcs-prefix
-                  value: '{{ "{{inputs.parameters.gcs-prefix}}/new-rows/{{item}}" }}'
-                - name: table-name
-                  value: '{{ "{{item}}" }}'
             withItems:
               - clinical_assertion
               - clinical_assertion_observation
