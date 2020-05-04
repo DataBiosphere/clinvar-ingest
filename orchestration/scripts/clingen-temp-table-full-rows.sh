@@ -17,7 +17,7 @@ for c in ${PK_COLS//,/ }; do
   DATAREPO_COLUMNS+=("datarepo_${c}")
 done
 # rows to be updated
-if [[ ${QUERY_TYPE} = 'update'  ]] ; then
+if [[ ${QUERY_TYPE} = 'updates'  ]] ; then
 COMPARISONS+=("datarepo_row_id IS NOT NULL")
 # new rows
 else
@@ -26,7 +26,7 @@ fi
 declare -r FULL_DIFF=$(join_by ' AND ' "${COMPARISONS[@]}")
 declare -r REPO_KEYS=$(join_by ', ' "${DATAREPO_COLUMNS[@]}")
 
-declare -r TARGET_TABLE=${TABLE}_values
+declare -r TARGET_TABLE=${TABLE}_clingen_${QUERY_TYPE}
 
 # Pull everything but the row ID from rows with non-null primary keys.
 # Store the results in another table because you can't directly export

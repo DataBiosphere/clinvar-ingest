@@ -109,7 +109,7 @@ spec:
                   value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
                 - name: bq-dataset
                   value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
-                - name: input-table
+                - name: join-table-name
                   value: '{{ "{{tasks.diff-table.outputs.parameters.join-table-name}}" }}'
                 - name: table-name
                   value: '{{ "{{inputs.parameters.table-name}}" }}'
@@ -125,12 +125,12 @@ spec:
           #       value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
           #     - name: bq-dataset
           #       value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
-          #     - name: input-table
+          #     - name: join-table-name
           #       value: '{{ "{{tasks.diff-table.outputs.parameters.join-table-name}}" }}'
           #     - name: table-name
           #       value: '{{ "{{inputs.parameters.table-name}}" }}'
           #     - name: query-type
-          #       value: update
+          #       value: updates
           # deleted rows - TODO
           #- name: generate-deleted-rows-table
           #  dependencies: [diff-table]
@@ -141,12 +141,12 @@ spec:
           #       value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
           #     - name: bq-dataset
           #       value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
-          #     - name: input-table
+          #     - name: join-table-name
           #       value: '{{ "{{tasks.diff-table.outputs.parameters.join-table-name}}" }}'
           #     - name: table-name
           #       value: '{{ "{{inputs.parameters.table-name}}" }}'
           #     - name: query-type
-          #       value: update
+          #       value: updates
     # Subtemplates
     # query-full-rows will be generic for both the new rows + updates
     - name: query-full-rows
@@ -159,21 +159,21 @@ spec:
           - name: query-type
       {{- include "argo.retry" . | indent 6 }}
       script:
-        # setting env variables for the bash script
+        # adding a layer of environment variables to make the scripts more stand-alone, and editor compatible
         env:
           - name: PROJECT
             value: '{{ "{{inputs.parameters.bq-project}}" }}'
           - name: DATASET
             value: '{{ "{{inputs.parameters.bq-dataset}}" }}'
           - name: INPUT_TABLE
-            value: '{{ "{{inputs.parameters.input-table}}" }}'
+            value: '{{ "{{inputs.parameters.join-table-name}}" }}'
           - name: TABLE
             value: '{{ "{{inputs.parameters.table-name}}" }}'
           - name: QUERY_TYPE
             value: '{{ "{{inputs.parameters.query-type}}" }}'
         command: [bash]
         source: |
-        {{- include "argo.render-lines" (.Files.Lines "scripts/generate-staging-table.sh") | indent 10 }}
+        {{- include "argo.render-lines" (.Files.Lines "scripts/clingen-temp-table-full-rows.sh") | indent 10 }}
     # query-row-ids is exclusively for deleted rows
     #- name: query-row-ids
     # inputs:
