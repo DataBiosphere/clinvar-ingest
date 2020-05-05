@@ -10,12 +10,11 @@ declare -r PK_COLS=$(cat ${TABLE_DIR}/primary-keys)
 # Build the WHERE clause of the SQL query.
 declare -a COMPARISONS=()
 declare -a DATAREPO_COLUMNS=(datarepo_row_id)
-# what are expected values of query type
-# use that marker to
 for c in ${PK_COLS//,/ }; do
   COMPARISONS+=("${c} IS NOT NULL")
   DATAREPO_COLUMNS+=("datarepo_${c}")
 done
+# query type is used to determine if these are updates or new rows
 # rows to be updated
 if [[ ${QUERY_TYPE} = 'updates'  ]] ; then
 COMPARISONS+=("datarepo_row_id IS NOT NULL")
