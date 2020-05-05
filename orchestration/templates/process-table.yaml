@@ -1,3 +1,4 @@
+{{- $schemaImage := printf "%s:%s" .Values.argoTemplates.diffBQTable.schemaImageName (default "latest" .Chart.AppVersion) }}
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
@@ -159,7 +160,8 @@ spec:
           - name: query-type
       {{- include "argo.retry" . | indent 6 }}
       script:
-        # adding a layer of environment variables to make the scripts more stand-alone, and editor compatible
+        image: {{ $schemaImage }}
+        # layer of env variables to make the scripts more stand-alone and more compatible within editors
         env:
           - name: PROJECT
             value: '{{ "{{inputs.parameters.bq-project}}" }}'
