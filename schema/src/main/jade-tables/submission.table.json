@@ -32,11 +32,6 @@
       "name": "submission_date",
       "datatype": "date",
       "type": "required"
-    },
-    {
-      "name": "submission_names",
-      "datatype": "string",
-      "type": "repeated"
     }
   ]
 }

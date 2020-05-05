@@ -63,7 +63,9 @@ object ParsedScv {
     rawAssertion: Msg
   ): ParsedScv = {
     // Extract submitter and submission data (easy).
-    val submitter = extractSubmitter(rawAssertion.read[Msg]("ClinVarAccession"))
+    val rawAccession = rawAssertion.read[Msg]("ClinVarAccession")
+
+    val submitter = extractSubmitter(rawAccession)
     val additionalSubmitters = rawAssertion
       .tryExtract[Array[Msg]]("AdditionalSubmitters", "SubmitterDescription")
       .fold(Array.empty[Submitter])(_.map(extractSubmitter))
@@ -71,8 +73,7 @@ object ParsedScv {
 
     // Extract the top-level set of traits described by the assertion.
     val assertionId = rawAssertion.extract[String]("@ID")
-    val assertionAccession =
-      rawAssertion.extract[String]("ClinVarAccession", "@Accession")
+    val assertionAccession = rawAccession.extract[String]("@Accession")
     val relevantTraitMappings = mappingsById.getOrElse(assertionId, Array.empty)
 
     val directTraitSet = ParsedScvTraitSet.fromRawSetWrapper(
@@ -115,7 +116,7 @@ object ParsedScv {
 
       ClinicalAssertion(
         id = assertionAccession,
-        version = rawAssertion.extract[Long]("ClinVarAccession", "@Version"),
+        version = rawAccession.extract[Long]("@Version"),
         internalId = assertionId,
         variationArchiveId = vcvId,
         variationId = variationId,
@@ -151,7 +152,17 @@ object ParsedScv {
               text = comment.extract[String]("$")
             )
           },
-        content = Content.encode(rawAssertion)
+        submitterName = rawAccession.tryExtract[String]("@SubmitterName"),
+        orgAbbrev = rawAccession.tryExtract[String]("@OrgAbbreviation"),
+        submissionNames = rawAssertion
+          .tryExtract[Array[Msg]]("SubmissionNameList", "SubmissionName")
+          .getOrElse(Array.empty)
+          .map(_.extract[String]("$")),
+        content = {
+          // Pop out the accession type to reduce noise in our unmodeled content column.
+          val _ = rawAssertion.tryExtract[Msg]("ClinVarAccession", "@Type")
+          Content.encode(rawAssertion)
+        }
       )
     }
 
@@ -169,9 +180,7 @@ object ParsedScv {
   /** Extract submitter fields from a raw ClinicalAssertion payload. */
   private def extractSubmitter(rawAssertion: Msg): Submitter = Submitter(
     id = rawAssertion.extract[String]("@OrgID"),
-    submitterName = rawAssertion.tryExtract[String]("@SubmitterName"),
-    orgCategory = rawAssertion.tryExtract[String]("@OrganizationCategory"),
-    orgAbbrev = rawAssertion.tryExtract[String]("@OrgAbbreviation")
+    orgCategory = rawAssertion.tryExtract[String]("@OrganizationCategory")
   )
 
   /** Extract submission fields from a raw ClinicalAssertion payload. */
@@ -186,11 +195,7 @@ object ParsedScv {
       id = s"${submitter.id}.$date",
       submitterId = submitter.id,
       additionalSubmitterIds = additionalSubmitters.map(_.id),
-      submissionDate = date,
-      submissionNames = rawAssertion
-        .tryExtract[Array[Msg]]("SubmissionNameList", "SubmissionName")
-        .getOrElse(Array.empty)
-        .map(_.extract[String]("$"))
+      submissionDate = date
     )
   }
 

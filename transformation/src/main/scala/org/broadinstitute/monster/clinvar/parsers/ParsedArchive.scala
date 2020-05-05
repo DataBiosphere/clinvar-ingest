@@ -82,7 +82,12 @@ object ParsedArchive {
 
     // Since IncludedRecords don't contain meaningful provenance, we only
     // bother to do further processing for InterpretedRecords.
-    if (rawArchive.obj.contains(InterpretedRecord)) {
+    val recordType = rawArchive.extract[String]("@RecordType")
+    if (recordType == "interpreted") {
+      // Pop out fields already covered by the variation tree.
+      val _ = List("@VariationID", "@VariationName", "@VariationType")
+        .foreach(rawArchive.tryExtract[Msg](_))
+
       val vcvId = rawArchive.extract[String]("@Accession")
 
       // Parse the variation's interpretation.
