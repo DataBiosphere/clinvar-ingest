@@ -182,18 +182,18 @@ spec:
           - name: join-table-name
           - name: bq-project
           - name: bq-dataset
-     {{- include "argo.retry" . | indent 6 }}
-     script:
-       image: {{ $schemaImage }}
-       env:
-         - name: PROJECT
-           value: '{{ "{{inputs.parameters.bq-project}}" }}'
-         - name: DATASET
-           value: '{{ "{{inputs.parameters.bq-dataset}}" }}'
-         - name: INPUT_TABLE
-           value: '{{ "{{inputs.parameters.input-table}}" }}'
-         - name: TABLE
-           value: '{{ "{{inputs.parameters.table-name}}" }}'
-       command: [bash]
-       source: |
-       {{- include "argo.render-lines" (.Files.Lines "scripts/clingen-temp-table-row-ids.sh") | indent 10 }}
+      {{- include "argo.retry" . | indent 6 }}
+      script:
+        image: {{ $schemaImage }}
+        env:
+          - name: PROJECT
+            value: '{{ "{{inputs.parameters.bq-project}}" }}'
+          - name: DATASET
+            value: '{{ "{{inputs.parameters.bq-dataset}}" }}'
+          - name: INPUT_TABLE
+            value: '{{ "{{inputs.parameters.input-table}}" }}'
+          - name: TABLE
+            value: '{{ "{{inputs.parameters.table-name}}" }}'
+        command: [bash]
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/clingen-temp-table-row-ids.sh") | indent 10 }}
