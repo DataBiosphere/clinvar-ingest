@@ -61,7 +61,8 @@ object ParsedScvTraitSet {
             name = metadata.name,
             alternateNames = metadata.alternateNames,
             medgenId = metadata.medgenId.orElse(matchingTrait.flatMap(_.medgenId)),
-            xrefs = metadata.xrefs,
+            xrefs = metadata.xrefs.toArray
+              .sortBy(xref => (xref.db, xref.id, xref.`type`, xref.sourceField, xref.sourceDetail)),
             // NOTE: This must always be the last filled-in field, so that every
             // other field is popped from the raw payload before it's bundled into
             // the content column.
@@ -104,7 +105,7 @@ object ParsedScvTraitSet {
 
       // Look to see if there are any with aligned XRefs.
       val xrefDirectMatch =
-        referenceTraits.find(_.xrefs.intersect(metadata.xrefs).nonEmpty)
+        referenceTraits.find(_.xrefs.toSet.intersect(metadata.xrefs).nonEmpty)
 
       // Find the reference trait with the matching MedGen ID if it's defined.
       // Otherwise match on preferred name.

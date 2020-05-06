@@ -20,7 +20,7 @@ case class TraitMetadata(
   name: Option[String],
   alternateNames: Array[String],
   medgenId: Option[String],
-  xrefs: Array[Xref]
+  xrefs: Set[Xref]
 )
 
 object TraitMetadata {
@@ -48,21 +48,22 @@ object TraitMetadata {
           val nameValue = name.extract[Msg]("ElementValue")
           val nameType = nameValue.extract[String]("@Type")
           val nameString = nameValue.extract[String]("$")
-          val nameRefs = extractXrefs(name, Some(nameString)).toSet
 
           if (nameType == "Preferred") {
             if (prefAcc.isDefined) {
               throw new IllegalStateException(s"Trait $id has multiple preferred names")
             } else {
-              (Some(nameString), altAcc, nameRefs.union(xrefAcc))
+              val preferredRefs = extractXrefs(name, Some("name"), None).toSet
+              (Some(nameString), altAcc, preferredRefs.union(xrefAcc))
             }
           } else {
-            (prefAcc, nameString :: altAcc, nameRefs.union(xrefAcc))
+            val alternateRefs = extractXrefs(name, Some("alternate_names"), Some(nameString)).toSet
+            (prefAcc, nameString :: altAcc, alternateRefs.union(xrefAcc))
           }
       }
     // Process remaining xrefs in the payload, combining them with the
     // name-based refs.
-    val topLevelRefs = extractXrefs(rawTrait, None)
+    val topLevelRefs = extractXrefs(rawTrait, None, None)
     val (medgenId, finalXrefs) =
       topLevelRefs.foldLeft((Option.empty[String], nameXrefs)) {
         case ((medgenAcc, xrefAcc), xref) =>
@@ -83,7 +84,7 @@ object TraitMetadata {
       `type` = rawTrait.tryExtract[String]("@Type"),
       name = preferredName,
       alternateNames = alternateNames.toArray.sorted,
-      xrefs = finalXrefs.toArray.sortBy(xref => (xref.db, xref.id, xref.sourceName))
+      xrefs = finalXrefs
     )
   }
 
@@ -91,17 +92,24 @@ object TraitMetadata {
     * Pull raw xrefs out of a containing payload, and process them.
     *
     * @param xrefContainer raw payload which might contain xrefs under the "XRef" key
-    * @param linkedName name that should be associated with the extracted xrefs, if any
+    * @param source TODO
+    * @param detail TODO
     */
-  def extractXrefs(xrefContainer: Msg, linkedName: Option[String]): Array[Xref] =
+  def extractXrefs(
+    xrefContainer: Msg,
+    source: Option[String],
+    detail: Option[String]
+  ): Array[Xref] =
     xrefContainer
       .tryExtract[Array[Msg]]("XRef")
       .getOrElse(Array.empty)
       .map { rawXref =>
         Xref(
-          rawXref.extract[String]("@DB"),
-          rawXref.extract[String]("@ID"),
-          linkedName
+          db = rawXref.extract[String]("@DB"),
+          id = rawXref.extract[String]("@ID"),
+          `type` = rawXref.tryExtract[String]("@Type"),
+          sourceField = source,
+          sourceDetail = detail
         )
       }
 }

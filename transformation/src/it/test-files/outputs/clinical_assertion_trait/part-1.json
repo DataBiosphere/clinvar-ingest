@@ -4,10 +4,10 @@
 {"alternate_names":["PORPHYRIA CUTANEA TARDA, SUSCEPTIBILITY TO"],"id":"SCV000020163.0","trait_id":"9583","type":"Disease","xrefs":[]}
 {"alternate_names":["PORPHYRIA VARIEGATA, SUSCEPTIBILITY TO"],"id":"SCV000020164.0","trait_id":"9584","type":"Disease","xrefs":[]}
 {"alternate_names":["TRANSFERRIN SERUM LEVEL QUANTITATIVE TRAIT LOCUS 2"],"id":"SCV000020167.0","medgen_id":"C3280096","trait_id":"9587","type":"Disease","xrefs":[]}
-{"alternate_names":["adaptor protein 4 (AP-4) deficiency syndrome"],"id":"SCV000119895.0","medgen_id":"C3279738","name":"spastic paraplegia 47, autosomal recessive; SPG47","trait_id":"16052","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"614066\",\"source_name\":null}"]}
+{"alternate_names":["adaptor protein 4 (AP-4) deficiency syndrome"],"id":"SCV000119895.0","medgen_id":"C3279738","name":"spastic paraplegia 47, autosomal recessive; SPG47","trait_id":"16052","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"614066\",\"type\":\"MIM\",\"source_field\":null,\"source_detail\":null}"]}
 {"alternate_names":[],"id":"SCV000020162.0","medgen_id":"C3469186","name":"HEMOCHROMATOSIS, TYPE 1","trait_id":"9582","type":"Disease","xrefs":[]}
 {"alternate_names":[],"id":"SCV000024774.0","medgen_id":"C2931355","name":"SPASTIC PARAPLEGIA 3, AUTOSOMAL DOMINANT","trait_id":"15930","type":"Disease","xrefs":[]}
-{"alternate_names":[],"id":"SCV000041287.0","medgen_id":"C2931355","name":"Spastic Paraplegia 3A","trait_id":"15930","type":"Disease","xrefs":["{\"db\":\"GeneReviews\",\"id\":\"NBK45978\",\"source_name\":null}","{\"db\":\"OMIM\",\"id\":\"182600\",\"source_name\":null}"]}
+{"alternate_names":[],"id":"SCV000041287.0","medgen_id":"C2931355","name":"Spastic Paraplegia 3A","trait_id":"15930","type":"Disease","xrefs":["{\"db\":\"GeneReviews\",\"id\":\"NBK45978\",\"type\":null,\"source_field\":null,\"source_detail\":null}","{\"db\":\"OMIM\",\"id\":\"182600\",\"type\":\"MIM\",\"source_field\":null,\"source_detail\":null}"]}
 {"alternate_names":[],"id":"SCV000119895.0.0","name":"severe ID","type":"Finding","xrefs":[]}
 {"alternate_names":[],"id":"SCV000119895.0.1","name":"absent speech","type":"Finding","xrefs":[]}
 {"alternate_names":[],"id":"SCV000119895.0.2","name":"microcephaly","type":"Finding","xrefs":[]}
@@ -23,62 +23,62 @@
 {"alternate_names":[],"id":"SCV000119895.2.2","name":"absence of microcephaly","type":"Finding","xrefs":[]}
 {"alternate_names":[],"id":"SCV000119895.2.3","name":"absence of growth retardation","type":"Finding","xrefs":[]}
 {"alternate_names":[],"id":"SCV000119895.2.4","name":"absence of progressive spastic tetraplegia","type":"Finding","xrefs":[]}
-{"alternate_names":[],"id":"SCV000151394.0","medgen_id":"C3469186","trait_id":"9582","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"235200\",\"source_name\":null}"]}
+{"alternate_names":[],"id":"SCV000151394.0","medgen_id":"C3469186","trait_id":"9582","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"235200\",\"type\":\"MIM\",\"source_field\":null,\"source_detail\":null}"]}
 {"alternate_names":[],"id":"SCV000190831.0","name":"See cases","trait_id":"18728","type":"PhenotypeInstruction","xrefs":[]}
 {"alternate_names":[],"id":"SCV000190831.0.0","name":"Developmental delay AND/OR other significant developmental or morphological phenotypes","type":"Finding","xrefs":[]}
 {"alternate_names":[],"id":"SCV000190832.0","name":"See cases","trait_id":"18728","type":"PhenotypeInstruction","xrefs":[]}
-{"alternate_names":[],"id":"SCV000190832.0.0","name":"Macrocephaly","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000256\",\"source_name\":null}"]}
+{"alternate_names":[],"id":"SCV000190832.0.0","name":"Macrocephaly","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000256\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
 {"alternate_names":[],"id":"SCV000190832.1.0","name":"Developmental delay AND/OR other significant developmental or morphological phenotypes","type":"Finding","xrefs":[]}
-{"alternate_names":[],"id":"SCV000196422.0","type":"Disease","xrefs":["{\"db\":\"OMIM phenotypic series\",\"id\":\"PS213300\",\"source_name\":null}"]}
+{"alternate_names":[],"id":"SCV000196422.0","type":"Disease","xrefs":["{\"db\":\"OMIM phenotypic series\",\"id\":\"PS213300\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
 {"alternate_names":[],"id":"SCV000206975.0","medgen_id":"C0392514","trait_id":"33108","type":"Disease","xrefs":[]}
 {"alternate_names":[],"id":"SCV000219175.0","medgen_id":"C0392514","name":"Hereditary hemochromatosis","trait_id":"33108","type":"Disease","xrefs":[]}
-{"alternate_names":[],"id":"SCV000221190.0","medgen_id":"CN205842","trait_id":"16195","type":"Disease","xrefs":["{\"db\":\"Orphanet\",\"id\":\"ORPHA79230\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000223934.0","medgen_id":"C3469186","trait_id":"9582","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"235200\",\"source_name\":null}"]}
+{"alternate_names":[],"id":"SCV000221190.0","medgen_id":"CN205842","trait_id":"16195","type":"Disease","xrefs":["{\"db\":\"Orphanet\",\"id\":\"ORPHA79230\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000223934.0","medgen_id":"C3469186","trait_id":"9582","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"235200\",\"type\":\"MIM\",\"source_field\":null,\"source_detail\":null}"]}
 {"alternate_names":[],"id":"SCV000230091.0","medgen_id":"CN517202","name":"not provided","trait_id":"17556","type":"Disease","xrefs":[]}
-{"alternate_names":[],"id":"SCV000244092.0","medgen_id":"C0950123","name":"Hereditary disease","trait_id":"32761","type":"Disease","xrefs":["{\"db\":\"MeSH\",\"id\":\"D030342\",\"source_name\":null}"]}
+{"alternate_names":[],"id":"SCV000244092.0","medgen_id":"C0950123","name":"Hereditary disease","trait_id":"32761","type":"Disease","xrefs":["{\"db\":\"MeSH\",\"id\":\"D030342\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
 {"alternate_names":[],"id":"SCV000244092.0.0","name":"Movement disorders","type":"Finding","xrefs":[]}
 {"alternate_names":[],"id":"SCV000244092.0.1","name":"Musculoskeletal/Structural (child onset)","type":"Finding","xrefs":[]}
 {"alternate_names":[],"id":"SCV000244092.0.2","name":"Neurologic (child onset)","type":"Finding","xrefs":[]}
-{"alternate_names":[],"id":"SCV000245793.0","medgen_id":"C3469186","name":"Hemochromatosis type 1","trait_id":"9582","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"235200\",\"source_name\":null}"]}
+{"alternate_names":[],"id":"SCV000245793.0","medgen_id":"C3469186","name":"Hemochromatosis type 1","trait_id":"9582","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"235200\",\"type\":\"MIM\",\"source_field\":null,\"source_detail\":null}"]}
 {"alternate_names":[],"id":"SCV000256543.0","medgen_id":"C3279738","name":"SPASTIC PARAPLEGIA 47, AUTOSOMAL RECESSIVE","trait_id":"16052","type":"Disease","xrefs":[]}
 {"alternate_names":[],"id":"SCV000267038.0","medgen_id":"C0027672","name":"Hereditary cancer-predisposing syndrome","trait_id":"18746","type":"Disease","xrefs":[]}
-{"alternate_names":[],"id":"SCV000328419.0","medgen_id":"C1855772","name":"Vici syndrome","trait_id":"2298","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"242840\",\"source_name\":null}"]}
+{"alternate_names":[],"id":"SCV000328419.0","medgen_id":"C1855772","name":"Vici syndrome","trait_id":"2298","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"242840\",\"type\":\"MIM\",\"source_field\":null,\"source_detail\":null}"]}
 {"alternate_names":[],"id":"SCV000329362.0","medgen_id":"CN517202","name":"Not Provided","trait_id":"17556","type":"Disease","xrefs":[]}
-{"alternate_names":[],"id":"SCV000461887.0","medgen_id":"C3469186","trait_id":"9582","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"235200\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000493004.0","medgen_id":"C0349506","trait_id":"22083","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000992\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000493004.1","medgen_id":"C0151861","trait_id":"28417","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0010473\",\"source_name\":null}"]}
+{"alternate_names":[],"id":"SCV000461887.0","medgen_id":"C3469186","trait_id":"9582","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"235200\",\"type\":\"MIM\",\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000493004.0","medgen_id":"C0349506","trait_id":"22083","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000992\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000493004.1","medgen_id":"C0151861","trait_id":"28417","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0010473\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
 {"alternate_names":[],"id":"SCV000551414.0","medgen_id":"C2931355","trait_id":"15930","type":"Disease","xrefs":[]}
 {"alternate_names":[],"id":"SCV000607202.0","medgen_id":"C0392514","name":"Hereditary hemochromatosis","trait_id":"33108","type":"Disease","xrefs":[]}
-{"alternate_names":[],"id":"SCV000607202.0.0","name":"Oral-pharyngeal dysphagia","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0200136\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.0.1","name":"Abnormality of vision","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000504\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.0.10","name":"Abnormality of the stomach","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0002577\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.0.11","name":"Abnormality of the liver","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0001392\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.0.12","name":"Abnormality of the intestine","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0002242\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.0.13","name":"Bruising susceptibility","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000978\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.0.14","name":"Abnormality of thrombocytes","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0001872\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.0.15","name":"Abnormality of leukocytes","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0001881\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.0.2","name":"Myopia","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000545\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.0.3","name":"Hypermetropia","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000540\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.0.4","name":"Multiple cafe-au-lait spots","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0007565\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.0.5","name":"Fragile skin","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0001030\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.0.6","name":"Abnormality of digit","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0011297\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.0.7","name":"Abnormality of cardiovascular system morphology","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0002564\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.0.8","name":"Asthma","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0002099\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.0.9","name":"Abnormality of esophagus morphology","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0002031\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.1.0","name":"Diabetes mellitus type 2","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0005978\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.1.1","name":"Hypogonadism","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000135\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.1.10","name":"Abnormality of reproductive system physiology","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000080\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.1.11","name":"Abnormality of erythrocytes","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0001877\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.1.2","name":"Hyperthyroidism","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000836\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.1.3","name":"Anxiety","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000739\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.1.4","name":"Depressivity","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000716\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.1.5","name":"Short attention span","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000736\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.1.6","name":"Multiple cafe-au-lait spots","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0007565\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.1.7","name":"Hyperhidrosis","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000975\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.1.8","name":"Joint hypermobility","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0001382\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000607202.1.9","name":"Abnormality of muscle physiology","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0011804\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000677906.0","medgen_id":"C3469186","trait_id":"9582","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"235200\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000742035.0","medgen_id":"C0950123","name":"Hereditary disease","trait_id":"32761","type":"Disease","xrefs":["{\"db\":\"MeSH\",\"id\":\"D030342\",\"source_name\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.0.0","name":"Oral-pharyngeal dysphagia","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0200136\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.0.1","name":"Abnormality of vision","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000504\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.0.10","name":"Abnormality of the stomach","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0002577\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.0.11","name":"Abnormality of the liver","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0001392\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.0.12","name":"Abnormality of the intestine","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0002242\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.0.13","name":"Bruising susceptibility","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000978\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.0.14","name":"Abnormality of thrombocytes","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0001872\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.0.15","name":"Abnormality of leukocytes","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0001881\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.0.2","name":"Myopia","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000545\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.0.3","name":"Hypermetropia","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000540\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.0.4","name":"Multiple cafe-au-lait spots","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0007565\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.0.5","name":"Fragile skin","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0001030\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.0.6","name":"Abnormality of digit","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0011297\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.0.7","name":"Abnormality of cardiovascular system morphology","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0002564\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.0.8","name":"Asthma","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0002099\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.0.9","name":"Abnormality of esophagus morphology","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0002031\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.1.0","name":"Diabetes mellitus type 2","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0005978\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.1.1","name":"Hypogonadism","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000135\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.1.10","name":"Abnormality of reproductive system physiology","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000080\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.1.11","name":"Abnormality of erythrocytes","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0001877\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.1.2","name":"Hyperthyroidism","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000836\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.1.3","name":"Anxiety","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000739\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.1.4","name":"Depressivity","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000716\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.1.5","name":"Short attention span","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000736\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.1.6","name":"Multiple cafe-au-lait spots","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0007565\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.1.7","name":"Hyperhidrosis","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000975\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.1.8","name":"Joint hypermobility","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0001382\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000607202.1.9","name":"Abnormality of muscle physiology","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0011804\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000677906.0","medgen_id":"C3469186","trait_id":"9582","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"235200\",\"type\":\"MIM\",\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000742035.0","medgen_id":"C0950123","name":"Hereditary disease","trait_id":"32761","type":"Disease","xrefs":["{\"db\":\"MeSH\",\"id\":\"D030342\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
 {"alternate_names":[],"id":"SCV000742035.0.0","name":"MR/ID/DD","type":"Finding","xrefs":[]}
 {"alternate_names":[],"id":"SCV000742035.0.1","name":"Autism spectrum","type":"Finding","xrefs":[]}
 {"alternate_names":[],"id":"SCV000742035.0.2","name":"Hypotonia","type":"Finding","xrefs":[]}
@@ -86,8 +86,12 @@
 {"alternate_names":[],"id":"SCV000742035.0.4","name":"Craniofacial (child onset)","type":"Finding","xrefs":[]}
 {"alternate_names":[],"id":"SCV000742035.0.5","name":"Neurologic (child onset)","type":"Finding","xrefs":[]}
 {"alternate_names":[],"id":"SCV000822690.0","medgen_id":"C3279738","name":"Spastic paraplegia 47, autosomal recessive","trait_id":"16052","type":"Disease","xrefs":[]}
-{"alternate_names":[],"id":"SCV000839959.0","medgen_id":"C3469186","trait_id":"9582","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"235200\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV000883106.0","medgen_id":"C3469186","trait_id":"9582","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"235200\",\"source_name\":null}"]}
+{"alternate_names":[],"id":"SCV000839959.0","medgen_id":"C3469186","trait_id":"9582","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"235200\",\"type\":\"MIM\",\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000883106.0","medgen_id":"C3469186","trait_id":"9582","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"235200\",\"type\":\"MIM\",\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000930709.0","medgen_id":"C1857242","trait_id":"4353","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"222765\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000930709.0.0","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000252\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000930709.0.1","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000519\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV000930709.0.2","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0001385\",\"type\":null,\"source_field\":null,\"source_detail\":null}"]}
 {"alternate_names":[],"id":"SCV000992278.0","name":"VARIANT OF UNKNOWN SIGNIFICANCE","type":"Disease","xrefs":[]}
-{"alternate_names":[],"id":"SCV001137062.0","medgen_id":"C3469186","trait_id":"9582","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"235200\",\"source_name\":null}"]}
-{"alternate_names":[],"id":"SCV001194044.0","medgen_id":"C3469186","trait_id":"9582","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"235200\",\"source_name\":null}"]}
+{"alternate_names":[],"id":"SCV001137062.0","medgen_id":"C3469186","trait_id":"9582","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"235200\",\"type\":\"MIM\",\"source_field\":null,\"source_detail\":null}"]}
+{"alternate_names":[],"id":"SCV001194044.0","medgen_id":"C3469186","trait_id":"9582","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"235200\",\"type\":\"MIM\",\"source_field\":null,\"source_detail\":null}"]}

@@ -24,6 +24,23 @@
       "type": "repeated"
     },
     {
+      "name": "symbol",
+      "datatype": "string"
+    },
+    {
+      "name": "alternate_symbols",
+      "datatype": "string",
+      "type": "repeated"
+    },
+    {
+      "name": "public_definition",
+      "datatype": "string"
+    },
+    {
+      "name": "gard_id",
+      "datatype": "integer"
+    },
+    {
       "name": "content",
       "datatype": "string"
     }

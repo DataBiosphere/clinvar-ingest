@@ -12,7 +12,15 @@
       "type": "required"
     },
     {
-      "name": "source_name",
+      "name": "type",
+      "datatype": "string"
+    },
+    {
+      "name": "source_field",
+      "datatype": "string"
+    },
+    {
+      "name": "source_detail",
       "datatype": "string"
     }
   ]
