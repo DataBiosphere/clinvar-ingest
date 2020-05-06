@@ -121,31 +121,31 @@ spec:
             dependencies: [diff-table]
             template: query-full-rows
             arguments:
-             parameters:
-               - name: bq-project
-                 value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
-               - name: bq-dataset
-                 value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
-               - name: join-table-name
-                 value: '{{ "{{tasks.diff-table.outputs.parameters.join-table-name}}" }}'
-               - name: table-name
-                 value: '{{ "{{inputs.parameters.table-name}}" }}'
-               - name: query-type
-                 value: updates
+              parameters:
+                - name: bq-project
+                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+                - name: bq-dataset
+                  value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
+                - name: join-table-name
+                  value: '{{ "{{tasks.diff-table.outputs.parameters.join-table-name}}" }}'
+                - name: table-name
+                  value: '{{ "{{inputs.parameters.table-name}}" }}'
+                - name: query-type
+                  value: updates
           # deleted rows
           - name: generate-deleted-rows-table
             dependencies: [diff-table]
             template: query-row-ids
             arguments:
-             parameters:
-               - name: bq-project
-                 value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
-               - name: bq-dataset
-                 value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
-               - name: join-table-name
-                 value: '{{ "{{tasks.diff-table.outputs.parameters.join-table-name}}" }}'
-               - name: table-name
-                 value: '{{ "{{inputs.parameters.table-name}}" }}'
+              parameters:
+                - name: bq-project
+                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+                - name: bq-dataset
+                  value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
+                - name: join-table-name
+                  value: '{{ "{{tasks.diff-table.outputs.parameters.join-table-name}}" }}'
+                - name: table-name
+                  value: '{{ "{{inputs.parameters.table-name}}" }}'
     # Subtemplates
     # query-full-rows will be generic for both the new rows + updates
     - name: query-full-rows
@@ -174,6 +174,7 @@ spec:
         command: [bash]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/clingen-temp-table-full-rows.sh") | indent 10 }}
+
     # query-row-ids is exclusively for deleted rows
     - name: query-row-ids
       inputs:
