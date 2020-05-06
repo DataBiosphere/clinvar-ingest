@@ -136,7 +136,7 @@ spec:
           - name: generate-deleted-rows-table
             dependencies: [diff-table]
             template: query-row-ids
-           arguments:
+            arguments:
              parameters:
                - name: bq-project
                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
