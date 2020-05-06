@@ -83,7 +83,7 @@ object TraitMetadata {
       `type` = rawTrait.tryExtract[String]("@Type"),
       name = preferredName,
       alternateNames = alternateNames.toArray,
-      xrefs = finalXrefs.toArray
+      xrefs = finalXrefs.toArray.sortBy(xref => (xref.db, xref.id))
     )
   }
 
