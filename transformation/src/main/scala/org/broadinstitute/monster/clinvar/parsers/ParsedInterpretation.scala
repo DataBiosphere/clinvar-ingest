@@ -42,7 +42,7 @@ object ParsedInterpretation {
           val traitSet = TraitSet(
             id = rawTraitSet.extract[String]("@ID"),
             `type` = rawTraitSet.tryExtract[String]("@Type"),
-            traitIds = traits.map(_.id),
+            traitIds = traits.map(_.id).sorted,
             content = Content.encode(rawTraitSet)
           )
           (traitSet +: setAcc, traits ++ traitAcc)
