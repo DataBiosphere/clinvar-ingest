@@ -182,7 +182,7 @@ spec:
           - name: join-table-name
           - name: bq-project
           - name: bq-dataset
-      {{- include "argo.retry" . | indent 6 }}
+     {{- include "argo.retry" . | indent 6 }}
      script:
        image: {{ $schemaImage }}
        env:
