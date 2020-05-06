@@ -120,7 +120,7 @@ spec:
           - name: generate-updated-rows-table
             dependencies: [diff-table]
             template: query-full-rows
-           arguments:
+            arguments:
              parameters:
                - name: bq-project
                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
@@ -146,8 +146,6 @@ spec:
                  value: '{{ "{{tasks.diff-table.outputs.parameters.join-table-name}}" }}'
                - name: table-name
                  value: '{{ "{{inputs.parameters.table-name}}" }}'
-               - name: query-type
-                 value: deletes
     # Subtemplates
     # query-full-rows will be generic for both the new rows + updates
     - name: query-full-rows
@@ -196,8 +194,6 @@ spec:
            value: '{{ "{{inputs.parameters.input-table}}" }}'
          - name: TABLE
            value: '{{ "{{inputs.parameters.table-name}}" }}'
-         - name: QUERY_TYPE
-           value: '{{ "{{inputs.parameters.query-type}}" }}'
        command: [bash]
        source: |
        {{- include "argo.render-lines" (.Files.Lines "scripts/clingen-temp-table-row-ids.sh") | indent 10 }}
