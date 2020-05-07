@@ -16,11 +16,11 @@
       "datatype": "string"
     },
     {
-      "name": "source_field",
+      "name": "ref_field",
       "datatype": "string"
     },
     {
-      "name": "source_detail",
+      "name": "ref_field_element",
       "datatype": "string"
     }
   ]

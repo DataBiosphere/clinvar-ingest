@@ -92,13 +92,14 @@ object TraitMetadata {
     * Pull raw xrefs out of a containing payload, and process them.
     *
     * @param xrefContainer raw payload which might contain xrefs under the "XRef" key
-    * @param source TODO
-    * @param detail TODO
+    * @param referencedField name of the field in the output JSON associated with the XRef
+    * @param referencedElement specific element in the referenced field associated with the XRef,
+    *                          only needed for array fields
     */
   def extractXrefs(
     xrefContainer: Msg,
-    source: Option[String],
-    detail: Option[String]
+    referencedField: Option[String],
+    referencedElement: Option[String]
   ): Array[Xref] =
     xrefContainer
       .tryExtract[Array[Msg]]("XRef")
@@ -108,8 +109,8 @@ object TraitMetadata {
           db = rawXref.extract[String]("@DB"),
           id = rawXref.extract[String]("@ID"),
           `type` = rawXref.tryExtract[String]("@Type"),
-          sourceField = source,
-          sourceDetail = detail
+          refField = referencedField,
+          refFieldElement = referencedElement
         )
       }
 }

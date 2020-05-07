@@ -62,7 +62,7 @@ object ParsedScvTraitSet {
             alternateNames = metadata.alternateNames,
             medgenId = metadata.medgenId.orElse(matchingTrait.flatMap(_.medgenId)),
             xrefs = metadata.xrefs.toArray
-              .sortBy(xref => (xref.db, xref.id, xref.`type`, xref.sourceField, xref.sourceDetail)),
+              .sortBy(xref => (xref.db, xref.id, xref.`type`, xref.refField, xref.refFieldElement)),
             // NOTE: This must always be the last filled-in field, so that every
             // other field is popped from the raw payload before it's bundled into
             // the content column.

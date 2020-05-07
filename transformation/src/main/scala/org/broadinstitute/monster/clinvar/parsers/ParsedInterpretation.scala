@@ -108,9 +108,8 @@ object ParsedInterpretation {
     }
     val (definition, defXrefs) = rawDefinition.fold((Option.empty[String], Set.empty[Xref])) {
       rawDef =>
-        val attribute = rawDef.read[Msg]("Attribute")
-        val defValue = attribute.read[String]("$")
-        val defRefs = TraitMetadata.extractXrefs(attribute, Some("public_definition"), None)
+        val defValue = rawDef.read[String]("Attribute", "$")
+        val defRefs = TraitMetadata.extractXrefs(rawDef, Some("public_definition"), None)
         (Some(defValue), defRefs.toSet)
     }
 
@@ -122,9 +121,8 @@ object ParsedInterpretation {
       Some(attributes.remove(gardIndex))
     }
     val (gardId, gardXrefs) = rawGardId.fold((Option.empty[Long], Set.empty[Xref])) { rawId =>
-      val attribute = rawId.read[Msg]("Attribute")
-      val idValue = attribute.read[Long]("@integerValue")
-      val idRefs = TraitMetadata.extractXrefs(attribute, Some("gard_id"), None)
+      val idValue = rawId.read[Long]("Attribute", "@integerValue")
+      val idRefs = TraitMetadata.extractXrefs(rawId, Some("gard_id"), None)
       (Some(idValue), idRefs.toSet)
     }
 
@@ -149,7 +147,7 @@ object ParsedInterpretation {
       publicDefinition = definition,
       gardId = gardId,
       xrefs = allXrefs.toArray
-        .sortBy(xref => (xref.db, xref.id, xref.`type`, xref.sourceField, xref.sourceDetail)),
+        .sortBy(xref => (xref.db, xref.id, xref.`type`, xref.refField, xref.refFieldElement)),
       content = Content.encode(rawTrait)
     )
   }
