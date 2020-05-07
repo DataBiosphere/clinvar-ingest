@@ -135,7 +135,7 @@ spec:
           # deleted rows
           - name: generate-deleted-rows-table
             dependencies: [diff-table]
-            template: query-row-ids
+            template: query-pk-deletes
             arguments:
               parameters:
                 - name: bq-project
@@ -175,8 +175,8 @@ spec:
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/clingen-temp-table-full-rows.sh") | indent 10 }}
 
-    # query-row-ids is exclusively for deleted rows
-    - name: query-row-ids
+    # query-pk-deletes to get primary keys of rows to be deleted
+    - name: query-pk-deletes
       inputs:
         parameters:
           - name: table-name
@@ -197,4 +197,4 @@ spec:
             value: '{{ "{{inputs.parameters.table-name}}" }}'
         command: [bash]
         source: |
-        {{- include "argo.render-lines" (.Files.Lines "scripts/clingen-temp-table-row-ids.sh") | indent 10 }}
+        {{- include "argo.render-lines" (.Files.Lines "scripts/clingen-temp-table-pk-deletes.sh") | indent 10 }}
