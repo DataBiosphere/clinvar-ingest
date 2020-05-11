@@ -88,6 +88,10 @@
 {"clinical_assertion_id":"SCV000822690","mapping_ref":"Preferred","mapping_type":"Name","mapping_value":"Spastic paraplegia 47, autosomal recessive","medgen_id":"C3279738","medgen_name":"Spastic paraplegia 47, autosomal recessive","trait_type":"Disease"}
 {"clinical_assertion_id":"SCV000839959","mapping_ref":"OMIM","mapping_type":"XRef","mapping_value":"235200","medgen_id":"C3469186","medgen_name":"Hemochromatosis type 1","trait_type":"Disease"}
 {"clinical_assertion_id":"SCV000883106","mapping_ref":"OMIM","mapping_type":"XRef","mapping_value":"235200","medgen_id":"C3469186","medgen_name":"Hemochromatosis type 1","trait_type":"Disease"}
+{"clinical_assertion_id":"SCV000930709","mapping_ref":"HP","mapping_type":"XRef","mapping_value":"HP:0000252","medgen_id":"C4551563","medgen_name":"Microcephaly","trait_type":"Finding"}
+{"clinical_assertion_id":"SCV000930709","mapping_ref":"HP","mapping_type":"XRef","mapping_value":"HP:0000519","medgen_id":"C0009691","medgen_name":"Congenital cataract","trait_type":"Finding"}
+{"clinical_assertion_id":"SCV000930709","mapping_ref":"HP","mapping_type":"XRef","mapping_value":"HP:0001385","medgen_id":"CN971197","medgen_name":"Hip dysplasia","trait_type":"Finding"}
+{"clinical_assertion_id":"SCV000930709","mapping_ref":"OMIM","mapping_type":"XRef","mapping_value":"222765","medgen_id":"C1857242","medgen_name":"Rhizomelic chondrodysplasia punctata type 2","trait_type":"Disease"}
 {"clinical_assertion_id":"SCV000992278","mapping_ref":"Preferred","mapping_type":"Name","mapping_value":"VARIANT OF UNKNOWN SIGNIFICANCE","medgen_id":"C0431399","medgen_name":"Joubert syndrome","trait_type":"Disease"}
 {"clinical_assertion_id":"SCV001137062","mapping_ref":"OMIM","mapping_type":"XRef","mapping_value":"235200","medgen_id":"C3469186","medgen_name":"Hemochromatosis type 1","trait_type":"Disease"}
 {"clinical_assertion_id":"SCV001194044","mapping_ref":"OMIM","mapping_type":"XRef","mapping_value":"235200","medgen_id":"C3469186","medgen_name":"Hemochromatosis type 1","trait_type":"Disease"}

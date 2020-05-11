@@ -1,27 +1,28 @@
-{"id":"1238","org_abbrev":"UCGS","org_category":"laboratory","submitter_name":"Genetic Services Laboratory, University of Chicago"}
-{"id":"21766","org_abbrev":"LMM","org_category":"laboratory","submitter_name":"Laboratory for Molecular Medicine, Partners HealthCare Personalized Medicine"}
-{"id":"26957","org_category":"laboratory","submitter_name":"GeneDx"}
-{"id":"3","org_category":"resource","submitter_name":"OMIM"}
-{"id":"320494","org_category":"laboratory","submitter_name":"Counsyl"}
-{"id":"500029","org_category":"consortium","submitter_name":"International Standards For Cytogenomic Arrays Consortium (ISCA)"}
-{"id":"500031","org_category":"laboratory","submitter_name":"Invitae"}
-{"id":"500035","org_category":"laboratory","submitter_name":"Mendelics"}
-{"id":"500060","org_category":"laboratory","submitter_name":"EGL Genetic Diagnostics,Eurofins Clinical Diagnostics"}
-{"id":"500062","org_abbrev":"GeneReviews","org_category":"resource","submitter_name":"GeneReviews"}
-{"id":"500184","org_abbrev":"DGU-KFSHRC","org_category":"laboratory","submitter_name":"Developmental Genetics Unit,King Faisal Specialist Hospital & Research Centre"}
-{"id":"500188","org_abbrev":"Blueprint Genetics","org_category":"laboratory","submitter_name":"Blueprint Genetics"}
-{"id":"500199","org_abbrev":"HGSC-CL","org_category":"laboratory","submitter_name":"Human Genome Sequencing Center Clinical Lab,Baylor College of Medicine"}
-{"id":"504895","org_category":"laboratory","submitter_name":"Illumina Clinical Services Laboratory,Illumina"}
-{"id":"505240","org_category":"laboratory","submitter_name":"ISCA site 4"}
-{"id":"505243","org_category":"laboratory","submitter_name":"ISCA site 14"}
-{"id":"505251","org_abbrev":"UKE","org_category":"laboratory","submitter_name":"Institute of Human Genetics,University Medical Center Hamburg-Eppendorf"}
-{"id":"505542","org_abbrev":"KDL-OHSU","org_category":"laboratory","submitter_name":"Knight Diagnostic Laboratories,Oregon Health and Sciences University"}
-{"id":"505712","org_category":"laboratory","submitter_name":"Vantari Genetics"}
-{"id":"505721","org_category":"other","submitter_name":"Medical Research Institute,Tokyo Medical and Dental University"}
-{"id":"505727","org_category":"laboratory","submitter_name":"Department of Pediatrics and Neonatology,Nagoya City University Graduate School of Medical Sciences"}
-{"id":"505952","org_abbrev":"CMG-UMCL","org_category":"clinic","submitter_name":"Centre for Mendelian Genomics,University Medical Centre Ljubljana"}
-{"id":"505987","org_category":"laboratory","submitter_name":"Department of Genetics,Osaka University Graduate School of Medicine"}
-{"id":"506039","org_abbrev":"GADteam","org_category":"laboratory","submitter_name":"Equipe Genetique des Anomalies du Developpement, Université de Bourgogne"}
-{"id":"506185","org_category":"other","submitter_name":"GenomeConnect, ClinGen"}
-{"id":"507240","org_category":"laboratory","submitter_name":"Myriad Women's Health, Inc."}
-{"id":"61756","org_category":"laboratory","submitter_name":"Ambry Genetics"}
+{"id":"1238","org_category":"laboratory"}
+{"id":"21766","org_category":"laboratory"}
+{"id":"26957","org_category":"laboratory"}
+{"id":"3","org_category":"resource"}
+{"id":"320494","org_category":"laboratory"}
+{"id":"500029","org_category":"consortium"}
+{"id":"500031","org_category":"laboratory"}
+{"id":"500035","org_category":"laboratory"}
+{"id":"500060","org_category":"laboratory"}
+{"id":"500062","org_category":"resource"}
+{"id":"500184","org_category":"laboratory"}
+{"id":"500188","org_category":"laboratory"}
+{"id":"500199","org_category":"laboratory"}
+{"id":"504895","org_category":"laboratory"}
+{"id":"505240","org_category":"laboratory"}
+{"id":"505243","org_category":"laboratory"}
+{"id":"505251","org_category":"laboratory"}
+{"id":"505542","org_category":"laboratory"}
+{"id":"505712","org_category":"laboratory"}
+{"id":"505721","org_category":"other"}
+{"id":"505727","org_category":"laboratory"}
+{"id":"505952","org_category":"clinic"}
+{"id":"505987","org_category":"laboratory"}
+{"id":"506039","org_category":"laboratory"}
+{"id":"506185","org_category":"other"}
+{"id":"507137","org_category":"other"}
+{"id":"507240","org_category":"laboratory"}
+{"id":"61756","org_category":"laboratory"}

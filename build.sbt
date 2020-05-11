@@ -1,3 +1,4 @@
+import _root_.io.circe.Json
 import org.broadinstitute.monster.sbt.model.JadeIdentifier
 
 lazy val `clinvar-ingest` = project
@@ -27,5 +28,15 @@ lazy val `clinvar-orchestration-workflow` = project
   .enablePlugins(MonsterHelmPlugin)
   .settings(
     helmChartOrganization := "DataBiosphere",
-    helmChartRepository := "clinvar-ingest"
+    helmChartRepository := "clinvar-ingest",
+    helmInjectVersionValues := { (baseValues, version) =>
+      val schemaVersionValues = Json.obj(
+        "argoTemplates" -> Json.obj(
+          "diffBQTable" -> Json.obj(
+            "schemaImageVersion" -> Json.fromString(version)
+          )
+        )
+      )
+      baseValues.deepMerge(schemaVersionValues)
+    }
   )
