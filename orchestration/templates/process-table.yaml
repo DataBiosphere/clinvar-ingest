@@ -122,7 +122,8 @@ spec:
           - name: export-new-rows-table
             dependencies: [generate-new-rows-table]
             templateRef:
-              name:
+              name: {{ .Values.argoTemplates.exportBQTable.name }}
+              template: main
             arguments:
               parameters:
                 - name: bq-project
@@ -157,7 +158,8 @@ spec:
           - name: export-updated-rows-table
             dependencies: [generate-updated-rows-table]
             templateRef:
-              name:
+              name: {{ .Values.argoTemplates.exportBQTable.name }}
+              template: main
             arguments:
               parameters:
                 - name: bq-project
@@ -190,7 +192,8 @@ spec:
           - name: export-deleted-rows-table
             dependencies: [generate-new-rows-table]
             templateRef:
-              name:
+              name: {{ .Values.argoTemplates.exportBQTable.name }}
+              template: main
             arguments:
               parameters:
                 - name: bq-project
