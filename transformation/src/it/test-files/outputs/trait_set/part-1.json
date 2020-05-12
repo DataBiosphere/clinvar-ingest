@@ -5,6 +5,7 @@
 {"id":"13","trait_ids":["5535"],"type":"Disease"}
 {"id":"13598","trait_ids":["18746"],"type":"Disease"}
 {"id":"16994","trait_ids":["18728"],"type":"PhenotypeInstruction"}
+{"id":"1887","trait_ids":["4353"],"type":"Disease"}
 {"id":"21210","trait_ids":["33108"],"type":"Disease"}
 {"id":"25797","trait_ids":["32761"],"type":"Disease"}
 {"id":"34316","trait_ids":["22083","28417"],"type":"Finding"}

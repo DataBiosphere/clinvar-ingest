@@ -12,7 +12,15 @@
       "type": "required"
     },
     {
-      "name": "source_name",
+      "name": "type",
+      "datatype": "string"
+    },
+    {
+      "name": "ref_field",
+      "datatype": "string"
+    },
+    {
+      "name": "ref_field_element",
       "datatype": "string"
     }
   ]
