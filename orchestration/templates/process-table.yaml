@@ -20,6 +20,7 @@ spec:
           - name: timeout
           - name: sa-secret
           - name: sa-secret-key
+          - name: export-gcs-bucket
       dag:
         tasks:
           # 1) diff table
@@ -99,8 +100,7 @@ spec:
                   value: '{{ "{{inputs.parameters.gcs-prefix}}/old-ids/{{inputs.parameters.table-name}}" }}'
                 - name: table-name
                   value: '{{ "{{inputs.parameters.table-name}}" }}'
-          # Generate BQ tables for ClinGen
-          # new rows
+          # Generate new rows BQ table for ClinGen
           - name: generate-new-rows-table
             dependencies: [diff-table]
             template: query-full-rows
@@ -116,7 +116,15 @@ spec:
                   value: '{{ "{{inputs.parameters.table-name}}" }}'
                 - name: query-type
                   value: new_rows
-          # updated rows
+          # Export new rows table to GCS bucket for ClinGen
+          - name: export-new-rows-table
+            dependencies: [generate-new-rows-table]
+            template:
+            arguments:
+              parameters:
+                - name: gcs-bucket
+                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+          # Generate updated rows BQ table for ClinGen
           - name: generate-updated-rows-table
             dependencies: [diff-table]
             template: query-full-rows
@@ -132,7 +140,15 @@ spec:
                   value: '{{ "{{inputs.parameters.table-name}}" }}'
                 - name: query-type
                   value: updates
-          # deleted rows
+          # Export updated rows table to GCS bucket for ClinGen
+          #- name: export-updated-rows-table
+          #  dependencies: [generate-updated-rows-table]
+          #  template: query-full-rows
+          #  arguments:
+          #    parameters:
+          #      - name: ???
+          #        value: ???
+          # Generate deleted rows BQ table for ClinGen
           - name: generate-deleted-rows-table
             dependencies: [diff-table]
             template: query-pk-deletes
@@ -146,6 +162,14 @@ spec:
                   value: '{{ "{{tasks.diff-table.outputs.parameters.join-table-name}}" }}'
                 - name: table-name
                   value: '{{ "{{inputs.parameters.table-name}}" }}'
+          # Export deleted rows table to GCS bucket for ClinGen
+          #- name: export-deleted-rows-table
+          #  dependencies: [generate-deleted-rows-table]
+          #  template: ???
+          #  arguments:
+          #    parameters:
+          #      - name: ???
+          #        value: ???
     # Subtemplates
     # query-full-rows will be generic for both the new rows + updates
     - name: query-full-rows

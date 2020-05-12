@@ -277,6 +277,8 @@ spec:
                 - name: sa-secret-key
                   value: '{{ .accessKey.secretKey }}'
                 {{- end }}
+                - name: export-gcs-bucket
+                  value: '{{ .Values.gcs.exportBucketName }}'
             withItems:
               - clinical_assertion
               - clinical_assertion_observation
