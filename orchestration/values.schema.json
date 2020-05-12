@@ -8,7 +8,7 @@
         "bucketName": { "type": "string" },
         "resultBucketName": {"type":  "string"}
       },
-      "required": ["bucketName", "exportBucketName"]
+      "required": ["bucketName", "resultBucketName"]
     },
     "serviceAccount": {
       "type": "object",
