@@ -6,7 +6,7 @@
       "type": "object",
       "properties": {
         "bucketName": { "type": "string" },
-        "exportBucketName": {"type":  "string"}
+        "resultBucketName": {"type":  "string"}
       },
       "required": ["bucketName", "exportBucketName"]
     },
