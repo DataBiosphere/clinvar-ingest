@@ -44,6 +44,11 @@
 {"clinical_assertion_trait_ids":["SCV000883106.0"],"id":"SCV000883106","type":"Disease"}
 {"clinical_assertion_trait_ids":["SCV000930709.0"],"id":"SCV000930709","type":"Disease"}
 {"clinical_assertion_trait_ids":["SCV000930709.0.0","SCV000930709.0.1","SCV000930709.0.2"],"content":"{\"@DateLastEvaluated\":\"2019-02-20\",\"Comment\":{\"$\":\"Patient with microcephaly, dysmorphic facial features, congenital cataracts, abnormal skeletal development, bilateral hip dysplasia, motor development delay, muscular hypotonia, premature birth, malnutrition, abnormal atrial septum (treated), growth failure, abnormal myelination. Age of manifestation: childish. The parents of the index patient are not consanguineous.\"}}","id":"SCV000930709.0","type":"Finding"}
+{"clinical_assertion_trait_ids":["SCV000946128.0"],"id":"SCV000946128","type":"Disease"}
+{"clinical_assertion_trait_ids":["SCV000959355.0"],"id":"SCV000959355","type":"Disease"}
 {"clinical_assertion_trait_ids":["SCV000992278.0"],"id":"SCV000992278","type":"Disease"}
 {"clinical_assertion_trait_ids":["SCV001137062.0"],"id":"SCV001137062","type":"Disease"}
+{"clinical_assertion_trait_ids":["SCV001190878.0"],"id":"SCV001190878","type":"Disease"}
+{"clinical_assertion_trait_ids":["SCV001190878.0.0","SCV001190878.0.1","SCV001190878.0.2","SCV001190878.0.3"],"id":"SCV001190878.0","type":"Finding"}
 {"clinical_assertion_trait_ids":["SCV001194044.0"],"id":"SCV001194044","type":"Disease"}
+{"clinical_assertion_trait_ids":["SCV001236871.0"],"id":"SCV001236871","type":"Disease"}

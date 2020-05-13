@@ -5,7 +5,7 @@ import java.time.LocalDate
 import org.broadinstitute.monster.clinvar.Content
 import org.broadinstitute.monster.clinvar.jadeschema.struct.Xref
 import org.broadinstitute.monster.clinvar.jadeschema.table.{Trait, TraitSet}
-import upack.{Arr, Msg, Str}
+import upack.Msg
 
 import scala.collection.mutable
 
@@ -99,42 +99,87 @@ object ParsedInterpretation {
     val attributes = rawTrait
       .tryExtract[mutable.ArrayBuffer[Msg]]("AttributeSet")
       .getOrElse(mutable.ArrayBuffer.empty)
-    val definitionIndex =
-      attributes.indexWhere(_.read[String]("Attribute", "@Type") == "public definition")
-    val rawDefinition = if (definitionIndex == -1) {
-      None
-    } else {
-      Some(attributes.remove(definitionIndex))
+
+    def popAttribute(attrType: String): Option[Msg] = {
+      val index = attributes.indexWhere(_.read[String]("Attribute", "@Type") == attrType)
+      if (index == -1) None else Some(attributes.remove(index))
     }
-    val (definition, defXrefs) = rawDefinition.fold((Option.empty[String], Set.empty[Xref])) {
-      rawDef =>
+    def popRepeatedAttribute(attrType: String): Array[Msg] = {
+      val indices = attributes.zipWithIndex.flatMap {
+        case (attr, i) =>
+          if (attr.read[String]("Attribute", "@Type") == attrType) Some(i) else None
+      }.sorted.zipWithIndex.map {
+        // Every time we pop from the array, we need to deprecate all following indices by 1.
+        // As long as the index-list is sorted, the amount we need to deprecate by should be
+        // the original position in the list.
+        case (originalIndex, adjustment) => originalIndex - adjustment
+      }
+      indices.map(attributes.remove).toArray
+    }
+
+    val (definition, defXrefs) =
+      popAttribute("public definition").fold((Option.empty[String], Set.empty[Xref])) { rawDef =>
         val defValue = rawDef.read[String]("Attribute", "$")
         val defRefs = TraitMetadata.extractXrefs(rawDef, Some("public_definition"), None)
         (Some(defValue), defRefs.toSet)
+      }
+
+    val (gardId, gardXrefs) = popAttribute("GARD id").fold((Option.empty[Long], Set.empty[Xref])) {
+      rawId =>
+        val idValue = rawId.read[Long]("Attribute", "@integerValue")
+        val idRefs = TraitMetadata.extractXrefs(rawId, Some("gard_id"), None)
+        (Some(idValue), idRefs.toSet)
     }
 
-    val gardIndex =
-      attributes.indexWhere(_.read[String]("Attribute", "@Type") == "GARD id")
-    val rawGardId = if (gardIndex == -1) {
-      None
-    } else {
-      Some(attributes.remove(gardIndex))
-    }
-    val (gardId, gardXrefs) = rawGardId.fold((Option.empty[Long], Set.empty[Xref])) { rawId =>
-      val idValue = rawId.read[Long]("Attribute", "@integerValue")
-      val idRefs = TraitMetadata.extractXrefs(rawId, Some("gard_id"), None)
-      (Some(idValue), idRefs.toSet)
+    val (keywords, keywordRefs) =
+      popRepeatedAttribute("keyword").foldLeft((Set.empty[String], Set.empty[Xref])) {
+        case ((kwAcc, refAcc), keyword) =>
+          val kwValue = keyword.read[String]("Attribute", "$")
+          val kwRefs = TraitMetadata.extractXrefs(keyword, Some("keywords"), Some(kwValue))
+          (kwAcc + kwValue, refAcc.union(kwRefs.toSet))
+      }
+
+    val (mechanism, mechanismId, mechanismRefs) = popAttribute("disease mechanism").fold(
+      (Option.empty[String], Option.empty[Long], Set.empty[Xref])
+    ) { mechanism =>
+      val mechanismValue = mechanism.read[String]("Attribute", "$")
+      val mechanismId = mechanism.tryRead[Long]("Attribute", "@integerValue")
+      val mechanismRefs = TraitMetadata.extractXrefs(mechanism, Some("disease_mechanism"), None)
+      (Some(mechanismValue), mechanismId, mechanismRefs.toSet)
     }
 
-    // Inject any unused attributes back into the unmodeled content.
-    if (attributes.nonEmpty) {
-      rawTrait.obj.put(Str("AttributeSet"), Arr(attributes))
-    }
+    val (inheritanceMode, inheritanceRefs) =
+      popAttribute("mode of inheritance").fold((Option.empty[String], Set.empty[Xref])) { rawMode =>
+        val modeValue = rawMode.read[String]("Attribute", "$")
+        val modeRefs = TraitMetadata.extractXrefs(rawMode, Some("mode_of_inheritance"), None)
+        (Some(modeValue), modeRefs.toSet)
+      }
+
+    val (review, reviewRefs) =
+      popAttribute("GeneReviews short").fold((Option.empty[String], Set.empty[Xref])) { rawReview =>
+        val reviewValue = rawReview.read[String]("Attribute", "$")
+        val reviewRefs = TraitMetadata.extractXrefs(rawReview, Some("gene_reviews_short"), None)
+        (Some(reviewValue), reviewRefs.toSet)
+      }
+
+    val (ghr, ghrRefs) =
+      popAttribute("Genetics Home Reference (GHR) links").fold(
+        (Option.empty[String], Set.empty[Xref])
+      ) { rawLinks =>
+        val ghrValue = rawLinks.read[String]("Attribute", "$")
+        val ghrRefs = TraitMetadata.extractXrefs(rawLinks, Some("ghr_links"), None)
+        (Some(ghrValue), ghrRefs.toSet)
+      }
 
     val allXrefs = metadata.xrefs
       .union(symbolXrefs)
       .union(defXrefs)
       .union(gardXrefs)
+      .union(keywordRefs)
+      .union(mechanismRefs)
+      .union(inheritanceRefs)
+      .union(reviewRefs)
+      .union(ghrRefs)
 
     Trait(
       id = metadata.id,
@@ -146,8 +191,15 @@ object ParsedInterpretation {
       alternateSymbols = altSymbols.toArray.sorted,
       publicDefinition = definition,
       gardId = gardId,
+      keywords = keywords.toArray.sorted,
+      diseaseMechanism = mechanism,
+      diseaseMechanismId = mechanismId,
+      modeOfInheritance = inheritanceMode,
+      geneReviewsShort = review,
+      ghrLinks = ghr,
+      attributeContent = attributes.flatMap(Content.encode).toArray,
       xrefs = allXrefs.toArray
-        .sortBy(xref => (xref.db, xref.id, xref.`type`, xref.refField, xref.refFieldElement)),
+        .sortBy(xref => (xref.refField, xref.refFieldElement, xref.db, xref.id, xref.`type`)),
       content = Content.encode(rawTrait)
     )
   }

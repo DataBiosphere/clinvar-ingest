@@ -41,6 +41,36 @@
       "datatype": "integer"
     },
     {
+      "name": "keywords",
+      "datatype": "string",
+      "type": "repeated"
+    },
+    {
+      "name": "disease_mechanism",
+      "datatype": "string"
+    },
+    {
+      "name": "disease_mechanism_id",
+      "datatype": "integer"
+    },
+    {
+      "name": "mode_of_inheritance",
+      "datatype": "string"
+    },
+    {
+      "name": "gene_reviews_short",
+      "datatype": "string"
+    },
+    {
+      "name": "ghr_links",
+      "datatype": "string"
+    },
+    {
+      "name": "attribute_content",
+      "datatype": "string",
+      "type": "repeated"
+    },
+    {
       "name": "content",
       "datatype": "string"
     }
