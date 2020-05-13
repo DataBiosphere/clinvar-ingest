@@ -40,6 +40,9 @@ argoTemplates:
     create: true
     name: diff-table
     schemaImageName: us.gcr.io/broad-dsp-gcr-public/clinvar-schema
+  exportBQTable:
+    create: true
+    name: export-table
   ingestFile:
     ingest: true
     name: ingest-file
