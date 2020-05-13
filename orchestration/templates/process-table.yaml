@@ -190,7 +190,7 @@ spec:
                 - name: table-name
                   value: '{{ "{{inputs.parameters.table-name}}" }}'
           - name: export-deleted-rows-table
-            dependencies: [generate-new-rows-table]
+            dependencies: [generate-deleted-rows-table]
             templateRef:
               name: {{ .Values.argoTemplates.exportBQTable.name }}
               template: main
