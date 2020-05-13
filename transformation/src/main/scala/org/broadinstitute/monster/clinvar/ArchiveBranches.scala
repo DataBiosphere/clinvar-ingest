@@ -101,9 +101,9 @@ object ArchiveBranches {
           aggregateScv.traitSets.foreach(ctx.output(scvTraitSetOut, _))
           aggregateScv.traits.foreach(ctx.output(scvTraitOut, _))
         }
-        val interpDate = parsed.vcv.flatMap(_.interpDateLastEvaluated)
-        parsed.traitSets.foreach(tSet => ctx.output(traitSetOut, tSet -> interpDate))
-        parsed.traits.foreach(t => ctx.output(traitOut, t -> interpDate))
+        val updateDate = parsed.vcv.flatMap(_.dateLastUpdated)
+        parsed.traitSets.foreach(tSet => ctx.output(traitSetOut, tSet -> updateDate))
+        parsed.traits.foreach(t => ctx.output(traitOut, t -> updateDate))
         parsed.traitMappings.foreach(ctx.output(traitMappingOut, _))
         // Use variation as the main output because each archive contains
         // exactly one of them.
