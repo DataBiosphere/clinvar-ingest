@@ -140,7 +140,7 @@ spec:
           - name: ingest-raw-xml
             dependencies: [upload-raw-archive, extract-release-date]
             templateRef:
-              name: ingest-file
+              name: {{ .Values.argoTemplates.ingestFile.name }}
               template: main
             arguments:
               parameters:
