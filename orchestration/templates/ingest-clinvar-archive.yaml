@@ -186,7 +186,7 @@ spec:
             # Same WHEN as `stage-release-history`.
             when: '{{ "{{tasks.ingest-raw-xml.outputs.parameters.file-exists}} == false" }}'
             templateRef:
-              name: ingest-table
+              name: {{ .Values.argoTemplates.ingestTable.name }}
               template: main
             arguments:
               parameters:
