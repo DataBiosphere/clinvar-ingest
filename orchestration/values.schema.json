@@ -5,9 +5,10 @@
     "gcs": {
       "type": "object",
       "properties": {
-        "bucketName": { "type": "string" }
+        "bucketName": { "type": "string" },
+        "resultBucketName": {"type":  "string"}
       },
-      "required": ["bucketName"]
+      "required": ["bucketName", "resultBucketName"]
     },
     "serviceAccount": {
       "type": "object",

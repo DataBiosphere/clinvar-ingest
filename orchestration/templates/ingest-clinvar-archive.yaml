@@ -194,7 +194,7 @@ spec:
                   value: release_history
                 - name: gcs-bucket
                   value: '{{ .Values.gcs.bucketName }}'
-                - name: gcs-file-path
+                - name: gcs-prefix
                   value: '{{ "{{inputs.parameters.gcs-prefix}}/processed/release_history" }}'
                 {{- with .Values.repo }}
                 - name: url
@@ -277,6 +277,8 @@ spec:
                 - name: sa-secret-key
                   value: '{{ .accessKey.secretKey }}'
                 {{- end }}
+                - name: gcs-results-bucket
+                  value: '{{ .Values.gcs.resultBucketName }}'
             withItems:
               - clinical_assertion
               - clinical_assertion_observation

@@ -10,6 +10,7 @@ spec:
         parameters:
           - name: table-name
           - name: gcs-bucket
+          - name: gcs-results-bucket
           - name: gcs-prefix
           - name: staging-bq-project
           - name: staging-bq-dataset
@@ -22,7 +23,7 @@ spec:
           - name: sa-secret-key
       dag:
         tasks:
-          # 1) diff table
+          # Diff staged data against previously-ingested tables
           - name: diff-table
             templateRef:
               name: {{ .Values.argoTemplates.diffBQTable.name }}
@@ -47,7 +48,8 @@ spec:
                   value: '{{ "{{inputs.parameters.jade-bq-project}}" }}'
                 - name: jade-bq-dataset
                   value: '{{ "{{inputs.parameters.jade-bq-dataset}}" }}'
-          # 2a) Ingest table
+
+          # Append rows with new data
           - name: ingest-table
             dependencies: [diff-table]
             # WHEN there are rows to append, THEN run the ingest task, otherwise don't
@@ -73,7 +75,8 @@ spec:
                   value: '{{ "{{inputs.parameters.gcs-prefix}}/new-rows/{{inputs.parameters.table-name}}" }}'
                 - name: table-name
                   value: '{{ "{{inputs.parameters.table-name}}" }}'
-          # 2b) Soft-delete table
+
+          # Soft-delete rows for PKs with new data
           - name: soft-delete-table
             dependencies: [diff-table]
             # Only when there are rows to soft-delete
@@ -99,8 +102,8 @@ spec:
                   value: '{{ "{{inputs.parameters.gcs-prefix}}/old-ids/{{inputs.parameters.table-name}}" }}'
                 - name: table-name
                   value: '{{ "{{inputs.parameters.table-name}}" }}'
-          # Generate BQ tables for ClinGen
-          # new rows
+
+          # Export new rows to GCS for ClinGen
           - name: generate-new-rows-table
             dependencies: [diff-table]
             template: query-full-rows
@@ -116,7 +119,27 @@ spec:
                   value: '{{ "{{inputs.parameters.table-name}}" }}'
                 - name: query-type
                   value: new_rows
-          # updated rows
+          - name: export-new-rows-table
+            dependencies: [generate-new-rows-table]
+            templateRef:
+              name: {{ .Values.argoTemplates.exportBQTable.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: bq-project
+                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+                - name: bq-dataset
+                  value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
+                - name: bq-table
+                  value: '{{ "{{tasks.generate-new-rows-table.outputs.result}}" }}'
+                - name: output-format
+                  value: NEWLINE_DELIMITED_JSON
+                - name: gcs-bucket
+                  value: '{{ "{{inputs.parameters.gcs-results-bucket}}" }}'
+                - name: gcs-prefix
+                  value: '{{ "{{inputs.parameters.gcs-prefix}}/{{inputs.parameters.table-name}}/creates" }}'
+
+          # Export updated rows to GCS for ClinGen
           - name: generate-updated-rows-table
             dependencies: [diff-table]
             template: query-full-rows
@@ -132,7 +155,27 @@ spec:
                   value: '{{ "{{inputs.parameters.table-name}}" }}'
                 - name: query-type
                   value: updates
-          # deleted rows
+          - name: export-updated-rows-table
+            dependencies: [generate-updated-rows-table]
+            templateRef:
+              name: {{ .Values.argoTemplates.exportBQTable.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: bq-project
+                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+                - name: bq-dataset
+                  value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
+                - name: bq-table
+                  value: '{{ "{{tasks.generate-updated-rows-table.outputs.result}}" }}'
+                - name: output-format
+                  value: NEWLINE_DELIMITED_JSON
+                - name: gcs-bucket
+                  value: '{{ "{{inputs.parameters.gcs-results-bucket}}" }}'
+                - name: gcs-prefix
+                  value: '{{ "{{inputs.parameters.gcs-prefix}}/{{inputs.parameters.table-name}}/updates" }}'
+
+          # Export deleted row keys to GCS for ClinGen
           - name: generate-deleted-rows-table
             dependencies: [diff-table]
             template: query-pk-deletes
@@ -146,7 +189,26 @@ spec:
                   value: '{{ "{{tasks.diff-table.outputs.parameters.join-table-name}}" }}'
                 - name: table-name
                   value: '{{ "{{inputs.parameters.table-name}}" }}'
-    # Subtemplates
+          - name: export-deleted-rows-table
+            dependencies: [generate-deleted-rows-table]
+            templateRef:
+              name: {{ .Values.argoTemplates.exportBQTable.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: bq-project
+                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+                - name: bq-dataset
+                  value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
+                - name: bq-table
+                  value: '{{ "{{tasks.generate-deleted-rows-table.outputs.result}}" }}'
+                - name: output-format
+                  value: NEWLINE_DELIMITED_JSON
+                - name: gcs-bucket
+                  value: '{{ "{{inputs.parameters.gcs-results-bucket}}" }}'
+                - name: gcs-prefix
+                  value: '{{ "{{inputs.parameters.gcs-prefix}}/{{inputs.parameters.table-name}}/deletes" }}'
+
     # query-full-rows will be generic for both the new rows + updates
     - name: query-full-rows
       inputs:
