@@ -59,8 +59,8 @@ object ArchiveBranches {
     val scvObservationOut = SideOutput[ClinicalAssertionObservation]
     val scvTraitSetOut = SideOutput[ClinicalAssertionTraitSet]
     val scvTraitOut = SideOutput[ClinicalAssertionTrait]
-    val traitSetOut = SideOutput[TraitSet]
-    val traitOut = SideOutput[Trait]
+    val traitSetOut = SideOutput[(TraitSet, Option[LocalDate])]
+    val traitOut = SideOutput[(Trait, Option[LocalDate])]
     val traitMappingOut = SideOutput[TraitMapping]
 
     val (variationStream, sideCtx) = archiveStream
@@ -101,12 +101,42 @@ object ArchiveBranches {
           aggregateScv.traitSets.foreach(ctx.output(scvTraitSetOut, _))
           aggregateScv.traits.foreach(ctx.output(scvTraitOut, _))
         }
-        parsed.traitSets.foreach(ctx.output(traitSetOut, _))
-        parsed.traits.foreach(ctx.output(traitOut, _))
+        val interpDate = parsed.vcv.flatMap(_.interpDateLastEvaluated)
+        parsed.traitSets.foreach(tSet => ctx.output(traitSetOut, tSet -> interpDate))
+        parsed.traits.foreach(t => ctx.output(traitOut, t -> interpDate))
         parsed.traitMappings.foreach(ctx.output(traitMappingOut, _))
         // Use variation as the main output because each archive contains
         // exactly one of them.
         parsed.variation.variation
+      }
+
+    val latestTraitSets = sideCtx(traitSetOut)
+      .groupBy(_._1.id)
+      .values
+      .flatMap { allTraitSets =>
+        val datedSets = allTraitSets.flatMap {
+          case (set, date) => date.map(set -> _)
+        }
+        if (datedSets.isEmpty) {
+          // No way to tell what the "right" set is.
+          allTraitSets.headOption.map(_._1).toIterable
+        } else {
+          Iterable(datedSets.maxBy(_._2.toEpochDay)._1)
+        }
+      }
+    val latestTraits = sideCtx(traitOut)
+      .groupBy(_._1.id)
+      .values
+      .flatMap { allTraits =>
+        val datedTraits = allTraits.flatMap {
+          case (trate, date) => date.map(trate -> _)
+        }
+        if (datedTraits.isEmpty) {
+          // No way to tell what the "right" trait is.
+          allTraits.headOption.map(_._1).toIterable
+        } else {
+          Iterable(datedTraits.maxBy(_._2.toEpochDay)._1)
+        }
       }
 
     ArchiveBranches(
@@ -122,8 +152,8 @@ object ArchiveBranches {
       scvObservations = sideCtx(scvObservationOut),
       scvTraitSets = sideCtx(scvTraitSetOut),
       scvTraits = sideCtx(scvTraitOut),
-      traitSets = sideCtx(traitSetOut).distinctBy(_.id),
-      traits = sideCtx(traitOut).distinctBy(_.id),
+      traitSets = latestTraitSets,
+      traits = latestTraits,
       traitMappings = sideCtx(traitMappingOut)
     )
   }
