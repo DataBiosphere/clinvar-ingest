@@ -55,7 +55,7 @@ spec:
             # WHEN there are rows to append, THEN run the ingest task, otherwise don't
             when: '{{ "{{tasks.diff-table.outputs.parameters.rows-to-append-count}} > 0" }}'
             templateRef:
-              name: ingest-table
+              name:  {{ .Values.argoTemplates.ingestTable.name }}
               template: main
             arguments:
               parameters:
@@ -82,7 +82,7 @@ spec:
             # Only when there are rows to soft-delete
             when: '{{ "{{tasks.diff-table.outputs.parameters.ids-to-delete-count}} > 0" }}'
             templateRef:
-              name: soft-delete-table
+              name: {{ .Values.argoTemplates.softDeleteTable.name }}
               template: main
             arguments:
               parameters:

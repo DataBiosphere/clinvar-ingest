@@ -43,3 +43,12 @@ argoTemplates:
   exportBQTable:
     create: true
     name: export-table
+  ingestFile:
+    ingest: true
+    name: ingest-file
+  ingestTable:
+    create: true
+    name: ingest-table
+  softDeleteTable:
+    create: true
+    name: soft-delete-table
