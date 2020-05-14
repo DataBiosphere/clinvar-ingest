@@ -190,7 +190,7 @@ spec:
               template: main
             arguments:
               parameters:
-                - name: table_name
+                - name: table-name
                   value: release_history
                 - name: gcs-bucket
                   value: '{{ .Values.gcs.bucketName }}'
