@@ -92,6 +92,14 @@
 {"alternate_names":[],"id":"SCV000930709.0.0","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000252\"}"]}
 {"alternate_names":[],"id":"SCV000930709.0.1","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0000519\"}"]}
 {"alternate_names":[],"id":"SCV000930709.0.2","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0001385\"}"]}
+{"alternate_names":[],"id":"SCV000946128.0","medgen_id":"C0410180","name":"Eichsfeld type congenital muscular dystrophy","trait_id":"4109","type":"Disease","xrefs":[]}
+{"alternate_names":[],"id":"SCV000959355.0","medgen_id":"C0007193","name":"Primary dilated cardiomyopathy","trait_id":"676","type":"Disease","xrefs":[]}
 {"alternate_names":[],"id":"SCV000992278.0","name":"VARIANT OF UNKNOWN SIGNIFICANCE","type":"Disease","xrefs":[]}
 {"alternate_names":[],"id":"SCV001137062.0","medgen_id":"C3469186","trait_id":"9582","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"235200\",\"type\":\"MIM\"}"]}
+{"alternate_names":[],"id":"SCV001190878.0","medgen_id":"C1853490","trait_id":"1445","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"606232\",\"type\":\"MIM\"}"]}
+{"alternate_names":[],"id":"SCV001190878.0.0","name":"Intellectual disability","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0001249\"}"]}
+{"alternate_names":[],"id":"SCV001190878.0.1","name":"Encephalopathy","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0001298\"}"]}
+{"alternate_names":[],"id":"SCV001190878.0.2","name":"Obesity","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0001513\"}"]}
+{"alternate_names":[],"id":"SCV001190878.0.3","name":"Elevated serum creatine phosphokinase","type":"Finding","xrefs":["{\"db\":\"HP\",\"id\":\"HP:0003236\"}"]}
 {"alternate_names":[],"id":"SCV001194044.0","medgen_id":"C3469186","trait_id":"9582","type":"Disease","xrefs":["{\"db\":\"OMIM\",\"id\":\"235200\",\"type\":\"MIM\"}"]}
+{"alternate_names":[],"id":"SCV001236871.0","medgen_id":"C3495498","name":"Familial hypertrophic cardiomyopathy 1","trait_id":"1311","type":"Disease","xrefs":[]}
