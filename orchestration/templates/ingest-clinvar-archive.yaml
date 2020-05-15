@@ -279,6 +279,8 @@ spec:
                 {{- end }}
                 - name: gcs-results-bucket
                   value: '{{ .Values.gcs.resultBucketName }}'
+            # Only process one table at a time to avoid contention.
+            parallelism: 1
             withItems:
               - clinical_assertion
               - clinical_assertion_observation
