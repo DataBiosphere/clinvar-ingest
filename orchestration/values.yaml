@@ -44,7 +44,7 @@ argoTemplates:
     create: true
     name: export-table
   ingestFile:
-    ingest: true
+    create: true
     name: ingest-file
   ingestTable:
     create: true
