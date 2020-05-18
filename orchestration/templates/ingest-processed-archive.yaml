@@ -288,7 +288,7 @@ spec:
         # layer of env variables to make the scripts more stand-alone and more compatible within editors
         env:
           - name: PROJECT
-            value: '{{ .Values.bigquery.stagingData.project" }}'
+            value: '{{ .Values.bigquery.stagingData.project }}'
           - name: DATASET
             value: '{{ "{{inputs.parameters.bq-dataset}}" }}'
           - name: INPUT_TABLE
