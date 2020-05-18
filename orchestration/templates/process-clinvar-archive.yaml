@@ -180,13 +180,13 @@ spec:
                 - name: gcs-prefix
                   value: '{{ $gcsPrefix }}'
 
-        # Output the extracted release date so it can be used in following steps when
-        # this workflow is launched by the over-arching orchestration pipeline.
-        outputs:
-          parameters:
-            - name: release-date
-              valueFrom:
-                parameter: '{{ $releaseDate }}'
+      # Output the extracted release date so it can be used in following steps when
+      # this workflow is launched by the over-arching orchestration pipeline.
+      outputs:
+        parameters:
+          - name: release-date
+            valueFrom:
+              parameter: '{{ $releaseDate }}'
 
     ##
     ## Shim template used to extract the release date from
