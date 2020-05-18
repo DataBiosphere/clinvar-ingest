@@ -48,7 +48,7 @@ spec:
                   value: '{{ .Values.gcs.bucketName }}'
                 - name: gcs-file-path
                   value: '{{ $gcsPrefix }}/raw/{{ include "clinvar.raw-archive-name" . }}'
-            {{- $fileId := "{{tasks.ingest-raw-xml.outputs.parameters.file-id}}}" }}
+            {{- $fileId := "{{tasks.ingest-raw-xml.outputs.parameters.file-id}}" }}
             {{- $shouldIngest := "{{tasks.ingest-raw-xml.outputs.parameters.file-exists}} == false" }}
 
           # Stage a row for the release_history table in GCS.
