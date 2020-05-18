@@ -8,292 +8,44 @@ spec:
       inputs:
         parameters:
           - name: archive-path
+          {{- $archivePath := "{{inputs.parameters.archive-path}}" }}
           - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
       dag:
         tasks:
-          # 1) Generate a PVC to hold the raw XML.
-          - name: generate-download-volume
-            templateRef:
-              name: {{ .Values.argoTemplates.generatePVC.name }}
-              template: main
-            arguments:
-              parameters:
-                - name: name-prefix
-                  value: ftp-download
-                - name: size
-                  value: '{{ .Values.volumes.downloadSize }}'
-                - name: storage-class
-                  value: '{{ .Values.volumes.storageClass }}'
-          # 2) Download the raw XML onto the new PVC.
-          {{- $downloadPvc := "{{tasks.generate-download-volume.outputs.parameters.pvc-name}}" }}
-          {{- $localXmlName := "ClinVarRelease.xml" }}
-          - name: download-archive
-            dependencies: [generate-download-volume]
-            templateRef:
-              name: {{ .Values.argoTemplates.downloadFTPFile.name }}
-              template: main
-            arguments:
-              parameters:
-                - name: ftp-site
-                  value: 'ftp.ncbi.nlm.nih.gov'
-                - name: ftp-path
-                  value: 'pub/clinvar/xml/clinvar_variation/{{ "{{inputs.parameters.archive-path}}" }}'
-                - name: local-path
-                  value: '{{ $localXmlName }}'
-                - name: pvc-name
-                  value: '{{ $downloadPvc }}'
-                - name: memory
-                  value: '512Mi'
-                - name: cpu
-                  value: '1000m'
-          # 3a) Upload the raw XML to GCS.
-          - name: upload-raw-archive
-            dependencies: [download-archive]
-            templateRef:
-              name: {{ .Values.argoTemplates.gsutilRsync.name }}
-              template: main
-            arguments:
-              parameters:
-                - name: pvc-name
-                  value: '{{ $downloadPvc }}'
-                - name: local-prefix
-                  value: ''
-                - name: gcs-bucket
-                  value: '{{ .Values.gcs.bucketName }}'
-                - name: gcs-prefix
-                  value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw'
-                - name: memory
-                  value: '1Gi'
-                - name: cpu
-                  value: '1000m'
-          # 3b) Generate a PVC to hold extracted JSON-list files.
-          - name: generate-extraction-volume
-            # Don't generate the PVC until we need it.
-            dependencies: [download-archive]
-            templateRef:
-              name: generate-pvc
-              template: main
-            arguments:
-              parameters:
-                - name: name-prefix
-                  value: extracted-json
-                - name: size
-                  value: '{{ .Values.volumes.extractSize }}'
-                - name: storage-class
-                  value: '{{ .Values.volumes.storageClass }}'
-          {{- $extractionPvc := "{{tasks.generate-extraction-volume.outputs.parameters.pvc-name}}" }}
-          # 4) Extract raw XML to JSON-list.
-          - name: extract-xml
-            dependencies: [generate-extraction-volume]
-            templateRef:
-              name: {{ .Values.xmlToJsonList.templateName }}
-              template: main
-            arguments:
-              parameters:
-                - name: input-pvc-name
-                  value: '{{ $downloadPvc }}'
-                - name: input-xml-path
-                  value: '{{ $localXmlName }}'
-                - name: output-pvc-name
-                  value: '{{ $extractionPvc }}'
-                - name: objects-per-part
-                  value: '1024'
-                - name: gunzip
-                  value: 'true'
-                - name: memory-mib
-                  value: '2560'
-                - name: cpu-m
-                  value: '1500'
-          # 5a) Upload JSON-list data to GCS.
-          - name: upload-extracted-archive
-            dependencies: [extract-xml]
-            templateRef:
-              name: {{ .Values.argoTemplates.gsutilRsync.name }}
-              template: main
-            arguments:
-              parameters:
-                - name: pvc-name
-                  value: '{{ $extractionPvc }}'
-                - name: local-prefix
-                  value: VariationArchive
-                - name: gcs-bucket
-                  value:  '{{ .Values.gcs.bucketName }}'
-                - name: gcs-prefix
-                  value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw/VariationArchive'
-                - name: memory
-                  value: '2Gi'
-                - name: cpu
-                  value: '2000m'
-          # 5b) Extract clinvar release date.
-          - name: extract-release-date
-            dependencies: [extract-xml]
-            templateRef:
-              name: extract-clinvar-release-date
-              template: main
-            arguments:
-              parameters:
-                - name: pvc-name
-                  value: '{{ $extractionPvc }}'
-                - name: file-path
-                  value: 'ClinVarVariationRelease/part-1.json'
-          # 6) Ingest raw XML blob from GCS to Jade Data Repo.
-          - name: ingest-raw-xml
-            dependencies: [upload-raw-archive, extract-release-date]
-            templateRef:
-              name: {{ .Values.argoTemplates.ingestFile.name }}
-              template: main
-            arguments:
-              parameters:
-                {{- with .Values.repo }}
-                - name: url
-                  value: '{{ .url }}'
-                - name: dataset-id
-                  value: '{{ .datasetId }}'
-                - name: profile-id
-                  value: '{{ .profileId }}'
-                - name: timeout
-                  value: '{{ .pollTimeout }}'
-                - name: sa-secret
-                  value: '{{ .accessKey.secretName }}'
-                - name: sa-secret-key
-                  value: '{{ .accessKey.secretKey }}'
-                {{- end }}
-                - name: target-path
-                  value: '{{ "/{{tasks.extract-release-date.outputs.result}}.xml" }}'
-                - name: gcs-bucket
-                  value: '{{ .Values.gcs.bucketName }}'
-                - name: gcs-file-path
-                  value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw/{{ $localXmlName }}'
-          # 7) Stage a release_history object in GCS
-          - name: stage-release-history
-            dependencies: [extract-release-date, ingest-raw-xml]
-            templateRef:
-              name: create-json-object
-              template: main
-            # WHEN the file does not already exist in the repo, THEN we can expect a drs-id for a file
-            when: '{{ "{{tasks.ingest-raw-xml.outputs.parameters.file-exists}} == false" }}'
-            arguments:
-              parameters:
-                - name: release-date
-                  value: '{{ "{{tasks.extract-release-date.outputs.result}}" }}'
-                - name: archive-path
-                  value: '{{ "{{tasks.ingest-raw-xml.outputs.parameters.file-id}}" }}'
-                - name: upload-path
-                  value: '{{ printf "gs://%s/{{inputs.parameters.gcs-prefix}}/processed/release_history/" .Values.gcs.bucketName }}'
-          # Ingest the staged release_history row.
-          - name: ingest-release-history
-            dependencies: [stage-release-history]
-            # Same WHEN as `stage-release-history`.
-            when: '{{ "{{tasks.ingest-raw-xml.outputs.parameters.file-exists}} == false" }}'
-            templateRef:
-              name: {{ .Values.argoTemplates.ingestTable.name }}
-              template: main
-            arguments:
-              parameters:
-                - name: table-name
-                  value: release_history
-                - name: gcs-bucket
-                  value: '{{ .Values.gcs.bucketName }}'
-                - name: gcs-prefix
-                  value: '{{ "{{inputs.parameters.gcs-prefix}}/processed/release_history" }}'
-                {{- with .Values.repo }}
-                - name: url
-                  value: '{{ .url }}'
-                - name: dataset-id
-                  value: '{{ .datasetId }}'
-                - name: timeout
-                  value: '{{ .pollTimeout }}'
-                - name: sa-secret
-                  value: '{{ .accessKey.secretName }}'
-                - name: sa-secret-key
-                  value: '{{ .accessKey.secretKey }}'
-                {{- end }}
-          # 8) Run Dataflow on uploaded JSON.
+          # Transfer and process the archive, staging outputs in GCS.
           - name: process-archive
-            dependencies: [upload-extracted-archive]
             templateRef:
-              name: run-dataflow
+              name: process-clinvar-archive
               template: main
             arguments:
               parameters:
-                - name: gcs-bucket
-                  value: '{{ .Values.gcs.bucketName }}'
-                - name: input-prefix
-                  value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/raw'
-                - name: output-prefix
-                  value: '{{ "{{inputs.parameters.gcs-prefix}}" }}/processed'
-          {{- $datasetName := printf "%s_%s" .Values.bigquery.stagingData.datasetPrefix (include "argo.timestamp" .) }}
-          # 9) Create a dataset
-          - name: create-dataset
+                - name: archive-path
+                  value: '{{ $archivePath }}'
+                - name: gcs-prefix
+                  value: '{{ $gcsPrefix }}'
+            {{- $releaseDate := "{{tasks.process-archive.outputs.parameters.release-date}}" }}
+
+          # Ingest the raw archive into the Repository, for provenance.
+          - name: ingest-raw-archive
             dependencies: [process-archive]
             templateRef:
-              name: {{ .Values.argoTemplates.createBQDataset.name }}
-              template: main
-            arguments:
-            {{- with .Values.bigquery.stagingData }}
-              parameters:
-                - name: dataset-name
-                  value: {{ $datasetName }}
-                - name: bq-project
-                  value: '{{ .project }}'
-                - name: dataset-description
-                  value: '{{ .description }}'
-                - name: dataset-expiration
-                  value: '{{ .expiration }}'
-            {{- end }}
-          # 10) Diff generated data against existing data
-          - name: process-tables
-            dependencies: [process-archive, create-dataset]
-            templateRef:
-              name: process-table
+              name: ingest-raw-archive
               template: main
             arguments:
               parameters:
-                - name: table-name
-                  value: '{{ "{{item}}" }}'
-                - name: gcs-bucket
-                  value: '{{ .Values.gcs.bucketName }}'
                 - name: gcs-prefix
-                  value: '{{ "{{inputs.parameters.gcs-prefix}}" }}'
-                - name: staging-bq-project
-                  value: '{{ .Values.bigquery.stagingData.project }}'
-                - name: staging-bq-dataset
-                  value: {{ $datasetName }}
-                {{- with .Values.bigquery.jadeData }}
-                - name: jade-bq-project
-                  value: '{{ .project }}'
-                - name: jade-bq-dataset
-                  value: '{{ .dataset }}'
-                {{- end }}
-                {{- with .Values.repo }}
-                - name: url
-                  value: '{{ .url }}'
-                - name: dataset-id
-                  value: '{{ .datasetId }}'
-                - name: timeout
-                  value: '{{ .pollTimeout }}'
-                - name: sa-secret
-                  value: '{{ .accessKey.secretName }}'
-                - name: sa-secret-key
-                  value: '{{ .accessKey.secretKey }}'
-                {{- end }}
-                - name: gcs-results-bucket
-                  value: '{{ .Values.gcs.resultBucketName }}'
-            # Only process one table at a time to avoid contention.
-            parallelism: 1
-            withItems:
-              - clinical_assertion
-              - clinical_assertion_observation
-              - clinical_assertion_trait
-              - clinical_assertion_trait_set
-              - clinical_assertion_variation
-              - gene
-              - gene_association
-              - rcv_accession
-              - submission
-              - submitter
-              - trait
-              - trait_mapping
-              - trait_set
-              - variation
-              - variation_archive
+                  value: '{{ $gcsPrefix }}'
+                - name: release-date
+                  value: '{{ $releaseDate }}'
+
+          # Ingest the processed archive into the Repository.
+          - name: ingest-processed-archive
+            dependencies: [process-archive]
+            templateRef:
+              name: ingest-processed-archive
+              template: main
+            arguments:
+              parameters:
+                - name: gcs-prefix
+                  value: '{{ $gcsPrefix }}'

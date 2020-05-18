@@ -1,0 +1,115 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: ingest-raw-archive
+spec:
+  templates:
+    ##
+    ## Entrypoint for ingesting a raw ClinVar archive into the Jade repository.
+    ##
+    ## Ingests the raw XML, along with a row in the release_history table to track it.
+    ## Does not run the ingest if the XML already exists.
+    ##
+    - name: main
+      inputs:
+        parameters:
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+      dag:
+        tasks:
+          # FIXME: This logic still needs reworked to truly be idempotent.
+
+          # Ingest raw XML blob from GCS to Jade Data Repo.
+          - name: ingest-raw-xml
+            templateRef:
+              name: {{ .Values.argoTemplates.ingestFile.name }}
+              template: main
+            arguments:
+              parameters:
+                {{- with .Values.repo }}
+                - name: url
+                  value: '{{ .url }}'
+                - name: dataset-id
+                  value: '{{ .datasetId }}'
+                - name: profile-id
+                  value: '{{ .profileId }}'
+                - name: timeout
+                  value: '{{ .pollTimeout }}'
+                - name: sa-secret
+                  value: '{{ .accessKey.secretName }}'
+                - name: sa-secret-key
+                  value: '{{ .accessKey.secretKey }}'
+                {{- end }}
+                - name: target-path
+                  value: '{{ printf "/%s.xml" $releaseDate }}'
+                - name: gcs-bucket
+                  value: '{{ .Values.gcs.bucketName }}'
+                - name: gcs-file-path
+                  value: '{{ $gcsPrefix }}/raw/{{ include "clinvar.raw-archive-name" }}'
+            {{- $fileId := "{{tasks.ingest-raw-xml.outputs.parameters.file-id}}}" }}
+            {{- $shouldIngest := "{{tasks.ingest-raw-xml.outputs.parameters.file-exists}} == false" }}
+
+          # Stage a row for the release_history table in GCS.
+          - name: stage-release-history
+            dependencies: [ingest-raw-xml]
+            template: stage-release-history
+            when: '{{ $shouldIngest }}'
+            arguments:
+              parameters:
+                - name: release-date
+                  value: '{{ $releaseDate }}'
+                - name: archive-id
+                  value: '{{ $fileId }}'
+                - name: gcs-prefix
+                  value: '{{ $gcsPrefix }}'
+
+          # Ingest the staged release_history row.
+          - name: ingest-release-history
+            dependencies: [ingest-raw-xml, stage-release-history]
+            when: '{{ $shouldIngest }}'
+            templateRef:
+              name: {{ .Values.argoTemplates.ingestTable.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: table-name
+                  value: release_history
+                - name: gcs-bucket
+                  value: '{{ .Values.gcs.bucketName }}'
+                - name: gcs-prefix
+                  value: '{{ printf "%s/processed/release_history" $gcsPrefix }}'
+                {{- with .Values.repo }}
+                - name: url
+                  value: '{{ .url }}'
+                - name: dataset-id
+                  value: '{{ .datasetId }}'
+                - name: timeout
+                  value: '{{ .pollTimeout }}'
+                - name: sa-secret
+                  value: '{{ .accessKey.secretName }}'
+                - name: sa-secret-key
+                  value: '{{ .accessKey.secretKey }}'
+                {{- end }}
+
+    ##
+    ## Stage a JSON object in GCS containing data for a row in the release_history table.
+    ##
+    - name: stage-release-history
+      inputs:
+        parameters:
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+          - name: archive-id
+          {{- $archiveId := "{{inputs.parameters.archive-id}}" }}
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+      script:
+        image: google/cloud-sdk:slim
+        command: [bash]
+        {{- $uploadPath := printf "gs://%s/%s/release_history/" .Values.gcs.bucketName $gcsPrefix }}
+        source: |
+            json='{"release_date":"{{ $releaseDate }}","archive_path":"{{ $archiveId }}"}'
+            echo "$json" > release_history.json
+            gsutil cp release_history.json {{ $uploadPath }}
