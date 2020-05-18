@@ -225,7 +225,7 @@ spec:
           - name: gcs-prefix
           {{- $prefix := "{{inputs.parameters.gcs-prefix}}" }}
       container:
-        {{- $version := default "latest" .Values.global.version }}
+        {{- $version := default "latest" .Values.diffBQTable.schemaImageVersion }}
         image: us.gcr.io/broad-dsp-gcr-public/clinvar-transformation-pipeline:{{ $version }}
         command: []
         args:
