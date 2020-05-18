@@ -273,6 +273,7 @@ spec:
                 - name: gcs-prefix
                   value: '{{ printf "%s/%s/deletes" $gcsPrefix $tableName }}'
 
+    {{- $schemaImage := printf "%s:%s" .Values.argoTemplates.diffBQTable.schemaImageName (default "latest" .Values.global.version) }}
     # query-full-rows will be generic for both the new rows + updates
     - name: query-full-rows
       inputs:
