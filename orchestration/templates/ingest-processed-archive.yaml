@@ -126,6 +126,8 @@ spec:
               parameters:
                 - name: table-name
                   value: '{{ $tableName }}'
+                - name: gcs-bucket
+                  value: '{{ .Values.gcs.bucketName }}'
                 - name: gcs-prefix
                   value: '{{ $newRowsPrefix }}'
                 {{- with .Values.repo }}
@@ -154,6 +156,8 @@ spec:
                   value: '{{ $tableName }}'
                 - name: gcs-prefix
                   value: '{{ $oldIdsPrefix }}'
+                - name: gcs-bucket
+                  value: '{{ .Values.gcs.bucketName }}'
                 {{- with .Values.repo }}
                 - name: url
                   value: '{{ .url }}'
