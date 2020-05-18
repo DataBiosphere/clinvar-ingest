@@ -108,7 +108,7 @@ spec:
       script:
         image: google/cloud-sdk:slim
         command: [bash]
-        {{- $uploadPath := printf "gs://%s/%s/release_history/" .Values.gcs.bucketName $gcsPrefix }}
+        {{- $uploadPath := printf "gs://%s/%s/processed/release_history/" .Values.gcs.bucketName $gcsPrefix }}
         source: |
             json='{"release_date":"{{ $releaseDate }}","archive_path":"{{ $archiveId }}"}'
             echo "$json" > release_history.json
