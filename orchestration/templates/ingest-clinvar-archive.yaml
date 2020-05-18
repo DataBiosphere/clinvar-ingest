@@ -3,6 +3,8 @@ kind: WorkflowTemplate
 metadata:
   name: ingest-clinvar-archive
 spec:
+  entrypoint: main
+  serviceAccountName: {{ .Values.serviceAccount.k8sName }}
   templates:
     - name: main
       inputs:

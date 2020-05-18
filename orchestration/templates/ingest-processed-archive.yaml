@@ -3,6 +3,8 @@ kind: WorkflowTemplate
 metadata:
   name: ingest-processed-archive
 spec:
+  entrypoint: main
+  serviceAccountName: {{ .Values.serviceAccount.k8sName }}
   templates:
     ##
     ## Entrypoint for ingesting the outputs of a processed ClinVar archive.

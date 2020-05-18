@@ -3,6 +3,8 @@ kind: WorkflowTemplate
 metadata:
   name: ingest-raw-archive
 spec:
+  entrypoint: main
+  serviceAccountName: {{ .Values.serviceAccount.k8sName }}
   templates:
     ##
     ## Entrypoint for ingesting a raw ClinVar archive into the Jade repository.
