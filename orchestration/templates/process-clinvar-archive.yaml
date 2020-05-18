@@ -41,18 +41,19 @@ spec:
               name: {{ .Values.argoTemplates.downloadFTPFile.name }}
               template: main
             arguments:
-              - name: ftp-site
-                value: 'ftp.ncbi.nlm.nih.gov'
-              - name: ftp-path
-                value: value: 'pub/clinvar/xml/clinvar_variation/{{ $archivePath }}'
-              - name: local-path
-                value: {{ include "clinvar.raw-archive-name "}}
-              - name: pvc-name
-                value: '{{ $downloadPvc }}'
-              - name: memory
-                value: '512Mi'
-              - name: cpu
-                value: '1000m'
+              parameters:
+                - name: ftp-site
+                  value: 'ftp.ncbi.nlm.nih.gov'
+                - name: ftp-path
+                  value: value: 'pub/clinvar/xml/clinvar_variation/{{ $archivePath }}'
+                - name: local-path
+                  value: {{ include "clinvar.raw-archive-name" . }}
+                - name: pvc-name
+                  value: '{{ $downloadPvc }}'
+                - name: memory
+                  value: '512Mi'
+                - name: cpu
+                  value: '1000m'
 
           # Upload the raw XML to GCS.
           - name: upload-raw-archive
@@ -103,7 +104,7 @@ spec:
                 - name: input-pvc-name
                   value: '{{ $downloadPvc }}'
                 - name: input-xml-path
-                  value: {{ include "clinvar.raw-archive-name "}}
+                  value: {{ include "clinvar.raw-archive-name" . }}
                 - name: output-pvc-name
                   value: '{{ $extractionPvc }}'
                 - name: objects-per-part

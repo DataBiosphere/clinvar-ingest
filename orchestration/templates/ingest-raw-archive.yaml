@@ -47,7 +47,7 @@ spec:
                 - name: gcs-bucket
                   value: '{{ .Values.gcs.bucketName }}'
                 - name: gcs-file-path
-                  value: '{{ $gcsPrefix }}/raw/{{ include "clinvar.raw-archive-name" }}'
+                  value: '{{ $gcsPrefix }}/raw/{{ include "clinvar.raw-archive-name" . }}'
             {{- $fileId := "{{tasks.ingest-raw-xml.outputs.parameters.file-id}}}" }}
             {{- $shouldIngest := "{{tasks.ingest-raw-xml.outputs.parameters.file-exists}} == false" }}
 
