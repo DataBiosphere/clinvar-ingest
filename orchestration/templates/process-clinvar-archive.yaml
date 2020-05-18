@@ -45,7 +45,7 @@ spec:
                 - name: ftp-site
                   value: 'ftp.ncbi.nlm.nih.gov'
                 - name: ftp-path
-                  value: value: 'pub/clinvar/xml/clinvar_variation/{{ $archivePath }}'
+                  value: 'pub/clinvar/xml/clinvar_variation/{{ $archivePath }}'
                 - name: local-path
                   value: {{ include "clinvar.raw-archive-name" . }}
                 - name: pvc-name
