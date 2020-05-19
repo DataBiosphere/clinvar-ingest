@@ -193,7 +193,7 @@ spec:
             value: '{{ $releaseDate }}'
         command: [bash]
         source: |
-        {{ include "argo.render-lines" (.Files.Lines "scripts/check-for-release.sh") | indent 10 }}
+        {{- include "argo.render-lines" (.Files.Lines "scripts/check-for-release.sh") | indent 10 }}
 
     ##
     ## Stage a JSON object in GCS containing data for a row in the release_history table.

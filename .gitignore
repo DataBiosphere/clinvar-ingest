@@ -4,3 +4,5 @@ target/
 .metals/
 metals.sbt
 Chart.lock
+charts/
+
