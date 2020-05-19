@@ -19,12 +19,64 @@ spec:
           {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
           - name: release-date
           {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+          {{- $targetPath := printf "/%s.xml" $releaseDate }}
       dag:
         tasks:
-          # FIXME: This logic still needs reworked to truly be idempotent.
+          # First, check if we've already ingested a row for the release_date.
+          # If so, there's nothing more to do.
+          - name: check-for-existing-release
+            template: check-for-existing-release
+            arguments:
+              parameters:
+                - name: release-date
+                  value: '{{ $releaseDate }}'
+            {{- $shouldIngestRow := "{{tasks.check-for-existing-release.outputs.result}} == 0"}}
 
-          # Ingest raw XML blob from GCS to Jade Data Repo.
+          # Even if we haven't ingested a row, we might have ingested a file
+          # (and then failed to ingest the row). Check the file separately so
+          # we can short-circuit that piece if needed.
+          - name: check-for-existing-file
+            dependencies: [check-for-existing-release]
+            when: '{{ $shouldIngestRow }}'
+            templateRef:
+              name: {{ .Values.argoTemplates.lookupFileId.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: virtual-path
+                  value: '{{ $targetPath }}'
+                {{- with .Values.repo }}
+                - name: url
+                  value: '{{ .url }}'
+                - name: dataset-id
+                  value: '{{ .datasetId }}'
+                - name: profile-id
+                  value: '{{ .profileId }}'
+                - name: sa-secret
+                  value: '{{ .accessKey.secretName }}'
+                - name: sa-secret-key
+                  value: '{{ .accessKey.secretKey }}'
+                {{- end }}
+            {{- $existingFileId := "{{tasks.check-for-existing-file.outputs.result}}" }}
+
+          # If we've already ingested a file, use it to ingest the matching row.
+          - name: ingest-release-history-existing-file
+            dependencies: [check-for-existing-release, check-for-existing-file]
+            when: '{{ printf "%s && %s != null" $shouldIngestRow $existingFileId }}'
+            template: ingest-release-history
+            arguments:
+              parameters:
+                - name: release-date
+                  value: '{{ $releaseDate }}'
+                - name: file-id
+                  value: '{{ $existingFileId }}'
+                - name: gcs-prefix
+                  value: '{{ $gcsPrefix }}'
+
+          # If we haven't already ingested a file, start by loading the staged XML into Jade.
           - name: ingest-raw-xml
+            dependencies: [check-for-existing-file]
+            when: '{{ printf "%s == null" $existingFileId }}'
             templateRef:
               name: {{ .Values.argoTemplates.ingestFile.name }}
               template: main
@@ -45,19 +97,45 @@ spec:
                   value: '{{ .accessKey.secretKey }}'
                 {{- end }}
                 - name: target-path
-                  value: '{{ printf "/%s.xml" $releaseDate }}'
+                  value: '{{ $targetPath }}'
                 - name: gcs-bucket
                   value: '{{ .Values.gcs.bucketName }}'
                 - name: gcs-file-path
                   value: '{{ $gcsPrefix }}/raw/{{ include "clinvar.raw-archive-name" . }}'
-            {{- $fileId := "{{tasks.ingest-raw-xml.outputs.parameters.file-id}}" }}
-            {{- $shouldIngest := "{{tasks.ingest-raw-xml.outputs.parameters.file-exists}} == false" }}
+            {{- $newFileId := "{{tasks.ingest-raw-xml.outputs.parameters.file-id}}" }}
 
+          # Ingest a row for the new file.
+          - name: ingest-release-history-new-file
+            dependencies: [check-for-existing-release, check-for-existing-file]
+            when: '{{ printf "%s && %s == null" $shouldIngestRow $existingFileId }}'
+            template: ingest-release-history
+            arguments:
+              parameters:
+                - name: release-date
+                  value: '{{ $releaseDate }}'
+                - name: file-id
+                  value: '{{ $newFileId }}'
+                - name: gcs-prefix
+                  value: '{{ $gcsPrefix }}'
+
+    ##
+    ## Sub-dag to ingest a new row into the release_history table, once we've
+    ## identified the file ID to use.
+    ##
+    - name: ingest-release-history
+      inputs:
+        parameters:
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+          - name: file-id
+          {{- $fileId := "{{inputs.parameters.file-id}}" }}
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+      dag:
+        tasks:
           # Stage a row for the release_history table in GCS.
           - name: stage-release-history
-            dependencies: [ingest-raw-xml]
             template: stage-release-history
-            when: '{{ $shouldIngest }}'
             arguments:
               parameters:
                 - name: release-date
@@ -69,8 +147,7 @@ spec:
 
           # Ingest the staged release_history row.
           - name: ingest-release-history
-            dependencies: [ingest-raw-xml, stage-release-history]
-            when: '{{ $shouldIngest }}'
+            dependencies: [stage-release-history]
             templateRef:
               name: {{ .Values.argoTemplates.ingestTable.name }}
               template: main
@@ -94,6 +171,29 @@ spec:
                 - name: sa-secret-key
                   value: '{{ .accessKey.secretKey }}'
                 {{- end }}
+
+    ##
+    ## Check if a row exists in the release_history table for a given release date.
+    ##
+    - name: check-for-existing-release
+      inputs:
+        parameters:
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+      script:
+        image: google/cloud-sdk:slim
+        env:
+          - name: PROJECT
+            value: '{{ .Values.bigquery.stagingData.project }}'
+          - name: JADE_PROJECT
+            value: '{{ .Values.bigquery.jadeData.project }}'
+          - name: JADE_DATASET
+            value: '{{ .Values.bigquery.jadeData.dataset }}'
+          - name: RELEASE_DATE
+            value: '{{ $releaseDate }}'
+        command: [bash]
+        source: |
+        {{ include "argo.render-lines" (.Files.Lines "scripts/check-for-release.sh") | indent 10 }}
 
     ##
     ## Stage a JSON object in GCS containing data for a row in the release_history table.

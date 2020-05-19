@@ -55,3 +55,6 @@ argoTemplates:
   softDeleteTable:
     create: true
     name: soft-delete-table
+  lookupFileId:
+    create: true
+    name: lookup-file-id
