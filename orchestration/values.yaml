@@ -27,6 +27,9 @@ argoTemplates:
   generatePVC:
     create: true
     name: generate-pvc
+  deletePVC:
+    create: true
+    name: delete-pvc
   downloadFTPFile:
     create: true
     name: download-ftp-file
@@ -52,3 +55,6 @@ argoTemplates:
   softDeleteTable:
     create: true
     name: soft-delete-table
+  lookupFileId:
+    create: true
+    name: lookup-file-id
