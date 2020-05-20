@@ -19,7 +19,6 @@ spec:
           {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
           - name: release-date
           {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
-          {{- $targetPath := printf "/%s.xml" $releaseDate }}
       dag:
         tasks:
           # First, check if we've already ingested a row for the release_date.
@@ -30,14 +29,37 @@ spec:
               parameters:
                 - name: release-date
                   value: '{{ $releaseDate }}'
-            {{- $shouldIngestRow := "{{tasks.check-for-existing-release.outputs.result}} == 0"}}
+            {{- $shouldIngest := "{{tasks.check-for-existing-release.outputs.result}} == 0"}}
 
+          - name: ingest-release
+            dependencies: [check-for-existing-release]
+            when: '{{ $shouldIngest }}'
+            template: ingest-release
+            arguments:
+              parameters:
+                - name: release-date
+                  value: '{{ $releaseDate }}'
+                - name: gcs-prefix
+                  value: '{{ $gcsPrefix }}'
+
+    ##
+    ## Sub-dag to ingest a raw release into the Repo and register it in the release_history table.
+    ##
+    - name: ingest-release
+      inputs:
+        parameters:
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+          {{- $targetPath := printf "/%s.xml" $releaseDate }}
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+      dag:
+        tasks:
           # Even if we haven't ingested a row, we might have ingested a file
           # (and then failed to ingest the row). Check the file separately so
           # we can short-circuit that piece if needed.
           - name: check-for-existing-file
             dependencies: [check-for-existing-release]
-            when: '{{ $shouldIngestRow }}'
             templateRef:
               name: {{ .Values.argoTemplates.lookupFileId.name }}
               template: main
@@ -58,11 +80,12 @@ spec:
                   value: '{{ .accessKey.secretKey }}'
                 {{- end }}
             {{- $existingFileId := "{{tasks.check-for-existing-file.outputs.result}}" }}
+            {{- $shouldIngestFile := printf "%s == null" $existingFileId }}
 
           # If we've already ingested a file, use it to ingest the matching row.
           - name: ingest-release-history-existing-file
-            dependencies: [check-for-existing-release, check-for-existing-file]
-            when: '{{ printf "%s && %s != null" $shouldIngestRow $existingFileId }}'
+            dependencies: [check-for-existing-file]
+            when: '{{ printf "%s != null" $existingFileId }}'
             template: ingest-release-history
             arguments:
               parameters:
@@ -76,7 +99,7 @@ spec:
           # If we haven't already ingested a file, start by loading the staged XML into Jade.
           - name: ingest-raw-xml
             dependencies: [check-for-existing-file]
-            when: '{{ printf "%s == null" $existingFileId }}'
+            when: '{{ $shouldIngestFile }}'
             templateRef:
               name: {{ .Values.argoTemplates.ingestFile.name }}
               template: main
@@ -106,8 +129,8 @@ spec:
 
           # Ingest a row for the new file.
           - name: ingest-release-history-new-file
-            dependencies: [check-for-existing-release, check-for-existing-file]
-            when: '{{ printf "%s && %s == null" $shouldIngestRow $existingFileId }}'
+            dependencies: [ingest-raw-xml]
+            when: '{{ $shouldIngestFile }}'
             template: ingest-release-history
             arguments:
               parameters:
