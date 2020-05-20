@@ -59,7 +59,6 @@ spec:
           # (and then failed to ingest the row). Check the file separately so
           # we can short-circuit that piece if needed.
           - name: check-for-existing-file
-            dependencies: [check-for-existing-release]
             templateRef:
               name: {{ .Values.argoTemplates.lookupFileId.name }}
               template: main
