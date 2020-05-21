@@ -1,7 +1,7 @@
 import _root_.io.circe.Json
 
 lazy val `clinvar-ingest` = project
-.in(file("."))
+  .in(file("."))
   .aggregate(`clinvar-schema`, `clinvar-transformation-pipeline`)
   .settings(publish / skip := true)
 
