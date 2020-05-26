@@ -1,0 +1,32 @@
+gcs:
+  bucketName: buk
+  resultBucketName: buc
+serviceAccount:
+  k8sName: k8sss
+  googleName: goog@boog
+cron:
+  schedule: '@weekly'
+dataflow:
+  project: project
+  tmpBucketName: tmp
+  subnetName: network
+  workerAccount: runner@zoog
+  useFlexRS: false
+bigquery:
+  stagingData:
+    project: project
+    datasetPrefix: monster_staging_data
+    description: ClinVar!!!
+    expiration: '604800'
+  jadeData:
+    project: dataaaaaa
+repo:
+  url: http://jade.repo
+  datasetId: a
+  profileId: b
+  accessKey:
+    secretName: dont-tell
+    secretKey: its-a-secret
+argoTemplates:
+  diffBQTable:
+    schemaImageVersion: adsaasdf
