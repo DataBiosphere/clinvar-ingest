@@ -117,34 +117,6 @@ spec:
             {{- $shouldAppend := "{{tasks.diff-table.outputs.parameters.rows-to-append-count}} > 0" }}
             {{- $shouldDelete := "{{tasks.diff-table.outputs.parameters.ids-to-delete-count}} > 0" }}
 
-          # Append rows with new data.
-          - name: ingest-table
-            dependencies: [diff-table]
-            when: '{{ $shouldAppend }}'
-            templateRef:
-              name:  {{ .Values.argoTemplates.ingestTable.name }}
-              template: main
-            arguments:
-              parameters:
-                - name: table-name
-                  value: '{{ $tableName }}'
-                - name: gcs-bucket
-                  value: '{{ .Values.gcs.bucketName }}'
-                - name: gcs-prefix
-                  value: '{{ $newRowsPrefix }}'
-                {{- with .Values.repo }}
-                - name: url
-                  value: '{{ .url }}'
-                - name: dataset-id
-                  value: '{{ .datasetId }}'
-                - name: timeout
-                  value: '{{ .pollTimeout }}'
-                - name: sa-secret
-                  value: '{{ .accessKey.secretName }}'
-                - name: sa-secret-key
-                  value: '{{ .accessKey.secretKey }}'
-                {{- end }}
-
           # Soft-delete IDs of outdated rows.
           - name: soft-delete-table
             dependencies: [diff-table]
@@ -160,6 +132,34 @@ spec:
                   value: '{{ $oldIdsPrefix }}'
                 - name: gcs-bucket
                   value: '{{ .Values.gcs.bucketName }}'
+                {{- with .Values.repo }}
+                - name: url
+                  value: '{{ .url }}'
+                - name: dataset-id
+                  value: '{{ .datasetId }}'
+                - name: timeout
+                  value: '{{ .pollTimeout }}'
+                - name: sa-secret
+                  value: '{{ .accessKey.secretName }}'
+                - name: sa-secret-key
+                  value: '{{ .accessKey.secretKey }}'
+                {{- end }}
+
+          # Append rows with new data.
+          - name: ingest-table
+            dependencies: [diff-table, soft-delete-table]
+            when: '{{ $shouldAppend }}'
+            templateRef:
+              name:  {{ .Values.argoTemplates.ingestTable.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: table-name
+                  value: '{{ $tableName }}'
+                - name: gcs-bucket
+                  value: '{{ .Values.gcs.bucketName }}'
+                - name: gcs-prefix
+                  value: '{{ $newRowsPrefix }}'
                 {{- with .Values.repo }}
                 - name: url
                   value: '{{ .url }}'
