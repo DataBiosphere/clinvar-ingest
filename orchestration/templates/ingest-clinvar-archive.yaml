@@ -51,3 +51,5 @@ spec:
               parameters:
                 - name: gcs-prefix
                   value: '{{ $gcsPrefix }}'
+                - name: release-date
+                  value: '{{ $releaseDate }}'
