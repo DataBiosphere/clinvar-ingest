@@ -30,3 +30,8 @@ repo:
 argoTemplates:
   diffBQTable:
     schemaImageVersion: adsaasdf
+notification:
+  onlyOnFailure: true
+  slackUrl:
+    secretName: aaaaa
+    secretKey: bbbbb

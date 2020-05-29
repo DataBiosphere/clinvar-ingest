@@ -27,3 +27,8 @@ repo:
   accessKey:
     secretName: dont-tell
     secretKey: its-a-secret
+notification:
+  onlyOnFailure: false
+  slackUrl:
+    secretName: aaaaa
+    secretKey: bbbbb

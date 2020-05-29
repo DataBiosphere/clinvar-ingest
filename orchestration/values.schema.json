@@ -106,7 +106,21 @@
       },
       "required": ["url", "datasetId", "profileId", "pollTimeout", "accessKey"]
     },
-    "maxParallelism": { "type": "integer" }
+    "notification": {
+      "type": "object",
+      "properties": {
+        "onlyOnFailure": { "type": "boolean" },
+        "slackUrl": {
+          "type": "object",
+          "properties": {
+            "secretName": { "type": "string" },
+            "secretKey": { "type": "string" }
+          },
+          "required": ["secretName", "secretKey"]
+        }
+      },
+      "required": ["onlyOnFailure", "slackUrl"]
+    }
   },
-  "required": ["gcs", "serviceAccount", "volumes", "cron", "dataflow", "repo", "maxParallelism"]
+  "required": ["gcs", "serviceAccount", "volumes", "cron", "dataflow", "repo", "notification"]
 }
