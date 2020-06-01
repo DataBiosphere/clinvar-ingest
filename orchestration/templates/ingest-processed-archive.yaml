@@ -17,6 +17,8 @@ spec:
         parameters:
           - name: gcs-prefix
           {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
       # Limit to processing 1 table at a time to avoid lock failures in Jade.
       parallelism: 1
       dag:
@@ -39,6 +41,16 @@ spec:
                 - name: dataset-expiration
                   value: '{{ .expiration }}'
                 {{- end }}
+
+          # Write the archive's release date into ClinGen's bucket.
+          - name: write-release-date
+            template: stage-release-date
+            arguments:
+              parameters:
+                - name: gcs-prefix
+                  value: '{{ $gcsPrefix }}'
+                - name: release-date
+                  value: '{{ $releaseDate }}'
 
           # Loop over all tables, syncing state in Jade to match data staged in GCS.
           - name: process-tables
@@ -329,3 +341,18 @@ spec:
         command: [bash]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/clingen-temp-table-pk-deletes.sh") | indent 10 }}
+
+    - name: stage-release-date
+      inputs:
+        parameters:
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+      script:
+        image: google/cloud-sdk:slim
+        command: [bash]
+        {{- $uploadPath := printf "gs://%s/%s/" .Values.gcs.resultBucketName $gcsPrefix }}
+        source: |
+          echo "{{ $releaseDate }}" > release_date.txt
+          gsutil cp release_date.txt {{ $uploadPath }}
