@@ -36,6 +36,25 @@ case class ParsedArchive(
 object ParsedArchive {
   import org.broadinstitute.monster.common.msg.MsgOps
 
+  /**
+    * Interface for a utility which can convert raw VariationArchives into
+    * our target schema.
+    */
+  trait Parser extends Serializable {
+
+    /**
+      * Convert a raw VariationArchive payload into our parsed form.
+      *
+      * This process assumes:
+      *   1. The input payload was produced by running a ClinVar XML release
+      * through Monster's XML->JSON conversion program
+      *   2. Each VariationArchive is self-contained, and cross-links
+      * can be fully constructed between all sub-models without
+      * examining other archive instances
+      */
+    def parse(rawArchive: Msg): ParsedArchive
+  }
+
   /** Type for "real" VCVs backed by submissions to ClinVar. */
   val InterpretedRecord: Msg = Str("InterpretedRecord")
 
@@ -45,17 +64,8 @@ object ParsedArchive {
     */
   val IncludedRecord: Msg = Str("IncludedRecord")
 
-  /**
-    * Convert a raw VariationArchive payload into our parsed form.
-    *
-    * This process assumes:
-    *   1. The input payload was produced by running a ClinVar XML release
-    * through Monster's XML->JSON conversion program
-    *   2. Each VariationArchive is self-contained, and cross-links
-    * can be fully constructed between all sub-models without
-    * examining other archive instances
-    */
-  def fromRawArchive(rawArchive: Msg): ParsedArchive = {
+  /** Parser for "real" VariationArchive payloads, to be used in production. */
+  val Parser: Parser = rawArchive => {
     /*
      * ClinVar publishes two types of "record"s:
      *   1. InterpretedRecords are generated for each variation that is sent

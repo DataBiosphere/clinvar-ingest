@@ -188,7 +188,7 @@ object ParsedInterpretation {
       name = metadata.name,
       alternateNames = metadata.alternateNames,
       symbol = preferredSymbol,
-      alternateSymbols = altSymbols.toList.sorted,
+      alternateSymbols = altSymbols.sorted,
       publicDefinition = definition,
       gardId = gardId,
       keywords = keywords.toList.sorted,

@@ -83,7 +83,7 @@ object TraitMetadata {
       medgenId = medgenId,
       `type` = rawTrait.tryExtract[String]("@Type"),
       name = preferredName,
-      alternateNames = alternateNames.toList.sorted,
+      alternateNames = alternateNames.sorted,
       xrefs = finalXrefs
     )
   }

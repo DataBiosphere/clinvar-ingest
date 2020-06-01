@@ -107,7 +107,7 @@ object ParsedScv {
     val assertion = {
       val referenceTraitSetId = directTraitSet.flatMap { traitSet =>
         interpretation.traitSets
-          .find(_.traitIds.sameElements(traitSet.traits.flatMap(_.traitId)))
+          .find(_.traitIds == traitSet.traits.flatMap(_.traitId))
           .map(_.id)
       }
       val relatedRcv = referenceAccessions.find { rcv =>
@@ -152,8 +152,6 @@ object ParsedScv {
               text = comment.extract[String]("$")
             )
           },
-        submitterName = rawAccession.tryExtract[String]("@SubmitterName"),
-        orgAbbrev = rawAccession.tryExtract[String]("@OrgAbbreviation"),
         submissionNames = rawAssertion
           .tryExtract[List[Msg]]("SubmissionNameList", "SubmissionName")
           .getOrElse(List.empty)
@@ -178,10 +176,22 @@ object ParsedScv {
   }
 
   /** Extract submitter fields from a raw ClinicalAssertion payload. */
-  private def extractSubmitter(rawAssertion: Msg): Submitter = Submitter(
-    id = rawAssertion.extract[String]("@OrgID"),
-    orgCategory = rawAssertion.tryExtract[String]("@OrganizationCategory")
-  )
+  private def extractSubmitter(rawAssertion: Msg): Submitter = {
+    val name = rawAssertion.tryExtract[String]("@SubmitterName")
+    val abbrev = rawAssertion.tryExtract[String]("@OrgAbbreviation")
+
+    // NOTE: At this level the 'current' & 'all' fields are always equal.
+    // They diverge at a higher level in the code that aggregates across
+    // submitter records in a release.
+    Submitter(
+      id = rawAssertion.extract[String]("@OrgID"),
+      orgCategory = rawAssertion.tryExtract[String]("@OrganizationCategory"),
+      currentName = name,
+      allNames = name.toList,
+      currentAbbrev = abbrev,
+      allAbbrevs = abbrev.toList
+    )
+  }
 
   /** Extract submission fields from a raw ClinicalAssertion payload. */
   private def extractSubmission(
@@ -267,8 +277,8 @@ object ParsedScv {
         val allAncestry = descendants.childIds ::: descendants.descendantIds
         buffer.append {
           baseVariation.copy(
-            childIds = descendants.childIds.toList,
-            descendantIds = allAncestry.toList,
+            childIds = descendants.childIds,
+            descendantIds = allAncestry,
             content = Content.encode(rawVariation)
           )
         }
