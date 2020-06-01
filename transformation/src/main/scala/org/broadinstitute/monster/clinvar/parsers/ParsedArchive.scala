@@ -26,11 +26,11 @@ import upack.{Msg, Str}
 case class ParsedArchive(
   variation: ParsedVariation,
   vcv: Option[VariationArchive],
-  rcvs: Array[RcvAccession],
-  traitSets: Array[TraitSet],
-  traits: Array[Trait],
-  traitMappings: Array[TraitMapping],
-  scvs: Array[ParsedScv]
+  rcvs: List[RcvAccession],
+  traitSets: List[TraitSet],
+  traits: List[Trait],
+  traitMappings: List[TraitMapping],
+  scvs: List[ParsedScv]
 )
 
 object ParsedArchive {
@@ -97,8 +97,8 @@ object ParsedArchive {
 
       // Pull out any RCVs, cross-linking to the relevant trait sets.
       val rcvs = variationRecord
-        .tryExtract[Array[Msg]]("RCVList", "RCVAccession")
-        .getOrElse(Array.empty)
+        .tryExtract[List[Msg]]("RCVList", "RCVAccession")
+        .getOrElse(Nil)
         .map {
           parseRawRcv(
             parsedVariation.variation.id,
@@ -110,8 +110,8 @@ object ParsedArchive {
 
       // Pull out SCV<->VCV trait mappings.
       val traitMappings = variationRecord
-        .tryExtract[Array[Msg]]("TraitMappingList", "TraitMapping")
-        .getOrElse(Array.empty)
+        .tryExtract[List[Msg]]("TraitMappingList", "TraitMapping")
+        .getOrElse(Nil)
         .map { rawMapping =>
           TraitMapping(
             clinicalAssertionId = rawMapping.extract[String]("@ClinicalAssertionID"),
@@ -134,8 +134,8 @@ object ParsedArchive {
 
       // Pull out any SCVs, and related info.
       val parsedScvs = variationRecord
-        .tryExtract[Array[Msg]]("ClinicalAssertionList", "ClinicalAssertion")
-        .getOrElse(Array.empty)
+        .tryExtract[List[Msg]]("ClinicalAssertionList", "ClinicalAssertion")
+        .getOrElse(Nil)
         .map {
           ParsedScv.fromRawAssertion(
             parsedVariation.variation.id,
@@ -194,11 +194,11 @@ object ParsedArchive {
       ParsedArchive(
         variation = parsedVariation,
         vcv = None,
-        rcvs = Array.empty,
-        traitSets = Array.empty,
-        traits = Array.empty,
-        traitMappings = Array.empty,
-        scvs = Array.empty
+        rcvs = Nil,
+        traitSets = Nil,
+        traits = Nil,
+        traitMappings = Nil,
+        scvs = Nil
       )
     }
   }
@@ -222,8 +222,8 @@ object ParsedArchive {
     // RCV's condition list.
     val relevantTraitSetId = {
       val relevantTraitIds = rawRcv
-        .tryExtract[Array[Msg]]("InterpretedConditionList", "InterpretedCondition")
-        .getOrElse(Array.empty)
+        .tryExtract[List[Msg]]("InterpretedConditionList", "InterpretedCondition")
+        .getOrElse(Nil)
         .flatMap { rawCondition =>
           val conditionDb = rawCondition.tryExtract[String]("@DB")
           val conditionId = rawCondition.tryExtract[String]("@ID")

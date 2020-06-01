@@ -18,7 +18,7 @@ case class TraitMetadata(
   id: String,
   `type`: Option[String],
   name: Option[String],
-  alternateNames: Array[String],
+  alternateNames: List[String],
   medgenId: Option[String],
   xrefs: Set[Xref]
 )
@@ -41,7 +41,7 @@ object TraitMetadata {
     // Process any names stored in the trait.
     // Any nested xrefs will be "unzipped" from their names, to be
     // combined with top-level refs in the next step.
-    val allNames = rawTrait.tryExtract[Array[Msg]]("Name").getOrElse(Array.empty)
+    val allNames = rawTrait.tryExtract[List[Msg]]("Name").getOrElse(List.empty)
     val (preferredName, alternateNames, nameXrefs) =
       allNames.foldLeft((Option.empty[String], List.empty[String], Set.empty[Xref])) {
         case ((prefAcc, altAcc, xrefAcc), name) =>
@@ -83,7 +83,7 @@ object TraitMetadata {
       medgenId = medgenId,
       `type` = rawTrait.tryExtract[String]("@Type"),
       name = preferredName,
-      alternateNames = alternateNames.toArray.sorted,
+      alternateNames = alternateNames.toList.sorted,
       xrefs = finalXrefs
     )
   }
@@ -94,16 +94,16 @@ object TraitMetadata {
     * @param xrefContainer raw payload which might contain xrefs under the "XRef" key
     * @param referencedField name of the field in the output JSON associated with the XRef
     * @param referencedElement specific element in the referenced field associated with the XRef,
-    *                          only needed for array fields
+    *                          only needed for List fields
     */
   def extractXrefs(
     xrefContainer: Msg,
     referencedField: Option[String],
     referencedElement: Option[String]
-  ): Array[Xref] =
+  ): List[Xref] =
     xrefContainer
-      .tryExtract[Array[Msg]]("XRef")
-      .getOrElse(Array.empty)
+      .tryExtract[List[Msg]]("XRef")
+      .getOrElse(List.empty)
       .map { rawXref =>
         Xref(
           db = rawXref.extract[String]("@DB"),

@@ -25,12 +25,12 @@ import scala.util.matching.Regex
   */
 case class ParsedScv(
   assertion: ClinicalAssertion,
-  submitters: Array[Submitter],
+  submitters: List[Submitter],
   submission: Submission,
-  variations: Array[ClinicalAssertionVariation],
-  traitSets: Array[ClinicalAssertionTraitSet],
-  traits: Array[ClinicalAssertionTrait],
-  observations: Array[ClinicalAssertionObservation]
+  variations: List[ClinicalAssertionVariation],
+  traitSets: List[ClinicalAssertionTraitSet],
+  traits: List[ClinicalAssertionTrait],
+  observations: List[ClinicalAssertionObservation]
 )
 
 object ParsedScv {
@@ -57,9 +57,9 @@ object ParsedScv {
   def fromRawAssertion(
     variationId: String,
     vcvId: String,
-    referenceAccessions: Array[RcvAccession],
+    referenceAccessions: List[RcvAccession],
     interpretation: ParsedInterpretation,
-    mappingsById: Map[String, Array[TraitMapping]],
+    mappingsById: Map[String, List[TraitMapping]],
     rawAssertion: Msg
   ): ParsedScv = {
     // Extract submitter and submission data (easy).
@@ -67,14 +67,14 @@ object ParsedScv {
 
     val submitter = extractSubmitter(rawAccession)
     val additionalSubmitters = rawAssertion
-      .tryExtract[Array[Msg]]("AdditionalSubmitters", "SubmitterDescription")
-      .fold(Array.empty[Submitter])(_.map(extractSubmitter))
+      .tryExtract[List[Msg]]("AdditionalSubmitters", "SubmitterDescription")
+      .fold(List.empty[Submitter])(_.map(extractSubmitter))
     val submission = extractSubmission(submitter, additionalSubmitters, rawAssertion)
 
     // Extract the top-level set of traits described by the assertion.
     val assertionId = rawAssertion.extract[String]("@ID")
     val assertionAccession = rawAccession.extract[String]("@Accession")
-    val relevantTraitMappings = mappingsById.getOrElse(assertionId, Array.empty)
+    val relevantTraitMappings = mappingsById.getOrElse(assertionId, List.empty)
 
     val directTraitSet = ParsedScvTraitSet.fromRawSetWrapper(
       assertionAccession,
@@ -93,10 +93,10 @@ object ParsedScv {
 
     // Flatten out nested trait-set info.
     val (allTraitSets, allTraits) = {
-      val directSetAsArray = directTraitSet.toArray
+      val directSetAsList = directTraitSet.toList
       val actualObservedSets = observedTraitSets.flatten
-      val sets = (directSetAsArray ++ actualObservedSets).map(_.traitSet)
-      val traits = (directSetAsArray ++ actualObservedSets).flatMap(_.traits)
+      val sets = (directSetAsList ++ actualObservedSets).map(_.traitSet)
+      val traits = (directSetAsList ++ actualObservedSets).flatMap(_.traits)
       (sets, traits)
     }
 
@@ -144,8 +144,8 @@ object ParsedScv {
             case _                              => None
           },
         interpretationComments = rawAssertion
-          .tryExtract[Array[Msg]]("Interpretation", "Comment")
-          .getOrElse(Array.empty)
+          .tryExtract[List[Msg]]("Interpretation", "Comment")
+          .getOrElse(List.empty)
           .map { comment =>
             InterpretationComment(
               `type` = comment.tryExtract[String]("@Type"),
@@ -155,8 +155,8 @@ object ParsedScv {
         submitterName = rawAccession.tryExtract[String]("@SubmitterName"),
         orgAbbrev = rawAccession.tryExtract[String]("@OrgAbbreviation"),
         submissionNames = rawAssertion
-          .tryExtract[Array[Msg]]("SubmissionNameList", "SubmissionName")
-          .getOrElse(Array.empty)
+          .tryExtract[List[Msg]]("SubmissionNameList", "SubmissionName")
+          .getOrElse(List.empty)
           .map(_.extract[String]("$")),
         content = {
           // Pop out the accession type to reduce noise in our unmodeled content column.
@@ -186,7 +186,7 @@ object ParsedScv {
   /** Extract submission fields from a raw ClinicalAssertion payload. */
   private def extractSubmission(
     submitter: Submitter,
-    additionalSubmitters: Array[Submitter],
+    additionalSubmitters: List[Submitter],
     rawAssertion: Msg
   ): Submission = {
     val date = rawAssertion.extract[LocalDate]("@SubmissionDate")
@@ -208,13 +208,13 @@ object ParsedScv {
   private def extractObservations(
     assertionAccession: String,
     rawAssertion: Msg,
-    referenceTraits: Array[Trait],
-    traitMappings: Array[TraitMapping]
-  ): Array[(ClinicalAssertionObservation, Option[ParsedScvTraitSet])] = {
+    referenceTraits: List[Trait],
+    traitMappings: List[TraitMapping]
+  ): List[(ClinicalAssertionObservation, Option[ParsedScvTraitSet])] = {
     val observationCounter = new AtomicInteger(0)
     rawAssertion
-      .tryExtract[Array[Msg]]("ObservedInList", "ObservedIn")
-      .getOrElse(Array.empty)
+      .tryExtract[List[Msg]]("ObservedInList", "ObservedIn")
+      .getOrElse(List.empty)
       .map { rawObservation =>
         val observationId =
           s"$assertionAccession.${observationCounter.getAndIncrement()}"
@@ -243,8 +243,8 @@ object ParsedScv {
   private def extractVariations(
     assertionAccession: String,
     rawAssertion: Msg
-  ): Array[ClinicalAssertionVariation] = {
-    val buffer = new mutable.ArrayBuffer[ClinicalAssertionVariation]()
+  ): List[ClinicalAssertionVariation] = {
+    val buffer = new mutable.ListBuffer[ClinicalAssertionVariation]()
     val counter = new AtomicInteger(0)
 
     // Traverse the tree of SCV variations, parsing each one and adding it to a buffer.
@@ -254,8 +254,8 @@ object ParsedScv {
           id = s"$assertionAccession.${counter.getAndIncrement()}",
           clinicalAssertionId = assertionAccession,
           subclassType = subtype,
-          childIds = Array.empty,
-          descendantIds = Array.empty,
+          childIds = List.empty,
+          descendantIds = List.empty,
           variationType = rawVariation
             .tryExtract[String]("VariantType", "$")
             .orElse(rawVariation.tryExtract[String]("VariationType", "$")),
@@ -267,8 +267,8 @@ object ParsedScv {
         val allAncestry = descendants.childIds ::: descendants.descendantIds
         buffer.append {
           baseVariation.copy(
-            childIds = descendants.childIds.toArray,
-            descendantIds = allAncestry.toArray,
+            childIds = descendants.childIds.toList,
+            descendantIds = allAncestry.toList,
             content = Content.encode(rawVariation)
           )
         }
@@ -278,6 +278,6 @@ object ParsedScv {
     // Build up the buffer of variations while traversing the tree.
     extractAndAccumulateDescendants(rawAssertion)
     // Return whatever was buffered.
-    buffer.toArray
+    buffer.toList
   }
 }

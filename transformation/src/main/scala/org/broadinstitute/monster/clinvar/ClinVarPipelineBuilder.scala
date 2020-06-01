@@ -1,14 +1,9 @@
 package org.broadinstitute.monster.clinvar
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.Coder
 import org.broadinstitute.monster.common.{PipelineBuilder, StorageIO}
-import org.broadinstitute.monster.common.msg.UpackMsgCoder
-import upack.Msg
 
 object ClinVarPipelineBuilder extends PipelineBuilder[Args] {
-  /** (De)serializer for the upack messages we read from storage. */
-  implicit val msgCoder: Coder[Msg] = Coder.beam(new UpackMsgCoder)
 
   /**
     * Schedule all the steps for the ClinVar pipeline in the given pipeline context.

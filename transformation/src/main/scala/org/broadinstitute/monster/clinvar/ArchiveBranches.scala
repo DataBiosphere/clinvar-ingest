@@ -2,10 +2,10 @@ package org.broadinstitute.monster.clinvar
 
 import java.time.LocalDate
 
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.{SCollection, SideOutput}
 import org.broadinstitute.monster.clinvar.jadeschema.table._
 import org.broadinstitute.monster.clinvar.parsers.ParsedArchive
+import org.broadinstitute.monster.common.PipelineCoders
 import upack.{Msg, Str}
 
 /**
@@ -30,15 +30,10 @@ case class ArchiveBranches(
   traitMappings: SCollection[TraitMapping]
 )
 
-object ArchiveBranches {
+object ArchiveBranches extends PipelineCoders {
+
   /** Object wrapper key expected for all archive entries. */
   val ArchiveKey: Msg = Str("VariationArchive")
-
-  /** (De)serializer for dates parsed out of archives. */
-  implicit val dateCoder: Coder[LocalDate] = Coder.xmap(Coder.stringCoder)(
-    LocalDate.parse(_),
-    _.toString
-  )
 
   /**
     * Split a stream of raw VariationArchive entries into multiple
