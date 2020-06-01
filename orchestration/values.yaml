@@ -20,7 +20,6 @@ bigquery:
 repo:
   # 24 hours -> 86400 seconds
   pollTimeout: 86400
-maxParallelism: 16
 xmlToJsonList:
   templateName: extract-xml-to-json
 argoTemplates:

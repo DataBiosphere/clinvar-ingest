@@ -12,8 +12,14 @@ spec:
     serviceAccountName: {{ .Values.serviceAccount.k8sName }}
     podGC:
       strategy: OnWorkflowSuccess
-    parallelism: {{ .Values.maxParallelism }}
+    onExit: {{ if .Values.notification.onlyOnFailure }}send-slack-notification-if-failed{{ else }}send-slack-notification{{ end }}
     templates:
+      ##
+      ## Main entry-point to the regularly-run ClinVar ingest workflow.
+      ##
+      ## Delegates to a WorkflowTemplate for all of the business logic,
+      ## to support easily running manual ingests.
+      ##
       - name: main
         steps:
           - - name: run-main-template
@@ -26,3 +32,38 @@ spec:
                     value: weekly_release/ClinVarVariationRelease_00-latest_weekly.xml.gz
                   - name: gcs-prefix
                     value: '{{ template "argo.timestamp" }}'
+
+      ##
+      ## Send a Slack notifcation if the workflow has failed.
+      ##
+      - name: send-slack-notification-if-failed
+        dag:
+        steps:
+          - - name: send-notification
+              template: send-slack-notification
+              when: '{{ "{{workflow.status}} != Succeeded" }}'
+
+      ##
+      ## Send a Slack notification describing the final status of the workflow.
+      ##
+      - name: send-slack-notification
+        container:
+          image: curlimages/curl:7.70.0
+          env:
+            - name: WORKFLOW_ID
+              value: '{{ "{{workflow.name}}" }}'
+            - name: WORKFLOW_STATE
+              value: '{{ "{{workflow.status}}" }}'
+            - name: SLACK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.notification.slackUrl.secretName }}
+                  key: {{ .Values.notification.slackUrl.secretKey }}
+          command: [curl]
+          args:
+            - -XPOST
+            - -H
+            - 'Content-type: application/json'
+            - -d
+            - '{"text": "Workflow $(WORKFLOW_ID) entered state: $(WORKFLOW_STATE)"}'
+            - $(SLACK_URL)
