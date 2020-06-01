@@ -20,7 +20,7 @@ import upack.Msg
   */
 case class ParsedScvTraitSet(
   traitSet: ClinicalAssertionTraitSet,
-  traits: Array[ClinicalAssertionTrait]
+  traits: List[ClinicalAssertionTrait]
 )
 
 object ParsedScvTraitSet {
@@ -39,13 +39,13 @@ object ParsedScvTraitSet {
   def fromRawSetWrapper(
     setId: String,
     rawWrapper: Msg,
-    referenceTraits: Array[Trait],
-    traitMappings: Array[TraitMapping]
+    referenceTraits: List[Trait],
+    traitMappings: List[TraitMapping]
   ): Option[ParsedScvTraitSet] =
     rawWrapper.tryExtract[Msg]("TraitSet").map { rawSet =>
       val counter = new AtomicInteger(0)
       val traits = rawSet
-        .extract[Array[Msg]]("Trait")
+        .extract[List[Msg]]("Trait")
         .map { rawTrait =>
           val metadata = TraitMetadata.fromRawTrait(rawTrait) { _ =>
             // No meaningful ID for these nested traits.
@@ -61,7 +61,7 @@ object ParsedScvTraitSet {
             name = metadata.name,
             alternateNames = metadata.alternateNames,
             medgenId = metadata.medgenId.orElse(matchingTrait.flatMap(_.medgenId)),
-            xrefs = metadata.xrefs.toArray
+            xrefs = metadata.xrefs.toList
               .sortBy(xref => (xref.db, xref.id, xref.`type`, xref.refField, xref.refFieldElement)),
             // NOTE: This must always be the last filled-in field, so that every
             // other field is popped from the raw payload before it's bundled into
@@ -89,8 +89,8 @@ object ParsedScvTraitSet {
     */
   private def findMatchingTrait(
     metadata: TraitMetadata,
-    referenceTraits: Array[Trait],
-    mappings: Array[TraitMapping]
+    referenceTraits: List[Trait],
+    mappings: List[TraitMapping]
   ): Option[Trait] =
     if (mappings.isEmpty) {
       // Lack of trait mappings means the VCV contains at most one trait,

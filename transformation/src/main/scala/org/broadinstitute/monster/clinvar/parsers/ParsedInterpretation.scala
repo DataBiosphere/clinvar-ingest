@@ -26,8 +26,8 @@ case class ParsedInterpretation(
   description: Option[String],
   explanation: Option[String],
   content: Option[String],
-  traitSets: Array[TraitSet],
-  traits: Array[Trait]
+  traitSets: List[TraitSet],
+  traits: List[Trait]
 )
 
 object ParsedInterpretation {
@@ -37,11 +37,11 @@ object ParsedInterpretation {
   def fromRawInterpretation(rawInterpretation: Msg): ParsedInterpretation = {
     // Extract trait info first, so it doesn't get bundled into unmodeled content.
     val (traitSets, traits) = rawInterpretation
-      .tryExtract[Array[Msg]]("ConditionList", "TraitSet")
-      .getOrElse(Array.empty)
-      .foldLeft((Array.empty[TraitSet], Array.empty[Trait])) {
+      .tryExtract[List[Msg]]("ConditionList", "TraitSet")
+      .getOrElse(List.empty)
+      .foldLeft((List.empty[TraitSet], List.empty[Trait])) {
         case ((setAcc, traitAcc), rawTraitSet) =>
-          val traits = rawTraitSet.extract[Array[Msg]]("Trait").map(parseRawTrait)
+          val traits = rawTraitSet.extract[List[Msg]]("Trait").map(parseRawTrait)
           val traitSet = TraitSet(
             id = rawTraitSet.extract[String]("@ID"),
             `type` = rawTraitSet.tryExtract[String]("@Type"),
@@ -71,7 +71,7 @@ object ParsedInterpretation {
     // NOTE: The structure of this code is identical to how we process trait names in `TraitMetadata`,
     // but I'm not sure it's worth abstracting into its own method. If we need this pattern one more
     // time, we should make it generic.
-    val allSymbols = rawTrait.tryExtract[Array[Msg]]("Symbol").getOrElse(Array.empty)
+    val allSymbols = rawTrait.tryExtract[List[Msg]]("Symbol").getOrElse(List.empty)
     val (preferredSymbol, altSymbols, symbolXrefs) =
       allSymbols.foldLeft((Option.empty[String], List.empty[String], Set.empty[Xref])) {
         case ((prefAcc, altAcc, xrefAcc), symbol) =>
@@ -104,17 +104,17 @@ object ParsedInterpretation {
       val index = attributes.indexWhere(_.read[String]("Attribute", "@Type") == attrType)
       if (index == -1) None else Some(attributes.remove(index))
     }
-    def popRepeatedAttribute(attrType: String): Array[Msg] = {
+    def popRepeatedAttribute(attrType: String): List[Msg] = {
       val indices = attributes.zipWithIndex.flatMap {
         case (attr, i) =>
           if (attr.read[String]("Attribute", "@Type") == attrType) Some(i) else None
       }.sorted.zipWithIndex.map {
-        // Every time we pop from the array, we need to deprecate all following indices by 1.
+        // Every time we pop from the List, we need to deprecate all following indices by 1.
         // As long as the index-list is sorted, the amount we need to deprecate by should be
         // the original position in the list.
         case (originalIndex, adjustment) => originalIndex - adjustment
       }
-      indices.map(attributes.remove).toArray
+      indices.map(attributes.remove).toList
     }
 
     val (definition, defXrefs) =
@@ -188,17 +188,17 @@ object ParsedInterpretation {
       name = metadata.name,
       alternateNames = metadata.alternateNames,
       symbol = preferredSymbol,
-      alternateSymbols = altSymbols.toArray.sorted,
+      alternateSymbols = altSymbols.toList.sorted,
       publicDefinition = definition,
       gardId = gardId,
-      keywords = keywords.toArray.sorted,
+      keywords = keywords.toList.sorted,
       diseaseMechanism = mechanism,
       diseaseMechanismId = mechanismId,
       modeOfInheritance = inheritanceMode,
       geneReviewsShort = review,
       ghrLinks = ghr,
-      attributeContent = attributes.flatMap(Content.encode).toArray,
-      xrefs = allXrefs.toArray
+      attributeContent = attributes.flatMap(Content.encode).toList,
+      xrefs = allXrefs.toList
         .sortBy(xref => (xref.refField, xref.refFieldElement, xref.db, xref.id, xref.`type`)),
       content = Content.encode(rawTrait)
     )

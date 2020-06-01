@@ -1,7 +1,7 @@
 package org.broadinstitute.monster.clinvar
 
 import caseapp.{AppName, AppVersion, HelpMessage, ProgName}
-import org.broadinstitute.monster.ClinvarTransformationPipelineBuildInfo
+import org.broadinstitute.monster.buildinfo.ClinvarTransformationPipelineBuildInfo
 
 @AppName("ClinVar transformation pipeline")
 @AppVersion(ClinvarTransformationPipelineBuildInfo.version)

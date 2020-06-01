@@ -14,8 +14,8 @@ import upack.Msg
   */
 case class ParsedVariation(
   variation: Variation,
-  genes: Array[Gene],
-  associations: Array[GeneAssociation]
+  genes: List[Gene],
+  associations: List[GeneAssociation]
 )
 
 object ParsedVariation {
@@ -38,8 +38,8 @@ object ParsedVariation {
     // Extract gene info before parsing the rest of the variation so we can
     // bundle all the unmodeled content at the end.
     val (genes, geneAssociations) = rawVariation
-      .tryExtract[Array[Msg]]("GeneList", "Gene")
-      .getOrElse(Array.empty)
+      .tryExtract[List[Msg]]("GeneList", "Gene")
+      .getOrElse(Nil)
       .map { rawGene =>
         val gene = Gene(
           id = rawGene.extract[String]("@GeneID"),
@@ -64,8 +64,8 @@ object ParsedVariation {
       Variation(
         id = topId,
         subclassType = variationType,
-        childIds = descendants.childIds.toArray,
-        descendantIds = (descendants.childIds ::: descendants.descendantIds).toArray,
+        childIds = descendants.childIds.toList,
+        descendantIds = (descendants.childIds ::: descendants.descendantIds).toList,
         name = rawVariation.tryExtract[String]("Name", "$"),
         variationType = rawVariation
           .tryExtract[Msg]("VariantType")
@@ -73,8 +73,8 @@ object ParsedVariation {
           .map(_.extract[String]("$")),
         alleleId = rawVariation.tryExtract[String]("@AlleleID"),
         proteinChange = rawVariation
-          .tryExtract[Array[Msg]]("ProteinChange")
-          .getOrElse(Array.empty)
+          .tryExtract[List[Msg]]("ProteinChange")
+          .getOrElse(List.empty)
           .map(_.extract[String]("$")),
         numChromosomes = rawVariation.tryExtract[Long]("@NumberOfChromosomes"),
         numCopies = rawVariation.tryExtract[Long]("@NumberOfCopies"),
