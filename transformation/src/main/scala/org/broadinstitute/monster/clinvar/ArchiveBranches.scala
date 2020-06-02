@@ -2,6 +2,7 @@ package org.broadinstitute.monster.clinvar
 
 import java.time.LocalDate
 
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.{SCollection, SideOutput}
 import org.broadinstitute.monster.clinvar.jadeschema.table._
 import org.broadinstitute.monster.clinvar.parsers.ParsedArchive
@@ -35,6 +36,8 @@ object ArchiveBranches extends PipelineCoders {
   /** Object wrapper key expected for all archive entries. */
   val ArchiveKey: Msg = Str("VariationArchive")
 
+  implicit val dateOrdering: Ordering[LocalDate] = Ordering.by(_.toEpochDay)
+
   /**
     * Split a stream of raw VariationArchive entries into multiple
     * streams of un-nested entities.
@@ -42,13 +45,16 @@ object ArchiveBranches extends PipelineCoders {
     * Cross-linking between entities in the output streams occurs
     * prior to elements being pushed out of the split step.
     */
-  def fromArchiveStream(archiveStream: SCollection[Msg]): ArchiveBranches = {
-    val geneOut = SideOutput[Gene]
+  def fromArchiveStream(
+    parser: ParsedArchive.Parser,
+    archiveStream: SCollection[Msg]
+  ): ArchiveBranches = {
+    val geneOut = SideOutput[(Gene, Option[LocalDate])]
     val geneAssociationOut = SideOutput[GeneAssociation]
     val vcvOut = SideOutput[VariationArchive]
     val rcvOut = SideOutput[RcvAccession]
-    val submitterOut = SideOutput[Submitter]
-    val submissionOut = SideOutput[Submission]
+    val submitterOut = SideOutput[(Submitter, Option[LocalDate])]
+    val submissionOut = SideOutput[(Submission, Option[LocalDate])]
     val scvOut = SideOutput[ClinicalAssertion]
     val scvVariationOut = SideOutput[ClinicalAssertionVariation]
     val scvObservationOut = SideOutput[ClinicalAssertionObservation]
@@ -81,22 +87,23 @@ object ArchiveBranches extends PipelineCoders {
         // processing it.
         val archiveCopy = upack.copy(rawArchive.obj(ArchiveKey))
         // Parse the raw archive into the structures we care about.
-        val parsed = ParsedArchive.fromRawArchive(archiveCopy)
+        val parsed = parser.parse(archiveCopy)
         // Output all the things!
-        parsed.variation.genes.foreach(ctx.output(geneOut, _))
+        val updateDate = parsed.vcv.flatMap(_.dateLastUpdated)
+        parsed.variation.genes.foreach(g => ctx.output(geneOut, g -> updateDate))
         parsed.variation.associations.foreach(ctx.output(geneAssociationOut, _))
         parsed.vcv.foreach(ctx.output(vcvOut, _))
         parsed.rcvs.foreach(ctx.output(rcvOut, _))
         parsed.scvs.foreach { aggregateScv =>
-          aggregateScv.submitters.foreach(ctx.output(submitterOut, _))
-          ctx.output(submissionOut, aggregateScv.submission)
+          val submissionDate = aggregateScv.assertion.dateLastUpdated
+          aggregateScv.submitters.foreach(s => ctx.output(submitterOut, s -> submissionDate))
+          ctx.output(submissionOut, aggregateScv.submission -> submissionDate)
           ctx.output(scvOut, aggregateScv.assertion)
           aggregateScv.variations.foreach(ctx.output(scvVariationOut, _))
           aggregateScv.observations.foreach(ctx.output(scvObservationOut, _))
           aggregateScv.traitSets.foreach(ctx.output(scvTraitSetOut, _))
           aggregateScv.traits.foreach(ctx.output(scvTraitOut, _))
         }
-        val updateDate = parsed.vcv.flatMap(_.dateLastUpdated)
         parsed.traitSets.foreach(tSet => ctx.output(traitSetOut, tSet -> updateDate))
         parsed.traits.foreach(t => ctx.output(traitOut, t -> updateDate))
         parsed.traitMappings.foreach(ctx.output(traitMappingOut, _))
@@ -105,43 +112,20 @@ object ArchiveBranches extends PipelineCoders {
         parsed.variation.variation
       }
 
-    val latestTraitSets = sideCtx(traitSetOut)
-      .groupBy(_._1.id)
-      .values
-      .flatMap { allTraitSets =>
-        val datedSets = allTraitSets.flatMap {
-          case (set, date) => date.map(set -> _)
-        }
-        if (datedSets.isEmpty) {
-          // No way to tell what the "right" set is.
-          allTraitSets.headOption.map(_._1).toIterable
-        } else {
-          Iterable(datedSets.maxBy(_._2.toEpochDay)._1)
-        }
-      }
-    val latestTraits = sideCtx(traitOut)
-      .groupBy(_._1.id)
-      .values
-      .flatMap { allTraits =>
-        val datedTraits = allTraits.flatMap {
-          case (trate, date) => date.map(trate -> _)
-        }
-        if (datedTraits.isEmpty) {
-          // No way to tell what the "right" trait is.
-          allTraits.headOption.map(_._1).toIterable
-        } else {
-          Iterable(datedTraits.maxBy(_._2.toEpochDay)._1)
-        }
-      }
+    val latestGenes = dedupByDate(sideCtx(geneOut), "gene")(_.id)
+    val latestTraitSets = dedupByDate(sideCtx(traitSetOut), "trait_set")(_.id)
+    val latestTraits = dedupByDate(sideCtx(traitOut), "trait")(_.id)
+    val aggregatedSubmitters = aggregateSubmitters(sideCtx(submitterOut))
+    val latestSubmissions = dedupByDate(sideCtx(submissionOut), "submission")(_.id)
 
     ArchiveBranches(
       variations = variationStream,
-      genes = sideCtx(geneOut).distinctBy(_.id),
+      genes = latestGenes,
       geneAssociations = sideCtx(geneAssociationOut),
       vcvs = sideCtx(vcvOut),
       rcvs = sideCtx(rcvOut),
-      submitters = sideCtx(submitterOut).distinctBy(_.id),
-      submissions = sideCtx(submissionOut).distinctBy(_.id),
+      submitters = aggregatedSubmitters,
+      submissions = latestSubmissions,
       scvs = sideCtx(scvOut),
       scvVariations = sideCtx(scvVariationOut),
       scvObservations = sideCtx(scvObservationOut),
@@ -152,4 +136,38 @@ object ArchiveBranches extends PipelineCoders {
       traitMappings = sideCtx(traitMappingOut)
     )
   }
+
+  def dedupByDate[T: Coder](
+    in: SCollection[(T, Option[LocalDate])],
+    description: String
+  )(getId: T => String): SCollection[T] =
+    in.transform(s"Deduplicate $description elements") {
+      _.groupBy { case (item, _) => getId(item) }.values.flatMap { itemGroup =>
+        val datedItems = itemGroup.flatMap {
+          case (item, date) => date.map(item -> _)
+        }
+        if (datedItems.isEmpty) {
+          // No way to tell what the "right" item is.
+          itemGroup.headOption.map(_._1).toIterable
+        } else {
+          Iterable(datedItems.maxBy(_._2)._1)
+        }
+      }
+    }
+
+  def aggregateSubmitters(in: SCollection[(Submitter, Option[LocalDate])]): SCollection[Submitter] =
+    in.transform(s"Aggregate submitter elements") {
+      _.groupBy(_._1.id).values.map { allSubmitters =>
+        val latestSubmitter = allSubmitters.maxBy(_._2)._1
+        val allNames =
+          latestSubmitter.allNames.toSet.union(allSubmitters.flatMap(_._1.currentName).toSet)
+        val allAbbrevs =
+          latestSubmitter.allAbbrevs.toSet.union(allSubmitters.flatMap(_._1.currentAbbrev).toSet)
+
+        latestSubmitter.copy(
+          allNames = allNames.toList.sorted,
+          allAbbrevs = allAbbrevs.toList.sorted
+        )
+      }
+    }
 }

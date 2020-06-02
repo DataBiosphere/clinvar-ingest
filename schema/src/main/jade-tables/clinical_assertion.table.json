@@ -142,14 +142,6 @@
       "datatype": "date"
     },
     {
-      "name": "org_abbrev",
-      "datatype": "string"
-    },
-    {
-      "name": "submitter_name",
-      "datatype": "string"
-    },
-    {
       "name": "submission_names",
       "datatype": "string",
       "type": "repeated"

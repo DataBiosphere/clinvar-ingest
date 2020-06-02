@@ -9,6 +9,24 @@
     {
       "name": "org_category",
       "datatype": "string"
+    },
+    {
+      "name": "current_name",
+      "datatype": "string"
+    },
+    {
+      "name": "all_names",
+      "datatype": "string",
+      "type": "repeated"
+    },
+    {
+      "name": "current_abbrev",
+      "datatype": "string"
+    },
+    {
+      "name": "all_abbrevs",
+      "datatype": "string",
+      "type": "repeated"
     }
   ]
 }
