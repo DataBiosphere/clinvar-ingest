@@ -81,6 +81,12 @@ spec:
                 - name: table-name
                   value: '{{ "{{item}}" }}'
 
+      outputs:
+        parameters:
+          - name: summary
+            valueFrom:
+              parameter: '{{ "{{tasks.process-tables.outputs.parameters}}" }}'
+
     ##
     ## Update the Jade state of a single table to match data staged in GCS.
     ##
@@ -220,6 +226,7 @@ spec:
                   value: '{{ .Values.gcs.resultBucketName }}'
                 - name: gcs-prefix
                   value: '{{ printf "%s/%s/creates" $gcsPrefix $tableName }}'
+            {{- $createdCount := "{{tasks.export-new-rows-table.outputs.parameters.row-count}}" }}
 
           # Export updated rows to GCS for ClinGen
           - name: generate-updated-rows-table
@@ -256,6 +263,7 @@ spec:
                   value: '{{ .Values.gcs.resultBucketName }}'
                 - name: gcs-prefix
                   value: '{{ printf "%s/%s/updates" $gcsPrefix $tableName }}'
+            {{- $updatedCount := "{{tasks.export-updated-rows-table.outputs.parameters.row-count}}" }}
 
           # Export deleted row keys to GCS for ClinGen
           - name: generate-deleted-rows-table
@@ -290,6 +298,25 @@ spec:
                   value: '{{ .Values.gcs.resultBucketName }}'
                 - name: gcs-prefix
                   value: '{{ printf "%s/%s/deletes" $gcsPrefix $tableName }}'
+            {{- $deletedCount := "{{tasks.export-deleted-rows-table.outputs.parameters.row-count}}" }}
+
+      outputs:
+        parameters:
+          - name: table-name
+            valueFrom:
+              parameter: '{{ $tableName }}'
+          - name: gcs-prefix
+            valueFrom:
+              parameter: '{{ $gcsPrefix }}'
+          - name: created-count
+            valueFrom:
+              parameter: '{{ $createdCount }}'
+          - name: updated-count
+            valueFrom:
+              parameter: '{{ $updatedCount }}'
+          - name: deleted-count
+            valueFrom:
+              parameter: '{{ $deletedCount }}'
 
     {{- $schemaImage := printf "%s:%s" .Values.argoTemplates.diffBQTable.schemaImageName (default "latest" .Values.argoTemplates.diffBQTable.schemaImageVersion) }}
     # query-full-rows will be generic for both the new rows + updates

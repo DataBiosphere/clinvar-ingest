@@ -1,2 +1,3 @@
 FROM python:3-slim
-RUN pip install confluent-kafka
+ARG KAFKA_CLIENT_VERSION
+RUN pip install confluent-kafka==${KAFKA_CLIENT_VERSION}

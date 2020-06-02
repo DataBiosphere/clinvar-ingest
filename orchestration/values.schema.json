@@ -120,7 +120,15 @@
         }
       },
       "required": ["onlyOnFailure", "slackUrl"]
+    },
+    "kafka": {
+      "type": "object",
+      "properties": {
+        "topic": { "type": "string" },
+        "secretName": { "type": "string" }
+      },
+      "required": ["topic", "secretName"]
     }
   },
-  "required": ["gcs", "serviceAccount", "volumes", "cron", "dataflow", "repo", "notification"]
+  "required": ["gcs", "serviceAccount", "volumes", "cron", "dataflow", "repo", "notification", "kafka"]
 }

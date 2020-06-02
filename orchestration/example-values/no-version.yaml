@@ -20,6 +20,7 @@ bigquery:
     expiration: '604800'
   jadeData:
     project: dataaaaaa
+    dataset: clinvar
 repo:
   url: http://jade.repo
   datasetId: a
@@ -32,3 +33,6 @@ notification:
   slackUrl:
     secretName: aaaaa
     secretKey: bbbbb
+kafka:
+  topic: foo
+  secretName: bar
