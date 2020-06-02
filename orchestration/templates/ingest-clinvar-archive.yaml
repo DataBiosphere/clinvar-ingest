@@ -63,7 +63,7 @@ spec:
 
           # Publish the archive, and notify downstream consumers.
           - name: publish-archive
-            dependencies: [ingest-processed-archive]
+            dependencies: [ingest-raw-archive, ingest-processed-archive]
             templateRef:
               name: publish-clinvar-archive
               template: main
