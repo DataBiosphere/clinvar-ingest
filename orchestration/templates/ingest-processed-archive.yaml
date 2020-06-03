@@ -392,8 +392,11 @@ spec:
         # Image not important here, just need something w/ bash
         image: python:3-slim
         command: [bash]
+        env:
+          - name: MESSAGE
+            value: '{{ $message }}'
         source: |
-          echo {{ $message }}
+          echo ${MESSAGE}
       podSpecPatch: |
         containers:
           - name: main
