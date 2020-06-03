@@ -93,7 +93,7 @@ spec:
                 - name: message
                   value: '{{ $processedOutputs }}'
                 - name: memory
-                  value: 16Mi
+                  value: 128Mi
             {{- $processingSummary := "{{tasks.aggregate-summaries.outputs.result}}" }}
 
       outputs:
