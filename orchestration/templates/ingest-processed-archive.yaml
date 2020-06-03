@@ -191,6 +191,22 @@ spec:
                   value: '{{ .accessKey.secretKey }}'
                 {{- end }}
 
+          # Build the export prefixes for the table's ClinGen data.
+          # NOTE: This step is a convenience to make the table-name + gcs-prefix
+          # slurpable by the DAG's outputs.valueFrom (Argo doesn't support
+          # passing inputs as outputs???), which is needed for downstream publishing.
+          - name: build-export-paths
+            template: build-export-paths
+            arguments:
+              parameters:
+                - name: table-name
+                  value: '{{ $tableName }}'
+                - name: gcs-prefix
+                  value: '{{ $gcsPrefix }}'
+            {{- $createdPath := "{{tasks.build-export-paths.outputs.parameters.created-path}}" }}
+            {{- $updatedPath := "{{tasks.build-export-paths.outputs.parameters.updated-path}}" }}
+            {{- $deletedPath := "{{tasks.build-export-paths.outputs.parameters.deleted-path}}" }}
+
           # Export new rows to GCS for ClinGen
           - name: generate-new-rows-table
             dependencies: [diff-table]
@@ -208,7 +224,7 @@ spec:
             {{- $newRowsTable := "{{tasks.generate-new-rows-table.outputs.result}}" }}
 
           - name: export-new-rows-table
-            dependencies: [generate-new-rows-table]
+            dependencies: [generate-new-rows-table, build-export-paths]
             templateRef:
               name: {{ .Values.argoTemplates.exportBQTable.name }}
               template: main
@@ -225,7 +241,7 @@ spec:
                 - name: gcs-bucket
                   value: '{{ .Values.gcs.resultBucketName }}'
                 - name: gcs-prefix
-                  value: '{{ printf "%s/%s/creates" $gcsPrefix $tableName }}'
+                  value: '{{ $createdPath }}'
             {{- $createdCount := "{{tasks.export-new-rows-table.outputs.parameters.row-count}}" }}
 
           # Export updated rows to GCS for ClinGen
@@ -245,7 +261,7 @@ spec:
             {{- $updatesTable := "{{tasks.generate-updated-rows-table.outputs.result}}" }}
 
           - name: export-updated-rows-table
-            dependencies: [generate-updated-rows-table]
+            dependencies: [generate-updated-rows-table, build-export-paths]
             templateRef:
               name: {{ .Values.argoTemplates.exportBQTable.name }}
               template: main
@@ -262,7 +278,7 @@ spec:
                 - name: gcs-bucket
                   value: '{{ .Values.gcs.resultBucketName }}'
                 - name: gcs-prefix
-                  value: '{{ printf "%s/%s/updates" $gcsPrefix $tableName }}'
+                  value: '{{ $updatedPath }}'
             {{- $updatedCount := "{{tasks.export-updated-rows-table.outputs.parameters.row-count}}" }}
 
           # Export deleted row keys to GCS for ClinGen
@@ -280,7 +296,7 @@ spec:
             {{- $deletionsTable := "{{tasks.generate-deleted-rows-table.outputs.result}}" }}
 
           - name: export-deleted-rows-table
-            dependencies: [generate-deleted-rows-table]
+            dependencies: [generate-deleted-rows-table, build-export-paths]
             templateRef:
               name: {{ .Values.argoTemplates.exportBQTable.name }}
               template: main
@@ -297,26 +313,61 @@ spec:
                 - name: gcs-bucket
                   value: '{{ .Values.gcs.resultBucketName }}'
                 - name: gcs-prefix
-                  value: '{{ printf "%s/%s/deletes" $gcsPrefix $tableName }}'
+                  value: '{{ $deletedPath }}'
             {{- $deletedCount := "{{tasks.export-deleted-rows-table.outputs.parameters.row-count}}" }}
 
       outputs:
         parameters:
-          - name: table-name
+          - name: created-prefix
             valueFrom:
-              parameter: '{{ $tableName }}'
-          - name: gcs-prefix
-            valueFrom:
-              parameter: '{{ $gcsPrefix }}'
+              parameter: '{{ $createdPath }}'
           - name: created-count
             valueFrom:
               parameter: '{{ $createdCount }}'
+          - name: updated-prefix
+            valueFrom:
+              parameter: '{{ $updatedPath }}'
           - name: updated-count
             valueFrom:
               parameter: '{{ $updatedCount }}'
+          - name: deleted-prefix
+            valueFrom:
+              parameter: '{{ $deletedPath }}'
           - name: deleted-count
             valueFrom:
               parameter: '{{ $deletedCount }}'
+
+    - name: build-export-paths
+      inputs:
+        parameters:
+          - name: table-name
+          - name: gcs-prefix
+      env:
+        - name: TABLE_NAME
+          value: '{{ "{{inputs.parameters.table-name}}" }}'
+        - name: GCS_PREFIX
+          value: '{{ "{{inputs.parameters.gcs-prefix}}" }}'
+      script:
+        # Image not important here, just need something w/ bash
+        image: python:3-slim
+        command: [bash]
+        source: |
+          set -euo pipefail
+
+          for event in created updated deleted; do
+            echo ${GCS_PREFIX}/${TABLE_NAME}/${event} > /${event}.txt
+          done
+      outputs:
+        parameters:
+          - name: created-path
+            valueFrom:
+              path: /created.txt
+          - name: updated-path
+            valueFrom:
+              path: /updated.txt
+          - name: deleted-path
+            valueFrom:
+              path: /deleted.txt
 
     {{- $schemaImage := printf "%s:%s" .Values.argoTemplates.diffBQTable.schemaImageName (default "latest" .Values.argoTemplates.diffBQTable.schemaImageVersion) }}
     # query-full-rows will be generic for both the new rows + updates

@@ -18,16 +18,11 @@ client = storage.Client()
 bucket = client.get_bucket(bucket_name)
 
 def get_data_files(summary):
-  table = summary['table-name']
-  prefix = summary['gcs-prefix']
-  created = summary['created-count']
-  updated = summary['updated-count']
-  deleted = summary['deleted-count']
-
   files = []
-  for event, count in [('creates', created), ('updates', updated), ('deletes', deleted)]:
+  for event in ['created', 'updated', 'deleted']:
+    count = summary[f'{event}-count']
     if count > 0:
-      gs_path = f'{prefix}/{table}/{event}'
+      gs_path = summary[f'{event}-prefix']
       blobs = bucket.list_blobs(prefix=gs_path)
       files.extend([blob.name for blob in blobs])
 
