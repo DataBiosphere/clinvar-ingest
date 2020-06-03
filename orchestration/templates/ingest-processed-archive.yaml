@@ -80,12 +80,25 @@ spec:
                   value: '{{ $gcsPrefix }}'
                 - name: table-name
                   value: '{{ "{{item}}" }}'
+            {{- $processedOutputs := "{{tasks.process-tables.outputs.parameters}}" }}
+
+          # Apparently Argo's support for aggregating the outputs of a `withItems` loop
+          # is restricted to within the DAG structure (no support for slurping as a template output).
+          # Inject an 'echo' step so we get the data we care about as a single string.
+          - name: aggregate-summaries
+            dependencies: [process-tables]
+            template: echo
+            arguments:
+              parameters:
+                - name: message
+                  value: '{{ $processedOutputs }}'
+            {{- $processingSummary := "{{tasks.aggregate-summaries.outputs.result}}" }}
 
       outputs:
         parameters:
           - name: summary
             valueFrom:
-              parameter: '{{ "{{tasks.process-tables.outputs.parameters}}" }}'
+              parameter: '{{ $processingSummary }}'
 
     ##
     ## Update the Jade state of a single table to match data staged in GCS.
@@ -341,21 +354,18 @@ spec:
       inputs:
         parameters:
           - name: table-name
+          {{- $tableName := "{{inputs.parameters.table-name}}" }}
           - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}"  }}
       script:
         # Image not important here, just need something w/ bash
         image: python:3-slim
-        env:
-          - name: TABLE_NAME
-            value: '{{ "{{inputs.parameters.table-name}}" }}'
-          - name: GCS_PREFIX
-            value: '{{ "{{inputs.parameters.gcs-prefix}}" }}'
         command: [bash]
         source: |
           set -euo pipefail
 
           for event in created updated deleted; do
-            echo ${GCS_PREFIX}/${TABLE_NAME}/${event} > /${event}.txt
+            echo {{ $gcsPrefix }}/{{ $tableName }}/${event} > /${event}.txt
           done
       outputs:
         parameters:
@@ -368,6 +378,18 @@ spec:
           - name: deleted-path
             valueFrom:
               path: /deleted.txt
+
+    - name: echo
+      inputs:
+        parameters:
+          - name: message
+          {{- $message := "{{inputs.parameters.message}}" }}
+      script:
+        # Image not important here, just need something w/ bash
+        image: python:3-slim
+        command: [bash]
+        source: |
+          echo {{ $message }}
 
     {{- $schemaImage := printf "%s:%s" .Values.argoTemplates.diffBQTable.schemaImageName (default "latest" .Values.argoTemplates.diffBQTable.schemaImageVersion) }}
     # query-full-rows will be generic for both the new rows + updates
