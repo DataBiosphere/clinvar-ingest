@@ -342,14 +342,14 @@ spec:
         parameters:
           - name: table-name
           - name: gcs-prefix
-      env:
-        - name: TABLE_NAME
-          value: '{{ "{{inputs.parameters.table-name}}" }}'
-        - name: GCS_PREFIX
-          value: '{{ "{{inputs.parameters.gcs-prefix}}" }}'
       script:
         # Image not important here, just need something w/ bash
         image: python:3-slim
+        env:
+          - name: TABLE_NAME
+            value: '{{ "{{inputs.parameters.table-name}}" }}'
+          - name: GCS_PREFIX
+            value: '{{ "{{inputs.parameters.gcs-prefix}}" }}'
         command: [bash]
         source: |
           set -euo pipefail
