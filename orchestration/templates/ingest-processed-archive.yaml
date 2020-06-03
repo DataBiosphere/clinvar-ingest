@@ -92,6 +92,8 @@ spec:
               parameters:
                 - name: message
                   value: '{{ $processedOutputs }}'
+                - name: memory
+                  value: 16Mi
             {{- $processingSummary := "{{tasks.aggregate-summaries.outputs.result}}" }}
 
       outputs:
@@ -384,12 +386,23 @@ spec:
         parameters:
           - name: message
           {{- $message := "{{inputs.parameters.message}}" }}
+          - name: memory
+          {{- $mem := "{{inputs.parameters.memory}}" }}
       script:
         # Image not important here, just need something w/ bash
         image: python:3-slim
         command: [bash]
         source: |
           echo {{ $message }}
+        podSpecPatch: |
+          containers:
+            - name: main
+              resources:
+                requests:
+                  memory: {{ $mem }}
+                limits:
+                  memory: {{ $mem }}
+
 
     {{- $schemaImage := printf "%s:%s" .Values.argoTemplates.diffBQTable.schemaImageName (default "latest" .Values.argoTemplates.diffBQTable.schemaImageVersion) }}
     # query-full-rows will be generic for both the new rows + updates
