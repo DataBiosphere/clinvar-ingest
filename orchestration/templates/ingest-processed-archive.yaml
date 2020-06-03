@@ -394,14 +394,16 @@ spec:
         command: [bash]
         source: |
           echo {{ $message }}
-        podSpecPatch: |
-          containers:
-            - name: main
-              resources:
-                requests:
-                  memory: {{ $mem }}
-                limits:
-                  memory: {{ $mem }}
+      podSpecPatch: |
+        containers:
+          - name: main
+            resources:
+              requests:
+                memory: {{ $mem }}
+          - name: wait
+            resources:
+              requests:
+                memory: {{ $mem }}
 
 
     {{- $schemaImage := printf "%s:%s" .Values.argoTemplates.diffBQTable.schemaImageName (default "latest" .Values.argoTemplates.diffBQTable.schemaImageVersion) }}
