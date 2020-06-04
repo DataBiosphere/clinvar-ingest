@@ -19,6 +19,8 @@ spec:
           {{- $archivePath := "{{inputs.parameters.archive-path}}" }}
           - name: gcs-prefix
           {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+          - name: notify-clingen
+          {{- $notifyClingen := "{{inputs.parameters.notify-clingen}}" }}
       dag:
         tasks:
           # Transfer and process the archive, staging outputs in GCS.
@@ -59,17 +61,6 @@ spec:
                   value: '{{ $gcsPrefix }}'
                 - name: release-date
                   value: '{{ $releaseDate }}'
+                - name: publish-kafka
+                  value: '{{ $notifyClingen }}'
             {{- $ingestSummary := "{{tasks.ingest-processed-archive.outputs.parameters.summary}}" }}
-
-          # Publish the archive, and notify downstream consumers.
-          - name: publish-archive
-            dependencies: [ingest-raw-archive, ingest-processed-archive]
-            templateRef:
-              name: publish-clinvar-archive
-              template: main
-            arguments:
-              parameters:
-                - name: release-date
-                  value: '{{ $releaseDate }}'
-                - name: ingest-summary
-                  value: '{{ $ingestSummary }}'

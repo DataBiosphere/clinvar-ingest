@@ -19,6 +19,8 @@ spec:
           {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
           - name: release-date
           {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+          - name: publish-kafka
+          {{- $publishKafka := "{{inputs.parameters.publish-kafka}}" }}
       # Limit to processing 1 table at a time to avoid lock failures in Jade.
       parallelism: 1
       dag:
@@ -80,27 +82,18 @@ spec:
                   value: '{{ $gcsPrefix }}'
                 - name: table-name
                   value: '{{ "{{item}}" }}'
-            {{- $processedOutputs := "{{tasks.process-tables.outputs.parameters}}" }}
+            {{- $summary := "{{tasks.process-tables.outputs.parameters}}" }}
 
-          # Apparently Argo's support for aggregating the outputs of a `withItems` loop
-          # is restricted to within the DAG structure (no support for slurping as a template output).
-          # Inject an 'echo' step so we get the data we care about as a single string.
-          - name: aggregate-summaries
+          - name: notify-clingen
             dependencies: [process-tables]
-            template: echo
+            when: '{{ printf "%s == true" $publishKafka }}'
+            template: notify-clingen-kafka
             arguments:
               parameters:
-                - name: message
-                  value: '{{ $processedOutputs }}'
-                - name: memory
-                  value: 128Mi
-            {{- $processingSummary := "{{tasks.aggregate-summaries.outputs.result}}" }}
-
-      outputs:
-        parameters:
-          - name: summary
-            valueFrom:
-              parameter: '{{ $processingSummary }}'
+                - name: release-date
+                  value: '{{ $releaseDate }}'
+                - name: ingest-summary
+                  value: '{{ $summary }}'
 
     ##
     ## Update the Jade state of a single table to match data staged in GCS.
@@ -352,6 +345,10 @@ spec:
             valueFrom:
               parameter: '{{ $deletedCount }}'
 
+    ##
+    ## Plumbing task to get create/update/delete prefixes into a format
+    ## that can thread through Argo's output parameters.
+    ##
     - name: build-export-paths
       inputs:
         parameters:
@@ -380,30 +377,6 @@ spec:
           - name: deleted-path
             valueFrom:
               path: /deleted.txt
-
-    - name: echo
-      inputs:
-        parameters:
-          - name: message
-          {{- $message := "{{inputs.parameters.message}}" }}
-          - name: memory
-          {{- $mem := "{{inputs.parameters.memory}}" }}
-      script:
-        # Image not important here, just need something w/ bash
-        image: python:3-slim
-        command: [bash]
-        source: |
-          echo "{{ $message }}"
-      podSpecPatch: |
-        containers:
-          - name: main
-            resources:
-              requests:
-                memory: {{ $mem }}
-          - name: wait
-            resources:
-              requests:
-                memory: {{ $mem }}
 
 
     {{- $schemaImage := printf "%s:%s" .Values.argoTemplates.diffBQTable.schemaImageName (default "latest" .Values.argoTemplates.diffBQTable.schemaImageVersion) }}
@@ -471,3 +444,31 @@ spec:
         source: |
           echo "{{ $releaseDate }}" > release_date.txt
           gsutil cp release_date.txt {{ $uploadPath }}
+
+    ##
+    ## Send a Kafka message to ClinGen, pointing them at newly-ingested data.
+    ##
+    - name: notify-clingen-kafka
+      inputs:
+        parameters:
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+          - name: ingest-summary
+          {{- $ingestSummary := "{{inputs.parameters.ingest-summary}}" }}
+      script:
+        image: us.gcr.io/broad-dsp-gcr-public/clingen-notifier:1.0.0
+        env:
+          - name: RELEASE_DATE
+            value: '{{ $releaseDate }}'
+          - name: GCS_BUCKET
+            value: '{{ .Values.gcs.resultBucketName }}'
+          - name: INGEST_SUMMARY
+            value: '{{ $ingestSummary }}'
+          - name: KAFKA_TOPIC
+            value: '{{ .Values.kafka.topic }}'
+        envFrom:
+          - secretRef:
+              name: '{{ .Values.kafka.secretName }}'
+        command: [python]
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/notify-clingen-kafka.py") | indent 10 }}
