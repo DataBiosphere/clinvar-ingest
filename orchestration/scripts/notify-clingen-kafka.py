@@ -21,7 +21,7 @@ def get_data_files(summary):
   files = []
   for event in ['created', 'updated', 'deleted']:
     count = summary[f'{event}-count']
-    if count > 0:
+    if int(count) > 0:
       gs_path = summary[f'{event}-prefix']
       blobs = bucket.list_blobs(prefix=gs_path)
       files.extend([blob.name for blob in blobs])
