@@ -40,7 +40,7 @@ spec:
           - name: ingest-summary
           {{- $ingestSummary := "{{inputs.parameters.ingest-summary}}" }}
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/monster-gcs-python:1.0.0
+        image: us.gcr.io/broad-dsp-gcr-public/clingen-notifier:1.0.0
         env:
           - name: RELEASE_DATE
             value: '{{ $releaseDate }}'
