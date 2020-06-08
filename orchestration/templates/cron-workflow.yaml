@@ -32,6 +32,8 @@ spec:
                     value: weekly_release/ClinVarVariationRelease_00-latest_weekly.xml.gz
                   - name: gcs-prefix
                     value: '{{ template "argo.timestamp" }}'
+                  - name: notify-clingen
+                    value: 'true'
 
       ##
       ## Send a Slack notifcation if the workflow has failed.

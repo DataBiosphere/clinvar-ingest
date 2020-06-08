@@ -6,6 +6,12 @@ spec:
   entrypoint: main
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
   templates:
+    ##
+    ## Entrypoint for end-to-end ETL of a ClinVar archive.
+    ##
+    ## Orchestrates calls to sub-workflows that know how to
+    ## extract, transform, load, and publish the data.
+    ##
     - name: main
       inputs:
         parameters:
@@ -13,6 +19,8 @@ spec:
           {{- $archivePath := "{{inputs.parameters.archive-path}}" }}
           - name: gcs-prefix
           {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+          - name: notify-clingen
+          {{- $notifyClingen := "{{inputs.parameters.notify-clingen}}" }}
       dag:
         tasks:
           # Transfer and process the archive, staging outputs in GCS.
@@ -53,3 +61,6 @@ spec:
                   value: '{{ $gcsPrefix }}'
                 - name: release-date
                   value: '{{ $releaseDate }}'
+                - name: publish-kafka
+                  value: '{{ $notifyClingen }}'
+            {{- $ingestSummary := "{{tasks.ingest-processed-archive.outputs.parameters.summary}}" }}
