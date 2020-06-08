@@ -31,8 +31,10 @@ spec:
                   - name: archive-path
                     value: weekly_release/ClinVarVariationRelease_00-latest_weekly.xml.gz
                   - name: gcs-prefix
-                    value: '{{ template "argo.timestamp" }}'
+                    value: {{ include "argo.timestamp" . | quote }}
                   - name: notify-clingen
+                    value: 'true'
+                  - name: publish-snapshot
                     value: 'true'
 
       ##
@@ -43,7 +45,7 @@ spec:
         steps:
           - - name: send-notification
               template: send-slack-notification
-              when: '{{ "{{workflow.status}} != Succeeded" }}'
+              when: {{ "{{workflow.status}} != Succeeded" | quote }}
 
       ##
       ## Send a Slack notification describing the final status of the workflow.
@@ -53,9 +55,9 @@ spec:
           image: curlimages/curl:7.70.0
           env:
             - name: WORKFLOW_ID
-              value: '{{ "{{workflow.name}}" }}'
+              value: {{ "{{workflow.name}}" | quote }}
             - name: WORKFLOW_STATE
-              value: '{{ "{{workflow.status}}" }}'
+              value: {{ "{{workflow.status}}" | quote }}
             - name: SLACK_URL
               valueFrom:
                 secretKeyRef:

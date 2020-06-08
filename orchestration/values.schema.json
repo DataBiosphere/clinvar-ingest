@@ -2,13 +2,42 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
-    "gcs": {
+    "staging": {
       "type": "object",
       "properties": {
-        "bucketName": { "type": "string" },
-        "resultBucketName": {"type":  "string"}
+        "gcsBucket": { "type": "string" },
+        "bigquery": {
+          "type": "object",
+          "properties": {
+            "project": { "type": "string" },
+            "datasetPrefix": { "type": "string" },
+            "description": { "type": "string" },
+            "expiration": { "type": "string" }
+          },
+          "required": ["datasetPrefix", "description", "expiration"]
+        }
       },
-      "required": ["bucketName", "resultBucketName"]
+      "required": ["gcsBucket", "bigquery"]
+    },
+    "jade": {
+      "type": "object",
+      "properties": {
+        "url": { "type": "string" },
+        "datasetId": { "type": "string" },
+        "datasetName": { "type": "string" },
+        "profileId": { "type": "string" },
+        "pollTimeout": { "type": "integer" },
+        "dataProject": { "type": "string" },
+        "accessKey": {
+          "type": "object",
+          "properties": {
+            "secretName": { "type": "string" },
+            "secretKey": { "type": "string" }
+          },
+          "required": ["secretName", "secretKey"]
+        }
+      },
+      "required": ["url", "datasetId", "datasetName", "profileId", "pollTimeout", "dataProject", "accessKey"]
     },
     "serviceAccount": {
       "type": "object",
@@ -64,48 +93,6 @@
       "required": ["project", "region", "tmpBucketName",  "subnetName", "workerAccount",
                    "workerMachineType", "autoscaling", "useFlexRS"]
     },
-    "bigquery": {
-      "type": "object",
-      "properties": {
-        "stagingData": {
-          "type": "object",
-          "properties": {
-            "project": { "type": "string" },
-            "datasetPrefix": {"type": "string"},
-            "description": {"type": "string"},
-            "expiration": {"type": "string"}
-          },
-          "required": ["project", "datasetPrefix", "description", "expiration"]
-        },
-        "jadeData": {
-          "type": "object",
-          "properties": {
-            "project": { "type": "string" },
-            "dataset": { "type": "string" }
-          },
-          "required": ["project", "dataset"]
-        }
-      },
-      "required": ["stagingData", "jadeData"]
-    },
-    "repo" : {
-      "type": "object",
-      "properties": {
-        "url": {"type":  "string"},
-        "datasetId": {"type": "string"},
-        "profileId": {"type": "string"},
-        "pollTimeout": {"type":  "integer"},
-        "accessKey": {
-          "type": "object",
-          "properties": {
-            "secretName": {"type": "string"},
-            "secretKey": {"type": "string"}
-          },
-          "required": ["secretName", "secretKey"]
-        }
-      },
-      "required": ["url", "datasetId", "profileId", "pollTimeout", "accessKey"]
-    },
     "notification": {
       "type": "object",
       "properties": {
@@ -121,14 +108,21 @@
       },
       "required": ["onlyOnFailure", "slackUrl"]
     },
-    "kafka": {
+    "clingen": {
       "type": "object",
       "properties": {
-        "topic": { "type": "string" },
-        "secretName": { "type": "string" }
+        "gcsBucket": { "type": "string" },
+        "kafka": {
+          "type": "object",
+          "properties": {
+            "topic": { "type": "string" },
+            "secretName": { "type": "string" }
+          },
+          "required": ["topic", "secretName"]
+        }
       },
-      "required": ["topic", "secretName"]
+      "required": ["gcsBucket", "kafka"]
     }
   },
-  "required": ["gcs", "serviceAccount", "volumes", "cron", "dataflow", "repo", "notification", "kafka"]
+  "required": ["staging", "jade", "serviceAccount", "volumes", "cron", "dataflow", "notification", "clingen"]
 }

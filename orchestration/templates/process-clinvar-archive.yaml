@@ -31,9 +31,9 @@ spec:
                 - name: name-prefix
                   value: ftp-download
                 - name: size
-                  value: '{{ .Values.volumes.downloadSize }}'
+                  value: {{ .Values.volumes.downloadSize | quote }}
                 - name: storage-class
-                  value: '{{ .Values.volumes.storageClass }}'
+                  value: {{ .Values.volumes.storageClass }}
             {{- $downloadPvc := "{{tasks.generate-download-volume.outputs.parameters.pvc-name}}" }}
 
           # Download the raw XML onto the new PVC.
@@ -47,15 +47,15 @@ spec:
                 - name: ftp-site
                   value: 'ftp.ncbi.nlm.nih.gov'
                 - name: ftp-path
-                  value: 'pub/clinvar/xml/clinvar_variation/{{ $archivePath }}'
+                  value: pub/clinvar/xml/clinvar_variation/{{ $archivePath }}
                 - name: local-path
                   value: {{ include "clinvar.raw-archive-name" . }}
                 - name: pvc-name
-                  value: '{{ $downloadPvc }}'
+                  value: {{ $downloadPvc | quote }}
                 - name: memory
-                  value: '512Mi'
+                  value: 512Mi
                 - name: cpu
-                  value: '1000m'
+                  value: 1000m
 
           # Upload the raw XML to GCS.
           - name: upload-raw-archive
@@ -66,17 +66,17 @@ spec:
             arguments:
               parameters:
                 - name: pvc-name
-                  value: '{{ $downloadPvc }}'
+                  value: {{ $downloadPvc | quote }}
                 - name: local-prefix
                   value: ''
                 - name: gcs-bucket
-                  value: '{{ .Values.gcs.bucketName }}'
+                  value: {{ .Values.staging.gcsBucket }}
                 - name: gcs-prefix
-                  value: '{{ $gcsPrefix }}/raw'
+                  value: {{ (printf "%s/raw" $gcsPrefix) | quote }}
                 - name: memory
-                  value: '1Gi'
+                  value: 1Gi
                 - name: cpu
-                  value: '1000m'
+                  value: 1000m
 
           # Generate a PVC to hold extracted JSON-list files.
           - name: generate-extraction-volume
@@ -90,9 +90,9 @@ spec:
                 - name: name-prefix
                   value: extracted-json
                 - name: size
-                  value: '{{ .Values.volumes.extractSize }}'
+                  value: {{ .Values.volumes.extractSize | quote }}
                 - name: storage-class
-                  value: '{{ .Values.volumes.storageClass }}'
+                  value: {{ .Values.volumes.storageClass }}
             {{- $extractionPvc := "{{tasks.generate-extraction-volume.outputs.parameters.pvc-name}}" }}
 
           # Extract raw XML to JSON-list.
@@ -104,11 +104,11 @@ spec:
             arguments:
               parameters:
                 - name: input-pvc-name
-                  value: '{{ $downloadPvc }}'
+                  value: {{ $downloadPvc | quote }}
                 - name: input-xml-path
                   value: {{ include "clinvar.raw-archive-name" . }}
                 - name: output-pvc-name
-                  value: '{{ $extractionPvc }}'
+                  value: {{ $extractionPvc | quote }}
                 - name: objects-per-part
                   value: '1024'
                 - name: gunzip
@@ -127,7 +127,7 @@ spec:
             arguments:
               parameters:
                 - name: pvc-name
-                  value: '{{ $downloadPvc }}'
+                  value: {{ $downloadPvc | quote }}
 
           # Upload extracted JSON-list data to GCS.
           - name: upload-extracted-archive
@@ -138,17 +138,17 @@ spec:
             arguments:
               parameters:
                 - name: pvc-name
-                  value: '{{ $extractionPvc }}'
+                  value: {{ $extractionPvc | quote }}
                 - name: local-prefix
                   value: VariationArchive
                 - name: gcs-bucket
-                  value:  '{{ .Values.gcs.bucketName }}'
+                  value:  {{ .Values.staging.gcsBucket }}
                 - name: gcs-prefix
-                  value: '{{ $gcsPrefix }}/raw/VariationArchive'
+                  value: {{ (printf "%s/raw/VariationArchive" $gcsPrefix) | quote }}
                 - name: memory
-                  value: '2Gi'
+                  value: 2Gi
                 - name: cpu
-                  value: '2000m'
+                  value: 2000m
 
           # Read the archive's release date from JSON.
           - name: extract-release-date
@@ -157,9 +157,9 @@ spec:
             arguments:
               parameters:
                 - name: pvc-name
-                  value: '{{ $extractionPvc }}'
+                  value: {{ $extractionPvc | quote }}
                 - name: file-path
-                  value: 'ClinVarVariationRelease/part-1.json'
+                  value: ClinVarVariationRelease/part-1.json
             {{- $releaseDate := "{{tasks.extract-release-date.outputs.result}}" }}
 
           # Clean up the extraction PVC
@@ -171,7 +171,7 @@ spec:
             arguments:
               parameters:
                 - name: pvc-name
-                  value: '{{ $extractionPvc }}'
+                  value: {{ $extractionPvc | quote }}
 
           # Use Dataflow to process the uploaded JSON-list
           - name: process-archive
@@ -180,7 +180,7 @@ spec:
             arguments:
               parameters:
                 - name: gcs-prefix
-                  value: '{{ $gcsPrefix }}'
+                  value: {{ $gcsPrefix | quote }}
 
       # Output the extracted release date so it can be used in following steps when
       # this workflow is launched by the over-arching orchestration pipeline.
@@ -188,7 +188,7 @@ spec:
         parameters:
           - name: release-date
             valueFrom:
-              parameter: '{{ $releaseDate }}'
+              parameter: {{ $releaseDate | quote }}
 
     ##
     ## Shim template used to extract the release date from
@@ -198,11 +198,13 @@ spec:
       inputs:
         parameters:
           - name: pvc-name
+          {{- $pvcName := "{{inputs.parameters.pvc-name}}" }}
           - name: file-path
+          {{- $filePath := "{{inputs.parameters.file-path}}" }}
       volumes:
         - name: state
           persistentVolumeClaim:
-            claimName: '{{ "{{inputs.parameters.pvc-name}}" }}'
+            claimName: {{ $pvcName | quote }}
             readOnly: true
       script:
         image: python:3-slim
@@ -213,7 +215,7 @@ spec:
             readOnly: true
         source: |
           import json
-          with open('/state/{{ "{{inputs.parameters.file-path}}" }}') as f:
+          with open('/state/{{ $filePath }}') as f:
             json_data = json.load(f)
           print(json_data["ClinVarVariationRelease"]["@ReleaseDate"])
 
@@ -232,7 +234,7 @@ spec:
         command: []
         args:
           - --runner=dataflow
-          {{- $bucket := .Values.gcs.bucketName }}
+          {{- $bucket := .Values.staging.gcsBucket }}
           - --inputPrefix=gs://{{ $bucket }}/{{ $prefix }}/raw
           - --outputPrefix=gs://{{ $bucket }}/{{ $prefix }}/processed
           {{- with .Values.dataflow }}

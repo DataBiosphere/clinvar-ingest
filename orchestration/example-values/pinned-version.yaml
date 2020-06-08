@@ -1,6 +1,24 @@
-gcs:
-  bucketName: buk
-  resultBucketName: buc
+staging:
+  gcsBucket: buk
+  bigquery:
+    project: project
+    datasetPrefix: monster_staging_data
+    description: ClinVar!!!
+    expiration: '604800'
+jade:
+  url: http://jade.repo
+  datasetId: a
+  datasetName: clinvar
+  profileId: b
+  dataProject: dataaaaa
+  accessKey:
+    secretName: dont-tell
+    secretKey: its-a-secret
+clingen:
+  gcsBucket: buc
+  kafka:
+    topic: foo
+    secretName: bar
 serviceAccount:
   k8sName: k8sss
   googleName: goog@boog
@@ -12,22 +30,6 @@ dataflow:
   subnetName: network
   workerAccount: runner@zoog
   useFlexRS: false
-bigquery:
-  stagingData:
-    project: project
-    datasetPrefix: monster_staging_data
-    description: ClinVar!!!
-    expiration: '604800'
-  jadeData:
-    project: dataaaaaa
-    dataset: clinvar
-repo:
-  url: http://jade.repo
-  datasetId: a
-  profileId: b
-  accessKey:
-    secretName: dont-tell
-    secretKey: its-a-secret
 argoTemplates:
   diffBQTable:
     schemaImageVersion: adsaasdf
@@ -36,6 +38,3 @@ notification:
   slackUrl:
     secretName: aaaaa
     secretKey: bbbbb
-kafka:
-  topic: foo
-  secretName: bar
