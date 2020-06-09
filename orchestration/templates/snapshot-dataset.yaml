@@ -68,7 +68,7 @@ spec:
         source: |
           release_date = '{{ $releaseDate }}'
           snapshot_name = f"clinvar_{release_date.replace('-', '_')}"
-          snapshot_description = f'Mirror of NCBI's ClinVar archive as of {release_date}'
+          snapshot_description = f"Mirror of NCBI's ClinVar archive as of {release_date}"
 
           with open('/name.txt', 'w') as namefile:
             namefile.write(snapshot_name)
