@@ -67,4 +67,14 @@ spec:
                   value: {{ $notifyClingen | quote }}
                 - name: publish-snapshot
                   value: {{ $publishSnapshot | quote }}
-            {{- $ingestSummary := "{{tasks.ingest-processed-archive.outputs.parameters.summary}}" }}
+
+          - name: snapshot-dataset
+            dependencies: [ingest-raw-archive, ingest-processed-archive]
+            when: {{ printf "%s == true" $publishSnapshot | quote }}
+            templateRef:
+              name: snapshot-dataset
+              template: main
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}

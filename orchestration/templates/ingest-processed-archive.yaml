@@ -21,8 +21,6 @@ spec:
           {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
           - name: publish-kafka
           {{- $publishKafka := "{{inputs.parameters.publish-kafka}}" }}
-          - name: publish-snapshot
-          {{- $publishSnapshot := "{{inputs.parameters.publish-snapshot}}" }}
       # Limit to processing 1 table at a time to avoid lock failures in Jade.
       parallelism: 1
       dag:
@@ -96,15 +94,6 @@ spec:
                   value: {{ $releaseDate | quote }}
                 - name: ingest-summary
                   value: {{ $summary | quote }}
-
-          - name: publish-snapshot
-            dependencies: [process-tables]
-            when: {{ printf "%s == true" $publishSnapshot | quote }}
-            template: create-snapshot
-            arguments:
-              parameters:
-                - name: release-date
-                  value: {{ $releaseDate | quote }}
 
     ##
     ## Update the Jade state of a single table to match data staged in GCS.
@@ -481,100 +470,3 @@ spec:
         command: [python]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/notify-clingen-kafka.py") | indent 10 }}
-
-    ##
-    ## Create a snapshot containing all live data in the ClinVar dataset.
-    ##
-    - name: create-snapshot
-      inputs:
-        parameters:
-          - name: release-date
-          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
-      dag:
-        tasks:
-          - name: get-snapshot-name
-            template: get-snapshot-name
-            arguments:
-              parameters:
-                - name: release-date
-                  value: {{ $releaseDate | quote }}
-          {{- $snapshotName := "{{tasks.get-snapshot-name.outputs.result}}" }}
-
-          - name: submit-job
-            dependencies: [get-snapshot-name]
-            template: submit-full-view-snapshot
-            arguments:
-              parameters:
-                - name: snapshot-name
-                  value: {{ $snapshotName | quote }}
-          {{ $jobId := "{{tasks.submit-job.outputs.result}}" }}
-
-          - name: poll-job
-            dependencies: [submit-job]
-            template: poll-ingest-job
-            arguments:
-              parameters:
-                - name: job-id
-                  value: {{ $jobId | quote }}
-                {{- with .Values.jade }}
-                - name: api-url
-                  value: {{ .url }}
-                - name: timeout
-                  value: {{ .pollTimeout | quote }}
-                - name: sa-secret
-                  value: {{ .accessKey.secretName }}
-                - name: sa-secret-key
-                  value: {{ .accessKey.secretKey }}
-                {{- end }}
-
-    ##
-    ## Transform a release-date into a TDR snapshot name.
-    ##
-    - name: get-snapshot-name
-      inputs:
-        parameters:
-          - name: release-date
-          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
-      script:
-        image: python:3-slim
-        command: [python]
-        source: |
-          release_date = '{{ $releaseDate }}'
-          print(f"clinvar_{release_date.replace('-', '_')}")
-
-    ##
-    ## Submit a job to the TDR which will create a snapshot of all live data in a dataset.
-    ##
-    - name: submit-full-view-snapshot
-      inputs:
-        parameters:
-          - name: snapshot-name
-          {{- $snapshotName := "{{inputs.parameters.snapshot-name}}" }}
-      volumes:
-        {{- with .Values.jade }}
-        - name: sa-secret-volume
-          secret:
-            secretName: {{ .accessKey.secretName }}
-      script:
-        image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.1
-        volumeMounts:
-          - name: sa-secret-volume
-            mountPath: /secret
-        env:
-          - name: API_URL
-            value: {{ .url }}
-          - name: DATASET_NAME
-            value: {{ .datasetName }}
-          - name: PROFILE_ID
-            value: {{ .profileId }}
-          - name: GOOGLE_APPLICATION_CREDENTIALS
-            value: {{ printf "/secret/%s" .accessKey.secretKey }}
-        {{- end }}
-          - name: SNAPSHOT_NAME
-            value: {{ $snapshotName | quote }}
-        command: [python]
-        source: |
-        {{- include "argo.render-lines" (.Files.Lines "scripts/request-full-view-snapshot.py") | indent 10 }}
-
-    ## Inject template used to poll TDR jobs.
-    {{- include "argo.poll-ingest-job" . | indent 4 }}
