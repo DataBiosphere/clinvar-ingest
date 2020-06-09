@@ -16,16 +16,17 @@ spec:
           {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
       dag:
         tasks:
-          - name: get-snapshot-name
+          - name: get-snapshot-info
             template: get-snapshot-name
             arguments:
               parameters:
                 - name: release-date
                   value: {{ $releaseDate | quote }}
-          {{- $snapshotName := "{{tasks.get-snapshot-name.outputs.result}}" }}
+          {{- $snapshotName := "{{tasks.get-snapshot-info.outputs.parameters.name}}" }}
+          {{- $snapshotDescription := "{{tasks.get-snapshot-info.outputs.parameters.description}}" }}
 
           - name: submit-job
-            dependencies: [get-snapshot-name]
+            dependencies: [get-snapshot-info]
             template: submit-full-view-snapshot
             arguments:
               parameters:
@@ -54,7 +55,7 @@ spec:
     ##
     ## Transform a release-date into a TDR snapshot name.
     ##
-    - name: get-snapshot-name
+    - name: get-snapshot-info
       inputs:
         parameters:
           - name: release-date
@@ -64,7 +65,21 @@ spec:
         command: [python]
         source: |
           release_date = '{{ $releaseDate }}'
-          print(f"clinvar_{release_date.replace('-', '_')}")
+          snapshot_name = f"clinvar_{release_date.replace('-', '_')}"
+          snapshot_description = f'Mirror of NCBI's ClinVar archive as of {release_date}'
+
+          with open('/name.txt', 'w') as namefile:
+            namefile.write(snapshot_name)
+          with open('/description.txt', 'w') as descriptionfile:
+            descriptionfile.write(snapshot_description)
+      outputs:
+        parameters:
+          - name: name
+            valueFrom:
+              path: /name.txt
+          - name: description
+            valueFrom:
+              path: /description.txt
 
     ##
     ## Submit a job to the TDR which will create a snapshot of all live data in a dataset.
@@ -74,6 +89,8 @@ spec:
         parameters:
           - name: snapshot-name
           {{- $snapshotName := "{{inputs.parameters.snapshot-name}}" }}
+          - name: snapshot-description
+          {{- $snapshotDescription := "{{inputs.parameters.snapshot-description}}" }}
       volumes:
         {{- with .Values.jade }}
         - name: sa-secret-volume
@@ -96,6 +113,8 @@ spec:
         {{- end }}
           - name: SNAPSHOT_NAME
             value: {{ $snapshotName | quote }}
+          - name: SNAPSHOT_DESCRIPTION
+            value: {{ $snapshotDescription | quote }}
         command: [python]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/request-full-view-snapshot.py") | indent 10 }}
