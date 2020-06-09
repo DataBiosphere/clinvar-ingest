@@ -32,6 +32,8 @@ spec:
               parameters:
                 - name: snapshot-name
                   value: {{ $snapshotName | quote }}
+                - name: snapshot-description
+                  value: {{ $snapshotDescription | quote }}
           {{ $jobId := "{{tasks.submit-job.outputs.result}}" }}
 
           - name: poll-job
