@@ -540,7 +540,7 @@ spec:
         command: [python]
         source: |
           release_date = '{{ $releaseDate }}'
-          print(f'clinvar_{release_date.replace('-', '_')}')
+          print(f"clinvar_{release_date.replace('-', '_')}")
 
     ##
     ## Submit a job to the TDR which will create a snapshot of all live data in a dataset.
