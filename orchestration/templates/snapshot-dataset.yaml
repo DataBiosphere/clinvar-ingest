@@ -17,7 +17,7 @@ spec:
       dag:
         tasks:
           - name: get-snapshot-info
-            template: get-snapshot-name
+            template: get-snapshot-info
             arguments:
               parameters:
                 - name: release-date
