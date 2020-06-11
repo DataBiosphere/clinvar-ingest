@@ -21,6 +21,8 @@ spec:
           {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
           - name: notify-clingen
           {{- $notifyClingen := "{{inputs.parameters.notify-clingen}}" }}
+          - name: publish-snapshot
+          {{- $publishSnapshot := "{{inputs.parameters.publish-snapshot}}" }}
       dag:
         tasks:
           # Transfer and process the archive, staging outputs in GCS.
@@ -31,9 +33,9 @@ spec:
             arguments:
               parameters:
                 - name: archive-path
-                  value: '{{ $archivePath }}'
+                  value: {{ $archivePath | quote }}
                 - name: gcs-prefix
-                  value: '{{ $gcsPrefix }}'
+                  value: {{ $gcsPrefix | quote }}
             {{- $releaseDate := "{{tasks.process-archive.outputs.parameters.release-date}}" }}
 
           # Ingest the raw archive into the Repository, for provenance.
@@ -45,9 +47,9 @@ spec:
             arguments:
               parameters:
                 - name: gcs-prefix
-                  value: '{{ $gcsPrefix }}'
+                  value: {{ $gcsPrefix | quote }}
                 - name: release-date
-                  value: '{{ $releaseDate }}'
+                  value: {{ $releaseDate | quote }}
 
           # Ingest the processed archive into the Repository.
           - name: ingest-processed-archive
@@ -58,9 +60,21 @@ spec:
             arguments:
               parameters:
                 - name: gcs-prefix
-                  value: '{{ $gcsPrefix }}'
+                  value: {{ $gcsPrefix | quote }}
                 - name: release-date
-                  value: '{{ $releaseDate }}'
+                  value: {{ $releaseDate | quote }}
                 - name: publish-kafka
-                  value: '{{ $notifyClingen }}'
-            {{- $ingestSummary := "{{tasks.ingest-processed-archive.outputs.parameters.summary}}" }}
+                  value: {{ $notifyClingen | quote }}
+                - name: publish-snapshot
+                  value: {{ $publishSnapshot | quote }}
+
+          - name: snapshot-dataset
+            dependencies: [ingest-raw-archive, ingest-processed-archive]
+            when: {{ printf "%s == true" $publishSnapshot | quote }}
+            templateRef:
+              name: snapshot-dataset
+              template: main
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}

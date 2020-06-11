@@ -14,7 +14,7 @@ dataflow:
     minWorkers: 4
     maxWorkers: 8
   useFlexRS: false
-repo:
+jade:
   # 24 hours -> 86400 seconds
   pollTimeout: 86400
 xmlToJsonList:

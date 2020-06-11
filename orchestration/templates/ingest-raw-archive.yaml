@@ -28,19 +28,19 @@ spec:
             arguments:
               parameters:
                 - name: release-date
-                  value: '{{ $releaseDate }}'
-            {{- $shouldIngest := "{{tasks.check-for-existing-release.outputs.result}} == 0"}}
+                  value: {{ $releaseDate | quote }}
+            {{- $shouldIngest := "{{tasks.check-for-existing-release.outputs.result}} == 0" }}
 
           - name: ingest-release
             dependencies: [check-for-existing-release]
-            when: '{{ $shouldIngest }}'
+            when: {{ $shouldIngest | quote }}
             template: ingest-release
             arguments:
               parameters:
                 - name: release-date
-                  value: '{{ $releaseDate }}'
+                  value: {{ $releaseDate | quote }}
                 - name: gcs-prefix
-                  value: '{{ $gcsPrefix }}'
+                  value: {{ $gcsPrefix | quote }}
 
     ##
     ## Sub-dag to ingest a raw release into the Repo and register it in the release_history table.
@@ -65,18 +65,18 @@ spec:
             arguments:
               parameters:
                 - name: virtual-path
-                  value: '{{ $targetPath }}'
-                {{- with .Values.repo }}
+                  value: {{ $targetPath | quote }}
+                {{- with .Values.jade }}
                 - name: url
-                  value: '{{ .url }}'
+                  value: {{ .url }}
                 - name: dataset-id
-                  value: '{{ .datasetId }}'
+                  value: {{ .datasetId }}
                 - name: profile-id
-                  value: '{{ .profileId }}'
+                  value: {{ .profileId }}
                 - name: sa-secret
-                  value: '{{ .accessKey.secretName }}'
+                  value: {{ .accessKey.secretName }}
                 - name: sa-secret-key
-                  value: '{{ .accessKey.secretKey }}'
+                  value: {{ .accessKey.secretKey }}
                 {{- end }}
             {{- $existingFileId := "{{tasks.check-for-existing-file.outputs.result}}" }}
             {{- $shouldIngestFile := printf "%s == null" $existingFileId }}
@@ -84,61 +84,61 @@ spec:
           # If we've already ingested a file, use it to ingest the matching row.
           - name: ingest-release-history-existing-file
             dependencies: [check-for-existing-file]
-            when: '{{ printf "%s != null" $existingFileId }}'
+            when: {{ (printf "%s != null" $existingFileId) | quote }}
             template: ingest-release-history
             arguments:
               parameters:
                 - name: release-date
-                  value: '{{ $releaseDate }}'
+                  value: {{ $releaseDate | quote }}
                 - name: file-id
-                  value: '{{ $existingFileId }}'
+                  value: {{ $existingFileId | quote }}
                 - name: gcs-prefix
-                  value: '{{ $gcsPrefix }}'
+                  value: {{ $gcsPrefix | quote }}
 
           # If we haven't already ingested a file, start by loading the staged XML into Jade.
           - name: ingest-raw-xml
             dependencies: [check-for-existing-file]
-            when: '{{ $shouldIngestFile }}'
+            when: {{ $shouldIngestFile | quote }}
             templateRef:
               name: {{ .Values.argoTemplates.ingestFile.name }}
               template: main
             arguments:
               parameters:
-                {{- with .Values.repo }}
+                {{- with .Values.jade }}
                 - name: url
-                  value: '{{ .url }}'
+                  value: {{ .url }}
                 - name: dataset-id
-                  value: '{{ .datasetId }}'
+                  value: {{ .datasetId }}
                 - name: profile-id
-                  value: '{{ .profileId }}'
+                  value: {{ .profileId }}
                 - name: timeout
-                  value: '{{ .pollTimeout }}'
+                  value: {{ .pollTimeout }}
                 - name: sa-secret
-                  value: '{{ .accessKey.secretName }}'
+                  value: {{ .accessKey.secretName }}
                 - name: sa-secret-key
-                  value: '{{ .accessKey.secretKey }}'
+                  value: {{ .accessKey.secretKey }}
                 {{- end }}
                 - name: target-path
-                  value: '{{ $targetPath }}'
+                  value: {{ $targetPath | quote }}
                 - name: gcs-bucket
-                  value: '{{ .Values.gcs.bucketName }}'
+                  value: {{ .Values.staging.gcsBucket }}
                 - name: gcs-file-path
-                  value: '{{ $gcsPrefix }}/raw/{{ include "clinvar.raw-archive-name" . }}'
+                  value: {{ printf "%s/raw/%s" $gcsPrefix (include "clinvar.raw-archive-name" .) | quote }}
             {{- $newFileId := "{{tasks.ingest-raw-xml.outputs.parameters.file-id}}" }}
 
           # Ingest a row for the new file.
           - name: ingest-release-history-new-file
             dependencies: [ingest-raw-xml]
-            when: '{{ $shouldIngestFile }}'
+            when: {{ $shouldIngestFile | quote }}
             template: ingest-release-history
             arguments:
               parameters:
                 - name: release-date
-                  value: '{{ $releaseDate }}'
+                  value: {{ $releaseDate | quote }}
                 - name: file-id
-                  value: '{{ $newFileId }}'
+                  value: {{ $newFileId | quote }}
                 - name: gcs-prefix
-                  value: '{{ $gcsPrefix }}'
+                  value: {{ $gcsPrefix | quote }}
 
     ##
     ## Sub-dag to ingest a new row into the release_history table, once we've
@@ -161,11 +161,11 @@ spec:
             arguments:
               parameters:
                 - name: release-date
-                  value: '{{ $releaseDate }}'
+                  value: {{ $releaseDate | quote }}
                 - name: archive-id
-                  value: '{{ $fileId }}'
+                  value: {{ $fileId | quote }}
                 - name: gcs-prefix
-                  value: '{{ $gcsPrefix }}'
+                  value: {{ $gcsPrefix | quote }}
 
           # Ingest the staged release_history row.
           - name: ingest-release-history
@@ -178,20 +178,20 @@ spec:
                 - name: table-name
                   value: release_history
                 - name: gcs-bucket
-                  value: '{{ .Values.gcs.bucketName }}'
+                  value: {{ .Values.staging.gcsBucket }}
                 - name: gcs-prefix
-                  value: '{{ printf "%s/processed/release_history" $gcsPrefix }}'
-                {{- with .Values.repo }}
+                  value: {{ printf "%s/processed/release_history" $gcsPrefix | quote }}
+                {{- with .Values.jade }}
                 - name: url
-                  value: '{{ .url }}'
+                  value: {{ .url }}
                 - name: dataset-id
-                  value: '{{ .datasetId }}'
+                  value: {{ .datasetId }}
                 - name: timeout
-                  value: '{{ .pollTimeout }}'
+                  value: {{ .pollTimeout }}
                 - name: sa-secret
-                  value: '{{ .accessKey.secretName }}'
+                  value: {{ .accessKey.secretName }}
                 - name: sa-secret-key
-                  value: '{{ .accessKey.secretKey }}'
+                  value: {{ .accessKey.secretKey }}
                 {{- end }}
 
     ##
@@ -206,13 +206,13 @@ spec:
         image: google/cloud-sdk:slim
         env:
           - name: PROJECT
-            value: '{{ .Values.bigquery.stagingData.project }}'
+            value: {{ .Values.staging.bigquery.project }}
           - name: JADE_PROJECT
-            value: '{{ .Values.bigquery.jadeData.project }}'
+            value: {{ .Values.jade.dataProject }}
           - name: JADE_DATASET
-            value: '{{ .Values.bigquery.jadeData.dataset }}'
+            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
           - name: RELEASE_DATE
-            value: '{{ $releaseDate }}'
+            value: {{ $releaseDate | quote }}
         command: [bash]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/check-for-release.sh") | indent 10 }}
@@ -232,7 +232,7 @@ spec:
       script:
         image: google/cloud-sdk:slim
         command: [bash]
-        {{- $uploadPath := printf "gs://%s/%s/processed/release_history/" .Values.gcs.bucketName $gcsPrefix }}
+        {{- $uploadPath := printf "gs://%s/%s/processed/release_history/" .Values.staging.gcsBucket $gcsPrefix }}
         source: |
             json='{"release_date":"{{ $releaseDate }}","archive_path":"{{ $archiveId }}"}'
             echo "$json" > release_history.json

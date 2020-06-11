@@ -26,7 +26,7 @@ spec:
       dag:
         tasks:
           # Create a dataset to store intermediate outputs of ETL jobs.
-          {{- $datasetName := printf "%s_%s" .Values.bigquery.stagingData.datasetPrefix $gcsPrefix }}
+          {{- $datasetName := printf "%s_%s" .Values.staging.bigquery.datasetPrefix $gcsPrefix }}
           - name: create-dataset
             templateRef:
               name: {{ .Values.argoTemplates.createBQDataset.name }}
@@ -34,14 +34,14 @@ spec:
             arguments:
               parameters:
                 - name: dataset-name
-                  value: {{ $datasetName }}
-                {{- with .Values.bigquery.stagingData }}
+                  value: {{ $datasetName | quote }}
+                {{- with .Values.staging.bigquery }}
                 - name: bq-project
-                  value: '{{ .project }}'
+                  value: {{ .project }}
                 - name: dataset-description
-                  value: '{{ .description }}'
+                  value: {{ .description }}
                 - name: dataset-expiration
-                  value: '{{ .expiration }}'
+                  value: {{ .expiration }}
                 {{- end }}
 
           # Write the archive's release date into ClinGen's bucket.
@@ -50,9 +50,9 @@ spec:
             arguments:
               parameters:
                 - name: gcs-prefix
-                  value: '{{ $gcsPrefix }}'
+                  value: {{ $gcsPrefix | quote }}
                 - name: release-date
-                  value: '{{ $releaseDate }}'
+                  value: {{ $releaseDate | quote }}
 
           # Loop over all tables, syncing state in Jade to match data staged in GCS.
           - name: process-tables
@@ -77,23 +77,23 @@ spec:
             arguments:
               parameters:
                 - name: dataset-name
-                  value: '{{ $datasetName }}'
+                  value: {{ $datasetName | quote }}
                 - name: gcs-prefix
-                  value: '{{ $gcsPrefix }}'
+                  value: {{ $gcsPrefix | quote }}
                 - name: table-name
-                  value: '{{ "{{item}}" }}'
+                  value: {{ "{{item}}" | quote }}
             {{- $summary := "{{tasks.process-tables.outputs.parameters}}" }}
 
           - name: notify-clingen
             dependencies: [process-tables]
-            when: '{{ printf "%s == true" $publishKafka }}'
+            when: {{ printf "%s == true" $publishKafka | quote }}
             template: notify-clingen-kafka
             arguments:
               parameters:
                 - name: release-date
-                  value: '{{ $releaseDate }}'
+                  value: {{ $releaseDate | quote }}
                 - name: ingest-summary
-                  value: '{{ $summary }}'
+                  value: {{ $summary | quote }}
 
     ##
     ## Update the Jade state of a single table to match data staged in GCS.
@@ -122,23 +122,23 @@ spec:
             arguments:
               parameters:
                 - name: table-name
-                  value: '{{ $tableName }}'
+                  value: {{ $tableName | quote }}
                 - name: gcs-bucket
-                  value: '{{ .Values.gcs.bucketName }}'
+                  value: {{ .Values.staging.gcsBucket }}
                 - name: input-prefix
-                  value: '{{ printf "%s/processed/%s" $gcsPrefix $tableName }}'
+                  value: {{ printf "%s/processed/%s" $gcsPrefix $tableName | quote }}
                 - name: old-ids-output-prefix
-                  value: '{{ $oldIdsPrefix }}'
+                  value: {{ $oldIdsPrefix | quote }}
                 - name: new-rows-output-prefix
-                  value: '{{ $newRowsPrefix }}'
+                  value: {{ $newRowsPrefix | quote }}
                 - name: staging-bq-project
-                  value: '{{ .Values.bigquery.stagingData.project }}'
+                  value: {{ .Values.staging.bigquery.project }}
                 - name: staging-bq-dataset
-                  value: '{{ $datasetName }}'
+                  value: {{ $datasetName | quote }}
                 - name: jade-bq-project
-                  value: '{{ .Values.bigquery.jadeData.project }}'
+                  value: {{ .Values.jade.dataProject }}
                 - name: jade-bq-dataset
-                  value: '{{ .Values.bigquery.jadeData.dataset }}'
+                  value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
             {{- $joinTable := "{{tasks.diff-table.outputs.parameters.join-table-name}}" }}
             {{- $shouldAppend := "{{tasks.diff-table.outputs.parameters.rows-to-append-count}} > 0" }}
             {{- $shouldDelete := "{{tasks.diff-table.outputs.parameters.ids-to-delete-count}} > 0" }}
@@ -146,57 +146,57 @@ spec:
           # Soft-delete IDs of outdated rows.
           - name: soft-delete-table
             dependencies: [diff-table]
-            when: '{{ $shouldDelete }}'
+            when: {{ $shouldDelete | quote }}
             templateRef:
               name: {{ .Values.argoTemplates.softDeleteTable.name }}
               template: main
             arguments:
               parameters:
                 - name: table-name
-                  value: '{{ $tableName }}'
+                  value: {{ $tableName | quote }}
                 - name: gcs-prefix
-                  value: '{{ $oldIdsPrefix }}'
+                  value: {{ $oldIdsPrefix | quote }}
                 - name: gcs-bucket
-                  value: '{{ .Values.gcs.bucketName }}'
-                {{- with .Values.repo }}
+                  value: {{ .Values.staging.gcsBucket }}
+                {{- with .Values.jade }}
                 - name: url
-                  value: '{{ .url }}'
+                  value: {{ .url }}
                 - name: dataset-id
-                  value: '{{ .datasetId }}'
+                  value: {{ .datasetId }}
                 - name: timeout
-                  value: '{{ .pollTimeout }}'
+                  value: {{ .pollTimeout }}
                 - name: sa-secret
-                  value: '{{ .accessKey.secretName }}'
+                  value: {{ .accessKey.secretName }}
                 - name: sa-secret-key
-                  value: '{{ .accessKey.secretKey }}'
+                  value: {{ .accessKey.secretKey }}
                 {{- end }}
 
           # Append rows with new data.
           - name: ingest-table
             dependencies: [diff-table, soft-delete-table]
-            when: '{{ $shouldAppend }}'
+            when: {{ $shouldAppend | quote }}
             templateRef:
               name:  {{ .Values.argoTemplates.ingestTable.name }}
               template: main
             arguments:
               parameters:
                 - name: table-name
-                  value: '{{ $tableName }}'
+                  value: {{ $tableName | quote }}
                 - name: gcs-bucket
-                  value: '{{ .Values.gcs.bucketName }}'
+                  value: {{ .Values.staging.gcsBucket }}
                 - name: gcs-prefix
-                  value: '{{ $newRowsPrefix }}'
-                {{- with .Values.repo }}
+                  value: {{ $newRowsPrefix | quote }}
+                {{- with .Values.jade }}
                 - name: url
-                  value: '{{ .url }}'
+                  value: {{ .url }}
                 - name: dataset-id
-                  value: '{{ .datasetId }}'
+                  value: {{ .datasetId }}
                 - name: timeout
-                  value: '{{ .pollTimeout }}'
+                  value: {{ .pollTimeout }}
                 - name: sa-secret
-                  value: '{{ .accessKey.secretName }}'
+                  value: {{ .accessKey.secretName }}
                 - name: sa-secret-key
-                  value: '{{ .accessKey.secretKey }}'
+                  value: {{ .accessKey.secretKey }}
                 {{- end }}
 
           # Build the export prefixes for the table's ClinGen data.
@@ -208,9 +208,9 @@ spec:
             arguments:
               parameters:
                 - name: table-name
-                  value: '{{ $tableName }}'
+                  value: {{ $tableName | quote }}
                 - name: gcs-prefix
-                  value: '{{ $gcsPrefix }}'
+                  value: {{ $gcsPrefix | quote }}
             {{- $createdPath := "{{tasks.build-export-paths.outputs.parameters.created-path}}" }}
             {{- $updatedPath := "{{tasks.build-export-paths.outputs.parameters.updated-path}}" }}
             {{- $deletedPath := "{{tasks.build-export-paths.outputs.parameters.deleted-path}}" }}
@@ -222,11 +222,11 @@ spec:
             arguments:
               parameters:
                 - name: bq-dataset
-                  value: '{{ $datasetName }}'
+                  value: {{ $datasetName | quote }}
                 - name: join-table-name
-                  value: '{{ $joinTable }}'
+                  value: {{ $joinTable | quote }}
                 - name: table-name
-                  value: '{{ $tableName }}'
+                  value: {{ $tableName | quote }}
                 - name: query-type
                   value: new_rows
             {{- $newRowsTable := "{{tasks.generate-new-rows-table.outputs.result}}" }}
@@ -239,17 +239,17 @@ spec:
             arguments:
               parameters:
                 - name: bq-project
-                  value: '{{ .Values.bigquery.stagingData.project }}'
+                  value: {{ .Values.staging.bigquery.project }}
                 - name: bq-dataset
-                  value: '{{ $datasetName }}'
+                  value: {{ $datasetName | quote }}
                 - name: bq-table
-                  value: '{{ $newRowsTable }}'
+                  value: {{ $newRowsTable | quote }}
                 - name: output-format
                   value: NEWLINE_DELIMITED_JSON
                 - name: gcs-bucket
-                  value: '{{ .Values.gcs.resultBucketName }}'
+                  value: {{ .Values.clingen.gcsBucket }}
                 - name: gcs-prefix
-                  value: '{{ $createdPath }}'
+                  value: {{ $createdPath | quote }}
             {{- $createdCount := "{{tasks.export-new-rows-table.outputs.parameters.row-count}}" }}
 
           # Export updated rows to GCS for ClinGen
@@ -259,11 +259,11 @@ spec:
             arguments:
               parameters:
                 - name: bq-dataset
-                  value: '{{ $datasetName }}'
+                  value: {{ $datasetName | quote }}
                 - name: join-table-name
-                  value: '{{ $joinTable }}'
+                  value: {{ $joinTable | quote }}
                 - name: table-name
-                  value: '{{ $tableName }}'
+                  value: {{ $tableName | quote }}
                 - name: query-type
                   value: updates
             {{- $updatesTable := "{{tasks.generate-updated-rows-table.outputs.result}}" }}
@@ -276,17 +276,17 @@ spec:
             arguments:
               parameters:
                 - name: bq-project
-                  value: '{{ .Values.bigquery.stagingData.project }}'
+                  value: {{ .Values.staging.bigquery.project }}
                 - name: bq-dataset
-                  value: '{{ $datasetName }}'
+                  value: {{ $datasetName | quote }}
                 - name: bq-table
-                  value: '{{ $updatesTable }}'
+                  value: {{ $updatesTable | quote }}
                 - name: output-format
                   value: NEWLINE_DELIMITED_JSON
                 - name: gcs-bucket
-                  value: '{{ .Values.gcs.resultBucketName }}'
+                  value: {{ .Values.clingen.gcsBucket }}
                 - name: gcs-prefix
-                  value: '{{ $updatedPath }}'
+                  value: {{ $updatedPath | quote }}
             {{- $updatedCount := "{{tasks.export-updated-rows-table.outputs.parameters.row-count}}" }}
 
           # Export deleted row keys to GCS for ClinGen
@@ -296,11 +296,11 @@ spec:
             arguments:
               parameters:
                 - name: bq-dataset
-                  value: '{{ $datasetName }}'
+                  value: {{ $datasetName | quote }}
                 - name: join-table-name
-                  value: '{{ $joinTable }}'
+                  value: {{ $joinTable | quote }}
                 - name: table-name
-                  value: '{{ $tableName }}'
+                  value: {{ $tableName | quote }}
             {{- $deletionsTable := "{{tasks.generate-deleted-rows-table.outputs.result}}" }}
 
           - name: export-deleted-rows-table
@@ -311,39 +311,39 @@ spec:
             arguments:
               parameters:
                 - name: bq-project
-                  value: '{{ .Values.bigquery.stagingData.project }}'
+                  value: {{ .Values.staging.bigquery.project }}
                 - name: bq-dataset
-                  value: '{{ $datasetName }}'
+                  value: {{ $datasetName | quote }}
                 - name: bq-table
-                  value: '{{ $deletionsTable }}'
+                  value: {{ $deletionsTable | quote }}
                 - name: output-format
                   value: NEWLINE_DELIMITED_JSON
                 - name: gcs-bucket
-                  value: '{{ .Values.gcs.resultBucketName }}'
+                  value: {{ .Values.clingen.gcsBucket }}
                 - name: gcs-prefix
-                  value: '{{ $deletedPath }}'
+                  value: {{ $deletedPath | quote }}
             {{- $deletedCount := "{{tasks.export-deleted-rows-table.outputs.parameters.row-count}}" }}
 
       outputs:
         parameters:
           - name: created-prefix
             valueFrom:
-              parameter: '{{ $createdPath }}'
+              parameter: {{ $createdPath | quote }}
           - name: created-count
             valueFrom:
-              parameter: '{{ $createdCount }}'
+              parameter: {{ $createdCount | quote }}
           - name: updated-prefix
             valueFrom:
-              parameter: '{{ $updatedPath }}'
+              parameter: {{ $updatedPath | quote }}
           - name: updated-count
             valueFrom:
-              parameter: '{{ $updatedCount }}'
+              parameter: {{ $updatedCount | quote }}
           - name: deleted-prefix
             valueFrom:
-              parameter: '{{ $deletedPath }}'
+              parameter: {{ $deletedPath | quote }}
           - name: deleted-count
             valueFrom:
-              parameter: '{{ $deletedCount }}'
+              parameter: {{ $deletedCount | quote }}
 
     ##
     ## Plumbing task to get create/update/delete prefixes into a format
@@ -388,21 +388,20 @@ spec:
           - name: join-table-name
           - name: bq-dataset
           - name: query-type
-      {{- include "argo.retry" . | indent 6 }}
       script:
         image: {{ $schemaImage }}
         # layer of env variables to make the scripts more stand-alone and more compatible within editors
         env:
           - name: PROJECT
-            value: '{{ .Values.bigquery.stagingData.project }}'
+            value: {{ .Values.staging.bigquery.project }}
           - name: DATASET
-            value: '{{ "{{inputs.parameters.bq-dataset}}" }}'
+            value: {{ "{{inputs.parameters.bq-dataset}}" | quote }}
           - name: INPUT_TABLE
-            value: '{{ "{{inputs.parameters.join-table-name}}" }}'
+            value: {{ "{{inputs.parameters.join-table-name}}" | quote }}
           - name: TABLE
-            value: '{{ "{{inputs.parameters.table-name}}" }}'
+            value: {{ "{{inputs.parameters.table-name}}" | quote }}
           - name: QUERY_TYPE
-            value: '{{ "{{inputs.parameters.query-type}}" }}'
+            value: {{ "{{inputs.parameters.query-type}}" | quote }}
         command: [bash]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/clingen-temp-table-full-rows.sh") | indent 10 }}
@@ -414,18 +413,17 @@ spec:
           - name: table-name
           - name: join-table-name
           - name: bq-dataset
-      {{- include "argo.retry" . | indent 6 }}
       script:
         image: {{ $schemaImage }}
         env:
           - name: PROJECT
-            value: '{{ .Values.bigquery.stagingData.project }}'
+            value: {{ .Values.staging.bigquery.project }}
           - name: DATASET
-            value: '{{ "{{inputs.parameters.bq-dataset}}" }}'
+            value: {{ "{{inputs.parameters.bq-dataset}}" | quote }}
           - name: INPUT_TABLE
-            value: '{{ "{{inputs.parameters.join-table-name}}" }}'
+            value: {{ "{{inputs.parameters.join-table-name}}" | quote }}
           - name: TABLE
-            value: '{{ "{{inputs.parameters.table-name}}" }}'
+            value: {{ "{{inputs.parameters.table-name}}" | quote }}
         command: [bash]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/clingen-temp-table-pk-deletes.sh") | indent 10 }}
@@ -440,7 +438,7 @@ spec:
       script:
         image: google/cloud-sdk:slim
         command: [bash]
-        {{- $uploadPath := printf "gs://%s/%s/" .Values.gcs.resultBucketName $gcsPrefix }}
+        {{- $uploadPath := printf "gs://%s/%s/" .Values.clingen.gcsBucket $gcsPrefix }}
         source: |
           echo "{{ $releaseDate }}" > release_date.txt
           gsutil cp release_date.txt {{ $uploadPath }}
@@ -459,16 +457,16 @@ spec:
         image: us.gcr.io/broad-dsp-gcr-public/clingen-notifier:1.0.0
         env:
           - name: RELEASE_DATE
-            value: '{{ $releaseDate }}'
+            value: {{ $releaseDate | quote }}
           - name: GCS_BUCKET
-            value: '{{ .Values.gcs.resultBucketName }}'
+            value: {{ .Values.clingen.gcsBucket }}
           - name: INGEST_SUMMARY
-            value: '{{ $ingestSummary }}'
+            value: {{ $ingestSummary | quote }}
           - name: KAFKA_TOPIC
-            value: '{{ .Values.kafka.topic }}'
+            value: {{ .Values.clingen.kafka.topic }}
         envFrom:
           - secretRef:
-              name: '{{ .Values.kafka.secretName }}'
+              name: {{ .Values.clingen.kafka.secretName }}
         command: [python]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/notify-clingen-kafka.py") | indent 10 }}

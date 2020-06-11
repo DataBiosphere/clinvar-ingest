@@ -2,7 +2,7 @@ import _root_.io.circe.Json
 
 lazy val `clinvar-ingest` = project
   .in(file("."))
-  .aggregate(`clinvar-schema`, `clinvar-transformation-pipeline`)
+  .aggregate(`clinvar-schema`, `clinvar-transformation-pipeline`, `clinvar-orchestration-workflow`)
   .settings(publish / skip := true)
 
 lazy val `clinvar-schema` = project
@@ -10,6 +10,7 @@ lazy val `clinvar-schema` = project
   .enablePlugins(MonsterJadeDatasetPlugin)
   .settings(
     jadeTablePackage := "org.broadinstitute.monster.clinvar.jadeschema.table",
+    jadeTableFragmentPackage := "org.broadinstitute.monster.clinvar.jadeschema.fragment",
     jadeStructPackage := "org.broadinstitute.monster.clinvar.jadeschema.struct"
   )
 
