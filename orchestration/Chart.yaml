@@ -6,7 +6,7 @@ type: application
 version: 0.0.0
 dependencies:
   - name: xml-to-json-list-template
-    version: ~3.2.4
+    version: 3.3.0
     repository: https://broadinstitute.github.io/monster-xml-to-json-list
     alias: xmlToJsonList
   - name: argo-templates
