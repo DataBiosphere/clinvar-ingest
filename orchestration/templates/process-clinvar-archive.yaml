@@ -249,9 +249,5 @@ spec:
           - --numWorkers={{ .minWorkers }}
           - --maxNumWorkers={{ .maxWorkers }}
           {{- end }}
-          {{- if .useFlexRS }}
-          - --flexRSGoal=COST_OPTIMIZED
-          {{- else }}
           - --experiments=shuffle_mode=service
-          {{- end }}
           {{- end }}

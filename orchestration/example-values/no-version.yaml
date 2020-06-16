@@ -29,7 +29,6 @@ dataflow:
   tmpBucketName: tmp
   subnetName: network
   workerAccount: runner@zoog
-  useFlexRS: false
 notification:
   onlyOnFailure: false
   slackUrl:
