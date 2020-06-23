@@ -33,6 +33,11 @@
       "type": "primary_key"
     },
     {
+      "name": "release_date",
+      "datatype": "date",
+      "type": "primary_key"
+    },
+    {
       "name": "medgen_id",
       "datatype": "string"
     },

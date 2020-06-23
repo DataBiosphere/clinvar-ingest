@@ -65,7 +65,7 @@ object ParsedArchive {
   val IncludedRecord: Msg = Str("IncludedRecord")
 
   /** Parser for "real" VariationArchive payloads, to be used in production. */
-  val Parser: Parser = rawArchive => {
+  def parser(releaseDate: LocalDate): Parser = rawArchive => {
     /*
      * ClinVar publishes two types of "record"s:
      *   1. InterpretedRecords are generated for each variation that is sent
@@ -88,7 +88,7 @@ object ParsedArchive {
         throw new IllegalStateException(s"Found an archive with no record: $rawArchive")
       }
 
-    val parsedVariation = ParsedVariation.fromRawRecord(variationRecord)
+    val parsedVariation = ParsedVariation.fromRawRecord(releaseDate, variationRecord)
 
     // Since IncludedRecords don't contain meaningful provenance, we only
     // bother to do further processing for InterpretedRecords.
@@ -102,6 +102,7 @@ object ParsedArchive {
 
       // Parse the variation's interpretation.
       val interpretation = ParsedInterpretation.fromRawInterpretation(
+        releaseDate,
         variationRecord.extract[Msg]("Interpretations", "Interpretation")
       )
 
@@ -111,6 +112,7 @@ object ParsedArchive {
         .getOrElse(Nil)
         .map {
           parseRawRcv(
+            releaseDate,
             parsedVariation.variation.id,
             vcvId,
             interpretation,
@@ -129,6 +131,7 @@ object ParsedArchive {
             mappingType = rawMapping.extract[String]("@MappingType"),
             mappingRef = rawMapping.extract[String]("@MappingRef"),
             mappingValue = rawMapping.extract[String]("@MappingValue"),
+            releaseDate = releaseDate,
             medgenId = rawMapping.tryExtract[String]("MedGen", "@CUI").filter(_ != "None"),
             medgenName = rawMapping.tryExtract[String]("MedGen", "@Name")
           )
@@ -148,6 +151,7 @@ object ParsedArchive {
         .getOrElse(Nil)
         .map {
           ParsedScv.fromRawAssertion(
+            releaseDate,
             parsedVariation.variation.id,
             vcvId,
             rcvs,
@@ -174,6 +178,7 @@ object ParsedArchive {
       // interpretation data.
       val vcv = VariationArchive(
         id = vcvId,
+        releaseDate = releaseDate,
         version = rawArchive.extract[Long]("@Version"),
         variationId = parsedVariation.variation.id,
         dateCreated = rawArchive.tryExtract[LocalDate]("@DateCreated"),
@@ -223,6 +228,7 @@ object ParsedArchive {
     * @param rawRcv payload to parse
     */
   def parseRawRcv(
+    releaseDate: LocalDate,
     variationId: String,
     vcvId: String,
     interpretation: ParsedInterpretation,
@@ -253,6 +259,7 @@ object ParsedArchive {
 
     RcvAccession(
       id = rawRcv.extract[String]("@Accession"),
+      releaseDate = releaseDate,
       version = rawRcv.extract[Long]("@Version"),
       variationId = variationId,
       variationArchiveId = vcvId,

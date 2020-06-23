@@ -1,5 +1,6 @@
 package org.broadinstitute.monster.clinvar.parsers
 
+import java.time.LocalDate
 import java.util.concurrent.atomic.AtomicInteger
 
 import org.broadinstitute.monster.clinvar.Content
@@ -37,6 +38,7 @@ object ParsedScvTraitSet {
     *                      to reference traits
     */
   def fromRawSetWrapper(
+    releaseDate: LocalDate,
     setId: String,
     rawWrapper: Msg,
     referenceTraits: List[Trait],
@@ -56,6 +58,7 @@ object ParsedScvTraitSet {
 
           ClinicalAssertionTrait(
             id = metadata.id,
+            releaseDate = releaseDate,
             traitId = matchingTrait.map(_.id),
             `type` = metadata.`type`,
             name = metadata.name,
@@ -71,6 +74,7 @@ object ParsedScvTraitSet {
         }
       val traitSet = ClinicalAssertionTraitSet(
         id = setId,
+        releaseDate = releaseDate,
         clinicalAssertionTraitIds = traits.map(_.id),
         `type` = rawSet.tryExtract[String]("@Type"),
         content = Content.encode(rawSet)

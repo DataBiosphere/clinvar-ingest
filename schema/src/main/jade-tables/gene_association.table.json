@@ -24,6 +24,11 @@
       ]
     },
     {
+      "name": "release_date",
+      "datatype": "date",
+      "type": "primary_key"
+    },
+    {
       "name": "relationship_type",
       "datatype": "string"
     },

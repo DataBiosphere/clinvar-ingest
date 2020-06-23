@@ -7,6 +7,11 @@
       "type": "primary_key"
     },
     {
+      "name": "release_date",
+      "datatype": "date",
+      "type": "primary_key"
+    },
+    {
       "name": "subclass_type",
       "datatype": "string",
       "type": "required"

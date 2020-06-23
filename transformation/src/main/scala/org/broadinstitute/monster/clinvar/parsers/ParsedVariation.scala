@@ -1,5 +1,7 @@
 package org.broadinstitute.monster.clinvar.parsers
 
+import java.time.LocalDate
+
 import org.broadinstitute.monster.clinvar.{Constants, Content}
 import org.broadinstitute.monster.clinvar.jadeschema.table.{Gene, GeneAssociation, Variation}
 import upack.Msg
@@ -22,7 +24,7 @@ object ParsedVariation {
   import org.broadinstitute.monster.common.msg.MsgOps
 
   /** Extract variation models from a raw InterpretedRecord or IncludedRecord. */
-  def fromRawRecord(rawRecord: Msg): ParsedVariation = {
+  def fromRawRecord(releaseDate: LocalDate, rawRecord: Msg): ParsedVariation = {
     // Get the top-level variation.
     val (rawVariation, variationType) = Constants.VariationTypes
       .foldLeft(Option.empty[(Msg, String)]) { (acc, subtype) =>
@@ -43,6 +45,7 @@ object ParsedVariation {
       .map { rawGene =>
         val gene = Gene(
           id = rawGene.extract[String]("@GeneID"),
+          releaseDate = releaseDate,
           symbol = rawGene.tryExtract[String]("@Symbol"),
           hgncId = rawGene.tryExtract[String]("@HGNC_ID"),
           fullName = rawGene.tryExtract[String]("@FullName")
@@ -50,6 +53,7 @@ object ParsedVariation {
         val geneAssociation = GeneAssociation(
           geneId = gene.id,
           variationId = topId,
+          releaseDate = releaseDate,
           relationshipType = rawGene.tryExtract[String]("@RelationshipType"),
           source = rawGene.tryExtract[String]("@Source"),
           content = Content.encode(rawGene)
@@ -63,6 +67,7 @@ object ParsedVariation {
 
       Variation(
         id = topId,
+        releaseDate = releaseDate,
         subclassType = variationType,
         childIds = descendants.childIds.toList,
         descendantIds = (descendants.childIds ::: descendants.descendantIds).toList,

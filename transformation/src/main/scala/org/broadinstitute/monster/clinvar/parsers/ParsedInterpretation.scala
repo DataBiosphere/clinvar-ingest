@@ -34,16 +34,20 @@ object ParsedInterpretation {
   import org.broadinstitute.monster.common.msg.MsgOps
 
   /** Convert a raw Interpretation payload into our model. */
-  def fromRawInterpretation(rawInterpretation: Msg): ParsedInterpretation = {
+  def fromRawInterpretation(
+    releaseDate: LocalDate,
+    rawInterpretation: Msg
+  ): ParsedInterpretation = {
     // Extract trait info first, so it doesn't get bundled into unmodeled content.
     val (traitSets, traits) = rawInterpretation
       .tryExtract[List[Msg]]("ConditionList", "TraitSet")
       .getOrElse(List.empty)
       .foldLeft((List.empty[TraitSet], List.empty[Trait])) {
         case ((setAcc, traitAcc), rawTraitSet) =>
-          val traits = rawTraitSet.extract[List[Msg]]("Trait").map(parseRawTrait)
+          val traits = rawTraitSet.extract[List[Msg]]("Trait").map(parseRawTrait(releaseDate, _))
           val traitSet = TraitSet(
             id = rawTraitSet.extract[String]("@ID"),
+            releaseDate = releaseDate,
             `type` = rawTraitSet.tryExtract[String]("@Type"),
             traitIds = traits.map(_.id).sorted,
             content = Content.encode(rawTraitSet)
@@ -63,7 +67,7 @@ object ParsedInterpretation {
   }
 
   /** Convert a raw Trait payload into our model. */
-  def parseRawTrait(rawTrait: Msg): Trait = {
+  def parseRawTrait(releaseDate: LocalDate, rawTrait: Msg): Trait = {
     // Extract common metadata from the trait.
     val metadata = TraitMetadata.fromRawTrait(rawTrait)(_.extract[String]("@ID"))
 
@@ -183,6 +187,7 @@ object ParsedInterpretation {
 
     Trait(
       id = metadata.id,
+      releaseDate = releaseDate,
       medgenId = metadata.medgenId,
       `type` = metadata.`type`,
       name = metadata.name,

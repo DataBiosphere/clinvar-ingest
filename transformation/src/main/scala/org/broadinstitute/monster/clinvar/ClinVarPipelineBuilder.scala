@@ -25,7 +25,7 @@ object ClinVarPipelineBuilder extends PipelineBuilder[Args] {
     // Since individual archives are self-contained, nearly all of the pipeline's
     // logic is done in this step.
     val archiveBranches =
-      ArchiveBranches.fromArchiveStream(ParsedArchive.Parser, fullArchives)
+      ArchiveBranches.fromArchiveStream(ParsedArchive.parser(args.releaseDate), fullArchives)
 
     // Write everything back to storage.
     StorageIO.writeJsonLists(

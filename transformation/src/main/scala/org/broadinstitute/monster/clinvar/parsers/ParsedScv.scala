@@ -55,6 +55,7 @@ object ParsedScv {
     * @param rawAssertion payload to parse
     */
   def fromRawAssertion(
+    releaseDate: LocalDate,
     variationId: String,
     vcvId: String,
     referenceAccessions: List[RcvAccession],
@@ -65,10 +66,10 @@ object ParsedScv {
     // Extract submitter and submission data (easy).
     val rawAccession = rawAssertion.read[Msg]("ClinVarAccession")
 
-    val submitter = extractSubmitter(rawAccession)
+    val submitter = extractSubmitter(releaseDate, rawAccession)
     val additionalSubmitters = rawAssertion
       .tryExtract[List[Msg]]("AdditionalSubmitters", "SubmitterDescription")
-      .fold(List.empty[Submitter])(_.map(extractSubmitter))
+      .fold(List.empty[Submitter])(_.map(extractSubmitter(releaseDate, _)))
     val submission = extractSubmission(submitter, additionalSubmitters, rawAssertion)
 
     // Extract the top-level set of traits described by the assertion.
@@ -77,6 +78,7 @@ object ParsedScv {
     val relevantTraitMappings = mappingsById.getOrElse(assertionId, List.empty)
 
     val directTraitSet = ParsedScvTraitSet.fromRawSetWrapper(
+      releaseDate,
       assertionAccession,
       rawAssertion,
       interpretation.traits,
@@ -85,6 +87,7 @@ object ParsedScv {
 
     // Extract info about any other traits observed in the submission.
     val (observations, observedTraitSets) = extractObservations(
+      releaseDate,
       assertionAccession,
       rawAssertion,
       interpretation.traits,
@@ -101,7 +104,7 @@ object ParsedScv {
     }
 
     // Extract the tree of variation records stored in the submission.
-    val variations = extractVariations(assertionAccession, rawAssertion)
+    val variations = extractVariations(releaseDate, assertionAccession, rawAssertion)
 
     // Extract remaining top-level info about the submitted assertion.
     val assertion = {
@@ -116,6 +119,7 @@ object ParsedScv {
 
       ClinicalAssertion(
         id = assertionAccession,
+        releaseDate = releaseDate,
         version = rawAccession.extract[Long]("@Version"),
         internalId = assertionId,
         variationArchiveId = vcvId,
@@ -176,7 +180,7 @@ object ParsedScv {
   }
 
   /** Extract submitter fields from a raw ClinicalAssertion payload. */
-  private def extractSubmitter(rawAssertion: Msg): Submitter = {
+  private def extractSubmitter(releaseDate: LocalDate, rawAssertion: Msg): Submitter = {
     val name = rawAssertion.tryExtract[String]("@SubmitterName")
     val abbrev = rawAssertion.tryExtract[String]("@OrgAbbreviation")
 
@@ -185,6 +189,7 @@ object ParsedScv {
     // submitter records in a release.
     Submitter(
       id = rawAssertion.extract[String]("@OrgID"),
+      releaseDate = releaseDate,
       orgCategory = rawAssertion.tryExtract[String]("@OrganizationCategory"),
       currentName = name,
       allNames = name.toList,
@@ -203,6 +208,7 @@ object ParsedScv {
 
     Submission(
       id = s"${submitter.id}.$date",
+      releaseDate = submitter.releaseDate,
       submitterId = submitter.id,
       additionalSubmitterIds = additionalSubmitters.map(_.id),
       submissionDate = date
@@ -216,6 +222,7 @@ object ParsedScv {
     * @param rawAssertion raw assertion payload to extract from
     */
   private def extractObservations(
+    releaseDate: LocalDate,
     assertionAccession: String,
     rawAssertion: Msg,
     referenceTraits: List[Trait],
@@ -229,6 +236,7 @@ object ParsedScv {
         val observationId =
           s"$assertionAccession.${observationCounter.getAndIncrement()}"
         val parsedSet = ParsedScvTraitSet.fromRawSetWrapper(
+          releaseDate,
           observationId,
           rawObservation,
           referenceTraits,
@@ -236,6 +244,7 @@ object ParsedScv {
         )
         val observation = ClinicalAssertionObservation(
           id = observationId,
+          releaseDate = releaseDate,
           clinicalAssertionTraitSetId = parsedSet.map(_.traitSet.id),
           content = Content.encode(rawObservation)
         )
@@ -251,6 +260,7 @@ object ParsedScv {
     * @param rawAssertion raw assertion payload to extract from
     */
   private def extractVariations(
+    releaseDate: LocalDate,
     assertionAccession: String,
     rawAssertion: Msg
   ): List[ClinicalAssertionVariation] = {
@@ -262,6 +272,7 @@ object ParsedScv {
       VariationDescendants.fromVariationWrapper(variationWrapper) { (subtype, rawVariation) =>
         val baseVariation = ClinicalAssertionVariation(
           id = s"$assertionAccession.${counter.getAndIncrement()}",
+          releaseDate = releaseDate,
           clinicalAssertionId = assertionAccession,
           subclassType = subtype,
           childIds = List.empty,
