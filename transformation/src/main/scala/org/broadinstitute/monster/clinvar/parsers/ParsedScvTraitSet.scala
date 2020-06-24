@@ -49,10 +49,9 @@ object ParsedScvTraitSet {
       val traits = rawSet
         .extract[List[Msg]]("Trait")
         .map { rawTrait =>
-          val metadata = TraitMetadata.fromRawTrait(rawTrait) { _ =>
-            // No meaningful ID for these nested traits.
-            s"$setId.${counter.getAndIncrement()}"
-          }
+          // No meaningful ID for these nested traits.
+          val metadata =
+            TraitMetadata.fromRawTrait(s"$setId.${counter.getAndIncrement()}", rawTrait)
           val matchingTrait =
             findMatchingTrait(metadata, referenceTraits, traitMappings)
 
@@ -91,7 +90,7 @@ object ParsedScvTraitSet {
     * @param referenceTraits reference traits to search through
     * @param mappings mappings between submitted and reference traits
     */
-  private def findMatchingTrait(
+  private[parsers] def findMatchingTrait(
     metadata: TraitMetadata,
     referenceTraits: List[Trait],
     mappings: List[TraitMapping]

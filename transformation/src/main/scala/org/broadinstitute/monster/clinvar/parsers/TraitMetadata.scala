@@ -29,14 +29,11 @@ object TraitMetadata {
   /**
     * Extract common metadata from an unmodeled trait payload.
     *
+    * @param id unique ID to assign to the trait
     * @param rawTrait a raw trait payload, nested under either an Interpretation
     *                 or an SCV
-    * @param getId function which can get a unique ID for the specific
-    *              type of trait
     */
-  def fromRawTrait(rawTrait: Msg)(getId: Msg => String): TraitMetadata = {
-    // Extract the ID from the trait so we can use it in any raised errors.
-    val id = getId(rawTrait)
+  def fromRawTrait(id: String, rawTrait: Msg): TraitMetadata = {
 
     // Process any names stored in the trait.
     // Any nested xrefs will be "unzipped" from their names, to be

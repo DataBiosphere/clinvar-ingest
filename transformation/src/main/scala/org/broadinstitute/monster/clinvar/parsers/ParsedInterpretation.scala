@@ -69,7 +69,7 @@ object ParsedInterpretation {
   /** Convert a raw Trait payload into our model. */
   def parseRawTrait(releaseDate: LocalDate, rawTrait: Msg): Trait = {
     // Extract common metadata from the trait.
-    val metadata = TraitMetadata.fromRawTrait(rawTrait)(_.extract[String]("@ID"))
+    val metadata = TraitMetadata.fromRawTrait(rawTrait.extract[String]("@ID"), rawTrait)
 
     // Process the trait's symbols.
     // NOTE: The structure of this code is identical to how we process trait names in `TraitMetadata`,
