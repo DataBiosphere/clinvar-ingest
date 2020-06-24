@@ -3,8 +3,6 @@ package org.broadinstitute.monster.clinvar
 import java.time.LocalDate
 
 import caseapp.core.argparser.ArgParser
-import caseapp.core.help.Help
-import caseapp.core.parser.Parser
 import caseapp.{AppName, AppVersion, HelpMessage, ProgName}
 import org.broadinstitute.monster.buildinfo.ClinvarTransformationPipelineBuildInfo
 
@@ -26,11 +24,4 @@ object Args {
     _.toString,
     LocalDate.parse(_)
   )
-
-  // Force implicit resolution of the parser here.
-  // IntelliJ marks it as an error, but who cares.
-  val parser: Parser[Args] = Parser[Args]
-
-  // Same for help-text.
-  val help: Help[Args] = Help[Args]
 }
