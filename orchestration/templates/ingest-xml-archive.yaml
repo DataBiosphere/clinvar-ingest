@@ -310,8 +310,8 @@ spec:
                   value: {{ $jsonPrefix | quote }}
 
           # Ingest the staged xml_archive row.
-          - name: ingest-release-history
-            dependencies: [stage-release-history]
+          - name: ingest-row
+            dependencies: [stage-row]
             templateRef:
               name: {{ .Values.argoTemplates.ingestTable.name }}
               template: main
