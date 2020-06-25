@@ -1,5 +1,6 @@
 package org.broadinstitute.monster.clinvar.parsers
 
+import java.time.LocalDate
 import java.util.concurrent.atomic.AtomicInteger
 
 import org.broadinstitute.monster.clinvar.Content
@@ -37,6 +38,7 @@ object ParsedScvTraitSet {
     *                      to reference traits
     */
   def fromRawSetWrapper(
+    releaseDate: LocalDate,
     setId: String,
     rawWrapper: Msg,
     referenceTraits: List[Trait],
@@ -47,15 +49,15 @@ object ParsedScvTraitSet {
       val traits = rawSet
         .extract[List[Msg]]("Trait")
         .map { rawTrait =>
-          val metadata = TraitMetadata.fromRawTrait(rawTrait) { _ =>
-            // No meaningful ID for these nested traits.
-            s"$setId.${counter.getAndIncrement()}"
-          }
+          // No meaningful ID for these nested traits.
+          val metadata =
+            TraitMetadata.fromRawTrait(s"$setId.${counter.getAndIncrement()}", rawTrait)
           val matchingTrait =
             findMatchingTrait(metadata, referenceTraits, traitMappings)
 
           ClinicalAssertionTrait(
             id = metadata.id,
+            releaseDate = releaseDate,
             traitId = matchingTrait.map(_.id),
             `type` = metadata.`type`,
             name = metadata.name,
@@ -71,6 +73,7 @@ object ParsedScvTraitSet {
         }
       val traitSet = ClinicalAssertionTraitSet(
         id = setId,
+        releaseDate = releaseDate,
         clinicalAssertionTraitIds = traits.map(_.id),
         `type` = rawSet.tryExtract[String]("@Type"),
         content = Content.encode(rawSet)
@@ -87,7 +90,7 @@ object ParsedScvTraitSet {
     * @param referenceTraits reference traits to search through
     * @param mappings mappings between submitted and reference traits
     */
-  private def findMatchingTrait(
+  private[parsers] def findMatchingTrait(
     metadata: TraitMetadata,
     referenceTraits: List[Trait],
     mappings: List[TraitMapping]

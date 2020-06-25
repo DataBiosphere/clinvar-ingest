@@ -33,6 +33,11 @@
       "type": "primary_key"
     },
     {
+      "name": "release_date",
+      "datatype": "date",
+      "type": "primary_key"
+    },
+    {
       "name": "medgen_id",
       "datatype": "string"
     },
@@ -40,5 +45,9 @@
       "name": "medgen_name",
       "datatype": "string"
     }
-  ]
+  ],
+  "partitioning": {
+    "mode": "date_from_column",
+    "column": "release_date"
+  }
 }

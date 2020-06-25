@@ -7,6 +7,11 @@
       "type": "primary_key"
     },
     {
+      "name": "release_date",
+      "datatype": "date",
+      "type": "primary_key"
+    },
+    {
       "name": "trait_ids",
       "datatype": "string",
       "type": "repeated",
@@ -25,5 +30,9 @@
       "name": "content",
       "datatype": "string"
     }
-  ]
+  ],
+  "partitioning": {
+    "mode": "date_from_column",
+    "column": "release_date"
+  }
 }

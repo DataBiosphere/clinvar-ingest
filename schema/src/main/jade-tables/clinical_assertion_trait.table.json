@@ -7,6 +7,11 @@
       "type": "primary_key"
     },
     {
+      "name": "release_date",
+      "datatype": "date",
+      "type": "primary_key"
+    },
+    {
       "name": "trait_id",
       "datatype": "string",
       "links": [
@@ -44,5 +49,9 @@
       "struct_name": "xref",
       "type": "repeated"
     }
-  ]
+  ],
+  "partitioning": {
+    "mode": "date_from_column",
+    "column": "release_date"
+  }
 }

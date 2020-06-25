@@ -7,6 +7,11 @@
       "type": "primary_key"
     },
     {
+      "name": "release_date",
+      "datatype": "date",
+      "type": "primary_key"
+    },
+    {
       "name": "submitter_id",
       "datatype": "string",
       "type": "required",
@@ -33,5 +38,9 @@
       "datatype": "date",
       "type": "required"
     }
-  ]
+  ],
+  "partitioning": {
+    "mode": "date_from_column",
+    "column": "release_date"
+  }
 }
