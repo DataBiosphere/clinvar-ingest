@@ -121,7 +121,7 @@ spec:
           - name: pvc-name
           {{- $pvcName := "{{inputs.parameters.pvc-name}}" }}
           - name: archive-path
-          {{- $filePath := "{{inputs.parameters.archvie-path}}" }}
+          {{- $filePath := "{{inputs.parameters.archive-path}}" }}
       volumes:
         - name: state
           persistentVolumeClaim:
