@@ -10,6 +10,6 @@ declare -ra BQ_QUERY=(
   query
   --use_legacy_sql=false
 )
-declare -r TABLE="\`${JADE_PROJECT}.${JADE_DATASET}.release_history\`"
+declare -r TABLE="\`${JADE_PROJECT}.${JADE_DATASET}.xml_archive\`"
 
 ${BQ_QUERY[@]} "SELECT COUNT(1) FROM ${TABLE} WHERE release_date = '${RELEASE_DATE}'" | tail -n 1

@@ -32,6 +32,9 @@ argoTemplates:
   gsutilRsync:
     create: true
     name: rsync-to-gcs
+  copyToGCS:
+    create: true
+    name: copy-to-gcs
   createBQDataset:
     create: true
     name: create-dataset
