@@ -24,7 +24,7 @@ spec:
         steps:
           - - name: run-main-template
               templateRef:
-                name: ingest-clinvar-archive
+                name: ingest-xml-archive
                 template: main
               arguments:
                 parameters:
@@ -32,10 +32,6 @@ spec:
                     value: weekly_release/ClinVarVariationRelease_00-latest_weekly.xml.gz
                   - name: gcs-prefix
                     value: {{ include "argo.timestamp" . | quote }}
-                  - name: notify-clingen
-                    value: 'true'
-                  - name: publish-snapshot
-                    value: 'true'
 
       ##
       ## Send a Slack notifcation if the workflow has failed.
