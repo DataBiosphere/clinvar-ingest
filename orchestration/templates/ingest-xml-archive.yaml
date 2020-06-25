@@ -265,7 +265,7 @@ spec:
                   value: {{ .Values.staging.gcsBucket }}
                 - name: gcs-file-path
                   value: {{ printf "%s/xml/%s" $gcsPrefix (include "clinvar.raw-archive-name" .) | quote }}
-            {{- $newFileId := "{{tasks.ingest-raw-xml.outputs.parameters.file-id}}" }}
+            {{- $newFileId := "{{tasks.ingest-archive.outputs.parameters.file-id}}" }}
 
           # Ingest a row for the new file.
           - name: ingest-xml-archive-new-file
