@@ -162,5 +162,9 @@
       "struct_name": "interpretation_comment",
       "type": "repeated"
     }
-  ]
+  ],
+  "partitioning": {
+    "mode": "date_from_column",
+    "column": "release_date"
+  }
 }

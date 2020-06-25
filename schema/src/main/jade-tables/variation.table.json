@@ -67,5 +67,9 @@
       "name": "content",
       "datatype": "string"
     }
-  ]
+  ],
+  "partitioning": {
+    "mode": "date_from_column",
+    "column": "release_date"
+  }
 }

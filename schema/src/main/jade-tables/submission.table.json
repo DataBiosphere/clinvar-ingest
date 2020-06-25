@@ -38,5 +38,9 @@
       "datatype": "date",
       "type": "required"
     }
-  ]
+  ],
+  "partitioning": {
+    "mode": "date_from_column",
+    "column": "release_date"
+  }
 }

@@ -49,5 +49,9 @@
       "struct_name": "xref",
       "type": "repeated"
     }
-  ]
+  ],
+  "partitioning": {
+    "mode": "date_from_column",
+    "column": "release_date"
+  }
 }
