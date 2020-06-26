@@ -1,0 +1,358 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: ingest-xml-archive
+spec:
+  entrypoint: main
+  serviceAccountName: {{ .Values.serviceAccount.k8sName }}
+  templates:
+    ##
+    ## Entrypoint for "phase 1" of ClinVar ingest.
+    ##
+    ## Downloads gzipped XML from NCBI's FTP site, inflates it,
+    ## and uploads it into the TDR if not already present.
+    ##
+    ## The release date reported by the archive is used to determine
+    ## if further processing is needed. Hypothetically we could be
+    ## burned if multiple archives were uploaded with the same date.
+    ##
+    - name: main
+      inputs:
+        parameters:
+          - name: archive-path
+          {{- $archivePath := "{{inputs.parameters.archive-path}}" }}
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+      dag:
+        tasks:
+          # Generate a PVC to hold the raw XML.
+          - name: generate-download-volume
+            templateRef:
+              name: {{ .Values.argoTemplates.generatePVC.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: name-prefix
+                  value: ftp-download
+                - name: size
+                  value: {{ .Values.volumes.downloadSize | quote }}
+                - name: storage-class
+                  value: {{ .Values.volumes.storageClass }}
+            {{- $downloadPvc := "{{tasks.generate-download-volume.outputs.parameters.pvc-name}}" }}
+
+          # Download the raw XML onto the new PVC.
+          - name: download-archive
+            dependencies: [generate-download-volume]
+            templateRef:
+              name: {{ .Values.argoTemplates.downloadFTPFile.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: ftp-site
+                  value: 'ftp.ncbi.nlm.nih.gov'
+                - name: ftp-path
+                  value: pub/clinvar/xml/clinvar_variation/{{ $archivePath }}
+                - name: local-path
+                  value: {{ include "clinvar.raw-archive-name" . }}
+                - name: pvc-name
+                  value: {{ $downloadPvc | quote }}
+                - name: memory
+                  value: 512Mi
+                - name: cpu
+                  value: 1000m
+
+          # Extract the archive's release date so we can check if it's already been ingested.
+          - name: extract-release-date
+            dependencies: [download-archive]
+            template: extract-release-date
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: {{ $downloadPvc | quote }}
+                - name: archive-path
+                  value: {{ include "clinvar.raw-archive-name" . }}
+            {{ $releaseDate := "{{tasks.extract-release-date.outputs.result}}" }}
+
+          # Check if we've already ingested the archive for the extracted date.
+          - name: check-for-existing-release
+            dependencies: [extract-release-date]
+            template: check-for-existing-release
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+            {{- $existingCount := "{{tasks.check-for-existing-release.outputs.result}}" }}
+
+          # If the release is new, ingest it!
+          - name: ingest-release
+            dependencies: [check-for-existing-release]
+            when: {{ printf "%s == 0" $existingCount | quote }}
+            template: ingest-release
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+                - name: gcs-prefix
+                  value: {{ $gcsPrefix | quote }}
+                - name: pvc-name
+                  value: {{ $downloadPvc | quote }}
+
+          # Clean up the PVC once we're done with it.
+          - name: cleanup-download
+            dependencies: [ingest-release]
+            templateRef:
+              name: {{ .Values.argoTemplates.deletePVC.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: {{ $downloadPvc | quote }}
+
+    ##
+    ## Extract the value of the "ReleaseDate" attribute from the root node of a ClinVar release.
+    ##
+    ## The logic here uses hacky regex (eek) which should usually _never_ be used to parse XML,
+    ## because all the command-line XML parsers I can find want to pull the entire file into memory
+    ## before performing any operations.
+    ##
+    - name: extract-release-date
+      inputs:
+        parameters:
+          - name: pvc-name
+          {{- $pvcName := "{{inputs.parameters.pvc-name}}" }}
+          - name: archive-path
+          {{- $filePath := "{{inputs.parameters.archive-path}}" }}
+      volumes:
+        - name: state
+          persistentVolumeClaim:
+            claimName: {{ $pvcName | quote }}
+            readOnly: true
+      script:
+        image: python:3-slim
+        command: [bash]
+        volumeMounts:
+          - name: state
+            mountPath: /state
+            readOnly: true
+        source: |
+          zgrep -m 1 -oP '(?<=ReleaseDate=")[0-9\-]*' /state/{{ $filePath }}
+
+    ##
+    ## Check if a row exists in the xml_archive table for a given release date.
+    ##
+    - name: check-for-existing-release
+      inputs:
+        parameters:
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+      script:
+        image: google/cloud-sdk:slim
+        env:
+          - name: PROJECT
+            value: {{ .Values.staging.bigquery.project }}
+          - name: JADE_PROJECT
+            value: {{ .Values.jade.dataProject }}
+          - name: JADE_DATASET
+            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+          - name: RELEASE_DATE
+            value: {{ $releaseDate | quote }}
+        command: [bash]
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/check-for-release.sh") | indent 10 }}
+
+    ##
+    ## Sub-dag to ingest a raw release into the Repo and register it in the xml_archive table.
+    ##
+    - name: ingest-release
+      inputs:
+        parameters:
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+          {{- $targetPath := printf "/%s.xml.gz" $releaseDate }}
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+          - name: pvc-name
+          {{- $pvcName := "{{inputs.parameters.pvc-name}}" }}
+      dag:
+        tasks:
+          # Even if we haven't ingested a row, we might have ingested a file
+          # (and then failed to ingest the row). Check the file separately so
+          # we can short-circuit that piece if needed.
+          - name: check-for-existing-file
+            templateRef:
+              name: {{ .Values.argoTemplates.lookupFileId.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: virtual-path
+                  value: {{ $targetPath | quote }}
+                {{- with .Values.jade }}
+                - name: url
+                  value: {{ .url }}
+                - name: dataset-id
+                  value: {{ .datasetId }}
+                - name: profile-id
+                  value: {{ .profileId }}
+                - name: sa-secret
+                  value: {{ .accessKey.secretName }}
+                - name: sa-secret-key
+                  value: {{ .accessKey.secretKey }}
+                {{- end }}
+            {{- $existingFileId := "{{tasks.check-for-existing-file.outputs.result}}" }}
+            {{- $shouldIngestFile := printf "%s == null" $existingFileId }}
+
+          # If we've already ingested a file, use it to ingest the matching row.
+          - name: ingest-xml-archive-existing-file
+            dependencies: [check-for-existing-file]
+            when: {{ (printf "%s != null" $existingFileId) | quote }}
+            template: ingest-xml-archive
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+                - name: file-id
+                  value: {{ $existingFileId | quote }}
+                - name: gcs-prefix
+                  value: {{ $gcsPrefix | quote }}
+
+          # If we haven't already ingested a file, upload the archive and ingest it.
+          - name: upload-archive
+            dependencies: [check-for-existing-file]
+            when: {{ $shouldIngestFile | quote }}
+            templateRef:
+              name: {{ .Values.argoTemplates.copyToGCS.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: {{ $pvcName | quote }}
+                - name: local-path
+                  value: {{ include "clinvar.raw-archive-name" . }}
+                - name: gcs-bucket
+                  value: {{ .Values.staging.gcsBucket }}
+                - name: gcs-path
+                  value: {{ printf "%s/xml/" $gcsPrefix | quote }}
+                - name: memory
+                  value: 1Gi
+                - name: cpu
+                  value: 1000m
+
+          - name: ingest-archive
+            dependencies: [check-for-existing-file, upload-archive]
+            when: {{ $shouldIngestFile | quote }}
+            templateRef:
+              name: {{ .Values.argoTemplates.ingestFile.name }}
+              template: main
+            arguments:
+              parameters:
+                {{- with .Values.jade }}
+                - name: url
+                  value: {{ .url }}
+                - name: dataset-id
+                  value: {{ .datasetId }}
+                - name: profile-id
+                  value: {{ .profileId }}
+                - name: timeout
+                  value: {{ .pollTimeout }}
+                - name: sa-secret
+                  value: {{ .accessKey.secretName }}
+                - name: sa-secret-key
+                  value: {{ .accessKey.secretKey }}
+                {{- end }}
+                - name: target-path
+                  value: {{ $targetPath | quote }}
+                - name: gcs-bucket
+                  value: {{ .Values.staging.gcsBucket }}
+                - name: gcs-file-path
+                  value: {{ printf "%s/xml/%s" $gcsPrefix (include "clinvar.raw-archive-name" .) | quote }}
+            {{- $newFileId := "{{tasks.ingest-archive.outputs.parameters.file-id}}" }}
+
+          # Ingest a row for the new file.
+          - name: ingest-xml-archive-new-file
+            dependencies: [ingest-archive]
+            when: {{ $shouldIngestFile | quote }}
+            template: ingest-xml-archive
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+                - name: file-id
+                  value: {{ $newFileId | quote }}
+                - name: gcs-prefix
+                  value: {{ $gcsPrefix | quote }}
+
+    ##
+    ## Sub-dag to ingest a new row into the xml_archive table, once we've
+    ## identified the file ID to use.
+    ##
+    - name: ingest-xml-archive
+      inputs:
+        parameters:
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+          - name: file-id
+          {{- $fileId := "{{inputs.parameters.file-id}}" }}
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+          {{- $jsonPrefix := printf "%s/xml/tabular" $gcsPrefix }}
+      dag:
+        tasks:
+          # Stage a row for the xml_archive table in GCS.
+          - name: stage-row
+            template: stage-xml-archive-row
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+                - name: archive-id
+                  value: {{ $fileId | quote }}
+                - name: gcs-prefix
+                  value: {{ $jsonPrefix | quote }}
+
+          # Ingest the staged xml_archive row.
+          - name: ingest-row
+            dependencies: [stage-row]
+            templateRef:
+              name: {{ .Values.argoTemplates.ingestTable.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: table-name
+                  value: xml_archive
+                - name: gcs-bucket
+                  value: {{ .Values.staging.gcsBucket }}
+                - name: gcs-prefix
+                  value: {{ $jsonPrefix | quote }}
+                {{- with .Values.jade }}
+                - name: url
+                  value: {{ .url }}
+                - name: dataset-id
+                  value: {{ .datasetId }}
+                - name: timeout
+                  value: {{ .pollTimeout }}
+                - name: sa-secret
+                  value: {{ .accessKey.secretName }}
+                - name: sa-secret-key
+                  value: {{ .accessKey.secretKey }}
+                {{- end }}
+
+    ##
+    ## Stage a JSON object in GCS containing data for a row in the xml_archive table.
+    ##
+    - name: stage-xml-archive-row
+      inputs:
+        parameters:
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+          - name: archive-id
+          {{- $archiveId := "{{inputs.parameters.archive-id}}" }}
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+      script:
+        image: google/cloud-sdk:slim
+        command: [bash]
+        {{- $uploadPath := printf "gs://%s/%s/" .Values.staging.gcsBucket $gcsPrefix }}
+        source: |
+            json='{"release_date":"{{ $releaseDate }}","archive_path":"{{ $archiveId }}"}'
+            echo "$json" > archive.json
+            gsutil cp archive.json {{ $uploadPath }}
