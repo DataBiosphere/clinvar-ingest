@@ -1,0 +1,93 @@
+{
+  "name": "clinvar_release",
+  "rootTable": "xml_archive",
+  "rootColumn": "release_date",
+  "tables": [
+    {
+      "name": "clinical_assertion",
+      "columns": []
+    },
+    {
+      "name": "clinical_assertion_observation",
+      "columns": []
+    },
+    {
+      "name": "clinical_assertion_trait",
+      "columns": []
+    },
+    {
+      "name": "clinical_assertion_trait_set",
+      "columns": []
+    },
+    {
+      "name": "clinical_assertion_variation",
+      "columns": []
+    },
+    {
+      "name": "gene",
+      "columns": []
+    },
+    {
+      "name": "gene_association",
+      "columns": []
+    },
+    {
+      "name": "processing_history",
+      "columns": []
+    },
+    {
+      "name": "rcv_accession",
+      "columns": []
+    },
+    {
+      "name": "submission",
+      "columns": []
+    },
+    {
+      "name": "submitter",
+      "columns": []
+    },
+    {
+      "name": "trait",
+      "columns": []
+    },
+    {
+      "name": "trait_mapping",
+      "columns": []
+    },
+    {
+      "name": "trait_set",
+      "columns": []
+    },
+    {
+      "name": "variation",
+      "columns": []
+    },
+    {
+      "name": "variation_archive",
+      "columns": []
+    },
+    {
+      "name": "xml_archive",
+      "columns": []
+    }
+  ],
+  "follow": [
+    "from_clinical_assertion.release_date_to_xml_archive.release_date",
+    "from_clinical_assertion_observation.release_date_to_xml_archive.release_date",
+    "from_clinical_assertion_trait.release_date_to_xml_archive.release_date",
+    "from_clinical_assertion_trait_set.release_date_to_xml_archive.release_date",
+    "from_clinical_assertion_variation.release_date_to_xml_archive.release_date",
+    "from_gene.release_date_to_xml_archive.release_date",
+    "from_gene_association.release_date_to_xml_archive.release_date",
+    "from_processing_history.release_date_to_xml_archive.release_date",
+    "from_rcv_accession.release_date_to_xml_archive.release_date",
+    "from_submission.release_date_to_xml_archive.release_date",
+    "from_submitter.release_date_to_xml_archive.release_date",
+    "from_trait.release_date_to_xml_archive.release_date",
+    "from_trait_mapping.release_date_to_xml_archive.release_date",
+    "from_trait_set.release_date_to_xml_archive.release_date",
+    "from_variation.release_date_to_xml_archive.release_date",
+    "from_variation_archive.release_date_to_xml_archive.release_date"
+  ]
+}
