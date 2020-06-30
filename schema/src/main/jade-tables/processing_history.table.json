@@ -1,11 +1,6 @@
 {
-  "name": "clinical_assertion_observation",
+  "name": "processing_history",
   "columns": [
-    {
-      "name": "id",
-      "datatype": "string",
-      "type": "primary_key"
-    },
     {
       "name": "release_date",
       "datatype": "date",
@@ -18,17 +13,11 @@
       ]
     },
     {
-      "name": "clinical_assertion_trait_set_id",
-      "datatype": "string",
-      "links": [
-        {
-          "table_name": "clinical_assertion_trait_set",
-          "column_name": "id"
-        }
-      ]
+      "name": "processing_date",
+      "datatype": "date"
     },
     {
-      "name": "content",
+      "name": "pipeline_version",
       "datatype": "string"
     }
   ],

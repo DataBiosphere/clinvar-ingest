@@ -35,7 +35,13 @@
     {
       "name": "release_date",
       "datatype": "date",
-      "type": "primary_key"
+      "type": "primary_key",
+      "links": [
+        {
+          "table_name": "xml_archive",
+          "column_name": "release_date"
+        }
+      ]
     },
     {
       "name": "medgen_id",
