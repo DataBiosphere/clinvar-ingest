@@ -292,8 +292,8 @@ object ParsedScv {
         val allAncestry = descendants.childIds ::: descendants.descendantIds
         buffer.append {
           baseVariation.copy(
-            childIds = descendants.childIds,
-            descendantIds = allAncestry,
+            childIds = descendants.childIds.sorted,
+            descendantIds = allAncestry.sorted,
             content = Content.encode(rawVariation)
           )
         }
