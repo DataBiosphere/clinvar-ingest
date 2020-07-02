@@ -28,32 +28,46 @@ object ParsedScvTraitSet {
   import org.broadinstitute.monster.common.msg.MsgOps
 
   /**
-    * Extract a condition-set from a raw payload, if one is present.
+    * Container for "background" information required to parse an SCV trait-set.
     *
-    * @param setId ID which should be assigned to the set
-    * @param rawWrapper raw payload which might contain a TraitSet node
-    * @param referenceTraits reference traits which any extracted set should
-    *                        be linked against
-    * @param traitMappings mappings to use for linking the extracted set
-    *                      to reference traits
+    * @param referenceTraits traits nested under the interpretation of the VCV containing
+    *                        the SCV trait-set
+    * @param traitMappings mapping elements included in the VCV containing the SCV trait-set
     */
-  def fromRawSetWrapper(
-    releaseDate: LocalDate,
-    setId: String,
-    rawWrapper: Msg,
+  case class ParsingContext(
     referenceTraits: List[Trait],
     traitMappings: List[TraitMapping]
-  ): Option[ParsedScvTraitSet] =
-    rawWrapper.tryExtract[Msg]("TraitSet").map { rawSet =>
+  )
+
+  /**
+    * Interface for a utility which can convert raw TraitSet payloads contained in an SCV
+    * into our target schema.
+    */
+  trait Parser {
+
+    /**
+      * Convert a raw TraitSet payload from an SCV into our parsed form.
+      *
+      * @param context information required for parsing which isn't included in
+      *                the TraitSet payload itself
+      * @param setId ID to assign to the parsed set
+      * @param rawSet  raw JSON-ified TraitSet payload
+      */
+    def parse(context: ParsingContext, setId: String, rawSet: Msg): ParsedScvTraitSet
+  }
+
+  /** Parser for "real" SCV TraitSet payloads, to be used in production. */
+  def parser(releaseDate: LocalDate, traitMetadataParser: TraitMetadata.Parser): Parser =
+    (context, setId, rawSet) => {
       val counter = new AtomicInteger(0)
       val traits = rawSet
         .extract[List[Msg]]("Trait")
         .map { rawTrait =>
           // No meaningful ID for these nested traits.
           val metadata =
-            TraitMetadata.fromRawTrait(s"$setId.${counter.getAndIncrement()}", rawTrait)
+            traitMetadataParser.parse(s"$setId.${counter.getAndIncrement()}", rawTrait)
           val matchingTrait =
-            findMatchingTrait(metadata, referenceTraits, traitMappings)
+            findMatchingTrait(metadata, context.referenceTraits, context.traitMappings)
 
           ClinicalAssertionTrait(
             id = metadata.id,

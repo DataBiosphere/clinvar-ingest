@@ -33,43 +33,55 @@ case class ParsedInterpretation(
 object ParsedInterpretation {
   import org.broadinstitute.monster.common.msg.MsgOps
 
-  /** Convert a raw Interpretation payload into our model. */
-  def fromRawInterpretation(
-    releaseDate: LocalDate,
-    rawInterpretation: Msg
-  ): ParsedInterpretation = {
-    // Extract trait info first, so it doesn't get bundled into unmodeled content.
-    val (traitSets, traits) = rawInterpretation
-      .tryExtract[List[Msg]]("ConditionList", "TraitSet")
-      .getOrElse(List.empty)
-      .foldLeft((List.empty[TraitSet], List.empty[Trait])) {
-        case ((setAcc, traitAcc), rawTraitSet) =>
-          val traits = rawTraitSet.extract[List[Msg]]("Trait").map(parseRawTrait(releaseDate, _))
-          val traitSet = TraitSet(
-            id = rawTraitSet.extract[String]("@ID"),
-            releaseDate = releaseDate,
-            `type` = rawTraitSet.tryExtract[String]("@Type"),
-            traitIds = traits.map(_.id).sorted,
-            content = Content.encode(rawTraitSet)
-          )
-          (traitSet +: setAcc, traits ++ traitAcc)
-      }
+  /**
+    * Interface for a utility which can convert raw Interpretations into
+    * our target schema.
+    */
+  trait Parser {
 
-    ParsedInterpretation(
-      dateLastEvaluated = rawInterpretation.tryExtract[LocalDate]("@DateLastEvaluated"),
-      `type` = rawInterpretation.tryExtract[String]("@Type"),
-      description = rawInterpretation.tryExtract[String]("Description", "$"),
-      explanation = rawInterpretation.tryExtract[String]("Explanation", "$"),
-      content = Content.encode(rawInterpretation),
-      traitSets = traitSets,
-      traits = traits
-    )
+    /** Convert a raw Interpretation payload into our parsed form. */
+    def parse(rawInterpretation: Msg): ParsedInterpretation
   }
 
+  /** Parser for "real" Interpretation payloads, to be used in production. */
+  def parser(releaseDate: LocalDate, traitParser: TraitMetadata.Parser): Parser =
+    rawInterpretation => {
+      // Extract trait info first, so it doesn't get bundled into unmodeled content.
+      val (traitSets, traits) = rawInterpretation
+        .tryExtract[List[Msg]]("ConditionList", "TraitSet")
+        .getOrElse(List.empty)
+        .foldLeft((List.empty[TraitSet], List.empty[Trait])) {
+          case ((setAcc, traitAcc), rawTraitSet) =>
+            val traits =
+              rawTraitSet.extract[List[Msg]]("Trait").map(parseRawTrait(releaseDate, traitParser))
+            val traitSet = TraitSet(
+              id = rawTraitSet.extract[String]("@ID"),
+              releaseDate = releaseDate,
+              `type` = rawTraitSet.tryExtract[String]("@Type"),
+              traitIds = traits.map(_.id).sorted,
+              content = Content.encode(rawTraitSet)
+            )
+            (traitSet +: setAcc, traits ++ traitAcc)
+        }
+
+      ParsedInterpretation(
+        dateLastEvaluated = rawInterpretation.tryExtract[LocalDate]("@DateLastEvaluated"),
+        `type` = rawInterpretation.tryExtract[String]("@Type"),
+        description = rawInterpretation.tryExtract[String]("Description", "$"),
+        explanation = rawInterpretation.tryExtract[String]("Explanation", "$"),
+        content = Content.encode(rawInterpretation),
+        traitSets = traitSets,
+        traits = traits
+      )
+    }
+
   /** Convert a raw Trait payload into our model. */
-  def parseRawTrait(releaseDate: LocalDate, rawTrait: Msg): Trait = {
+  private[parsers] def parseRawTrait(
+    releaseDate: LocalDate,
+    traitParser: TraitMetadata.Parser
+  )(rawTrait: Msg): Trait = {
     // Extract common metadata from the trait.
-    val metadata = TraitMetadata.fromRawTrait(rawTrait.extract[String]("@ID"), rawTrait)
+    val metadata = traitParser.parse(rawTrait.extract[String]("@ID"), rawTrait)
 
     // Process the trait's symbols.
     // NOTE: The structure of this code is identical to how we process trait names in `TraitMetadata`,

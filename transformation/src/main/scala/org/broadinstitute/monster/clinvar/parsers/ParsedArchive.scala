@@ -65,7 +65,11 @@ object ParsedArchive {
   val IncludedRecord: Msg = Str("IncludedRecord")
 
   /** Parser for "real" VariationArchive payloads, to be used in production. */
-  def parser(releaseDate: LocalDate): Parser = rawArchive => {
+  def parser(
+    releaseDate: LocalDate,
+    interpParser: ParsedInterpretation.Parser,
+    scvParser: ParsedScv.Parser
+  ): Parser = rawArchive => {
     /*
      * ClinVar publishes two types of "record"s:
      *   1. InterpretedRecords are generated for each variation that is sent
@@ -101,10 +105,8 @@ object ParsedArchive {
       val vcvId = rawArchive.extract[String]("@Accession")
 
       // Parse the variation's interpretation.
-      val interpretation = ParsedInterpretation.fromRawInterpretation(
-        releaseDate,
-        variationRecord.extract[Msg]("Interpretations", "Interpretation")
-      )
+      val interpretation =
+        interpParser.parse(variationRecord.extract[Msg]("Interpretations", "Interpretation"))
 
       // Pull out any RCVs, cross-linking to the relevant trait sets.
       val rcvs = variationRecord
@@ -146,20 +148,17 @@ object ParsedArchive {
       val mappingsByScvId = traitMappings.groupBy(_.clinicalAssertionId)
 
       // Pull out any SCVs, and related info.
+      val scvContext = ParsedScv.ParsingContext(
+        parsedVariation.variation.id,
+        vcvId,
+        rcvs,
+        interpretation,
+        mappingsByScvId
+      )
       val parsedScvs = variationRecord
         .tryExtract[List[Msg]]("ClinicalAssertionList", "ClinicalAssertion")
         .getOrElse(Nil)
-        .map {
-          ParsedScv.fromRawAssertion(
-            releaseDate,
-            parsedVariation.variation.id,
-            vcvId,
-            rcvs,
-            interpretation,
-            mappingsByScvId,
-            _
-          )
-        }
+        .map(scvParser.parse(scvContext, _))
 
       // Swap SCV accessions for their numeric IDs so the FK in the mapping table
       // actually works.
