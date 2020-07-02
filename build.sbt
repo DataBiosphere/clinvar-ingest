@@ -26,10 +26,12 @@ lazy val `clinvar-orchestration-workflow` = project
     helmChartOrganization := "DataBiosphere",
     helmChartRepository := "clinvar-ingest",
     helmInjectVersionValues := { (baseValues, version) =>
+      val jsonVersion = Json.fromString(version)
       val schemaVersionValues = Json.obj(
+        "version" -> jsonVersion,
         "argoTemplates" -> Json.obj(
           "diffBQTable" -> Json.obj(
-            "schemaImageVersion" -> Json.fromString(version)
+            "schemaImageVersion" -> jsonVersion
           )
         )
       )

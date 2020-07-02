@@ -1,0 +1,211 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: process-xml-archive
+spec:
+  entrypoint: main
+  serviceAccountName: {{ .Values.serviceAccount.k8sName }}
+  templates:
+    ##
+    ## Entrypoint for processing a ClinVar archive.
+    ##
+    ## Converts the archive to JSON and processes it with Dataflow,
+    ## then pushes the result into the TDR.
+    ##
+    - name: main
+      inputs:
+        parameters:
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+      dag:
+        tasks:
+          - name: check-already-processed
+            template: check-processing-history
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+          {{- $shouldProcess := "{{tasks.check-already-processed.outputs.result}} == 0"}}
+
+          - name: process-archive
+            dependencies: [check-already-processed]
+            when: {{ $shouldProcess | quote }}
+            template: process-archive
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+                - name: gcs-prefix
+                  value: {{ $gcsPrefix | quote }}
+
+    {{- $pipelineVersion := default "latest" .Values.version }}
+    ##
+    ## Check the processing_history table for a row matching the target
+    ## release-date and pipeline version, to see if we can short-circuit.
+    ##
+    - name: check-processing-history
+      inputs:
+        parameters:
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+      script:
+        image: google/cloud-sdk:slim
+        env:
+          - name: RELEASE_DATE
+            value: {{ $releaseDate | quote }}
+          - name: VERSION
+            value: {{ $pipelineVersion }}
+          - name: PROJECT
+            value: {{ .Values.staging.bigquery.project }}
+          - name: JADE_PROJECT
+            value: {{ .Values.jade.dataProject }}
+          - name: JADE_DATASET
+            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+        command: [bash]
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/check-already-processed.sh") | indent 10 }}
+
+    ##
+    ## Convert a ClinVar archive from XML to JSON, process it with Dataflow,
+    ## then ingest it into the TDR.
+    ##
+    - name: process-archive
+      inputs:
+        parameters:
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+      dag:
+        tasks:
+          # Get the file ID of the raw XML.
+          - name: get-archive-id
+            template: get-archive-id
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+            {{- $archiveId := "{{tasks.get-archive-id.outputs.result}}" }}
+
+          # Use the archive's ID to get its gs:// path.
+          - name: get-archive-uri
+            dependencies: [get-archive-id]
+            template: get-archive-uri
+            arguments:
+              parameters:
+                - name: file-id
+                  value: {{ $archiveId | quote }}
+            {{- $archivePath := "{{tasks.get-archive-uri.outputs.result}}" }}
+
+          # Generate a PVC to hold the raw XML.
+          - name: generate-download-volume
+            templateRef:
+              name: {{ .Values.argoTemplates.generatePVC.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: name-prefix
+                  value: ftp-download
+                - name: size
+                  value: {{ .Values.volumes.downloadSize | quote }}
+                - name: storage-class
+                  value: {{ .Values.volumes.storageClass }}
+            {{- $downloadPvc := "{{tasks.generate-download-volume.outputs.parameters.pvc-name}}" }}
+
+          - name: download-archive
+            dependencies: [get-archive-uri, generate-download-volume]
+            template: download-gcs-file
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: {{ $downloadPvc | quote }}
+                - name: local-path
+                  value: {{ include "clinvar.raw-archive-name" . }}
+                - name: gcs-path
+                  value: {{ $archivePath | quote }}
+
+    ##
+    ## Get the file ID for the XML archive associated with the given release-date
+    ## in the xml_archive TDR table.
+    ##
+    - name: get-archive-id
+      inputs:
+        parameters:
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+      script:
+        image: google/cloud-sdk:slim
+        env:
+          - name: RELEASE_DATE
+            value: {{ $releaseDate | quote }}
+          - name: PROJECT
+            value: {{ .Values.staging.bigquery.project }}
+          - name: JADE_PROJECT
+            value: {{ .Values.jade.dataProject }}
+          - name: JADE_DATASET
+            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+          - name: PROPERTY
+            value: archive_path
+        command: [bash]
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/get-archive-property.sh") | indent 10 }}
+
+    ##
+    ## Get the gs:// path for the file with the given ID.
+    ##
+    ## NOTE: This is generic, we should move it to monster-helm.
+    ##
+    - name: lookup-archive-path
+      inputs:
+        parameters:
+          - name: archive-id
+          {{- $archiveId := "{{inputs.parameters.archive-id}}" }}
+      volumes:
+        - name: sa-secret-volume
+          secret:
+            secretName: {{ .Values.jade.accessKey.secretName }}
+      script:
+        image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.1
+        volumeMounts:
+          - name: sa-secret-volume
+            mountPath: /secret
+        env:
+          - name: API_URL
+            value: {{ .Values.jade.url }}
+          - name: DATASET_ID
+            value: {{ .Values.jade.datasetId }}
+          - name: FILE_ID
+            value: {{ $archiveId | quote }}
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
+        command: [python]
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/lookup-file-path.py") | indent 10 }}
+
+    ##
+    ## Download a file from GCS to a local volume.
+    ##
+    ## NOTE: This is generic, we should move it to monster-helm.
+    ##
+    - name: download-gcs-file
+      inputs:
+        parameters:
+          - name: pvc-name
+          {{- $pvcName := "{{inputs.parameters.pvc-name}}" }}
+          - name: local-path
+          {{- $localPath := "{{inputs.parameters.local-path}}" }}
+          - name: gcs-path
+          {{- $gcsPath := "{{inputs.parameters.gcs-path}}" }}
+      volumes:
+        - name: state
+          persistentVolumeClaim:
+            claimName: {{ $pvcName | quote }}
+      container:
+        image: google/cloud-sdk:slim
+        command: [gsutil]
+        args: [cp, {{ $gcsPath | quote }}, {{ printf "/state/%s" $localPath }}]
+        volumeMounts:
+          - name: state
+            mountPath: /state

@@ -12,4 +12,4 @@ declare -ra BQ_QUERY=(
 )
 declare -r TABLE="\`${JADE_PROJECT}.${JADE_DATASET}.xml_archive\`"
 
-${BQ_QUERY[@]} "SELECT COUNT(1) FROM ${TABLE} WHERE release_date = '${RELEASE_DATE}'" | tail -n 1
+${BQ_QUERY[@]} "SELECT ${PROPERTY} FROM ${TABLE} WHERE release_date = '${RELEASE_DATE}'" | tail -n 1
