@@ -94,63 +94,58 @@ object ParsedScvTraitSet {
     metadata: TraitMetadata,
     referenceTraits: List[Trait],
     mappings: List[TraitMapping]
-  ): Option[Trait] =
-    if (mappings.isEmpty) {
-      // Lack of trait mappings means the VCV contains at most one trait,
-      // which all the attached SCV traits should link to.
-      referenceTraits.headOption
-    } else {
-      // Look through the reference traits to see if there are any with aligned medgen IDs.
-      // NOTE: The flatMap is _required_ here to prevent a false match on None == None.
-      val medgenDirectMatch = metadata.medgenId.flatMap { knownMedgenId =>
-        referenceTraits.find(_.medgenId.contains(knownMedgenId))
-      }
+  ): Option[Trait] = {
+    // Look through the reference traits to see if there are any with aligned medgen IDs.
+    // NOTE: The flatMap is _required_ here to prevent a false match on None == None.
+    val medgenDirectMatch = metadata.medgenId.flatMap { knownMedgenId =>
+      referenceTraits.find(_.medgenId.contains(knownMedgenId))
+    }
 
-      // Look to see if there are any with aligned XRefs.
-      val xrefDirectMatch =
-        referenceTraits.find(_.xrefs.toSet.intersect(metadata.xrefs).nonEmpty)
+    // Look to see if there are any with aligned XRefs.
+    val xrefDirectMatch =
+      referenceTraits.find(_.xrefs.toSet.intersect(metadata.xrefs).nonEmpty)
 
-      // Find the reference trait with the matching MedGen ID if it's defined.
-      // Otherwise match on preferred name.
-      medgenDirectMatch
-        .orElse(xrefDirectMatch)
-        .orElse {
-          // Look through the trait mappings for one that aligns with
-          // the SCV's data.
-          val matchingMapping = mappings.find { candidateMapping =>
-            val sameTraitType = metadata.`type`.contains(candidateMapping.traitType)
+    // Find the reference trait with the matching MedGen ID if it's defined.
+    // Otherwise match on preferred name.
+    medgenDirectMatch
+      .orElse(xrefDirectMatch)
+      .orElse {
+        // Look through the trait mappings for one that aligns with
+        // the SCV's data.
+        val matchingMapping = mappings.find { candidateMapping =>
+          val sameTraitType = metadata.`type`.contains(candidateMapping.traitType)
 
-            val nameMatch = {
-              val isNameMapping = candidateMapping.mappingType == "Name"
-              val isPreferredMatch = candidateMapping.mappingRef == "Preferred" &&
-                metadata.name.contains(candidateMapping.mappingValue)
-              val isAlternateMatch = candidateMapping.mappingRef == "Alternate" &&
-                metadata.alternateNames.contains(candidateMapping.mappingValue)
+          val nameMatch = {
+            val isNameMapping = candidateMapping.mappingType == "Name"
+            val isPreferredMatch = candidateMapping.mappingRef == "Preferred" &&
+              metadata.name.contains(candidateMapping.mappingValue)
+            val isAlternateMatch = candidateMapping.mappingRef == "Alternate" &&
+              metadata.alternateNames.contains(candidateMapping.mappingValue)
 
-              isNameMapping && (isPreferredMatch || isAlternateMatch)
-            }
-
-            val xrefMatch = {
-              val isXrefMapping = candidateMapping.mappingType == "XRef"
-              val xrefMatches = metadata.xrefs.exists { xref =>
-                xref.db == candidateMapping.mappingRef &&
-                xref.id == candidateMapping.mappingValue
-              }
-
-              isXrefMapping && xrefMatches
-            }
-
-            sameTraitType && (nameMatch || xrefMatch)
+            isNameMapping && (isPreferredMatch || isAlternateMatch)
           }
 
-          // Find the MedGen ID / name to look for in the VCV traits.
-          val matchingMedgenId = matchingMapping.flatMap(_.medgenId)
-          val matchingName = matchingMapping.flatMap(_.medgenName)
+          val xrefMatch = {
+            val isXrefMapping = candidateMapping.mappingType == "XRef"
+            val xrefMatches = metadata.xrefs.exists { xref =>
+              xref.db == candidateMapping.mappingRef &&
+              xref.id == candidateMapping.mappingValue
+            }
 
-          // return the trait mapping medgen ID match or the name match
-          referenceTraits
-            .find(_.medgenId == matchingMedgenId)
-            .orElse(referenceTraits.find(_.name == matchingName))
+            isXrefMapping && xrefMatches
+          }
+
+          sameTraitType && (nameMatch || xrefMatch)
         }
-    }
+
+        // Find the MedGen ID / name to look for in the VCV traits.
+        val matchingMedgenId = matchingMapping.flatMap(_.medgenId)
+        val matchingName = matchingMapping.flatMap(_.medgenName)
+
+        // return the trait mapping medgen ID match or the name match
+        referenceTraits
+          .find(_.medgenId == matchingMedgenId)
+          .orElse(referenceTraits.find(_.name == matchingName))
+      }
+  }
 }

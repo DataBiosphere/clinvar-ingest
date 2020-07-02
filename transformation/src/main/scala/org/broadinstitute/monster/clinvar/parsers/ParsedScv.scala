@@ -108,10 +108,15 @@ object ParsedScv {
 
     // Extract remaining top-level info about the submitted assertion.
     val assertion = {
-      val referenceTraitSetId = directTraitSet.flatMap { traitSet =>
-        interpretation.traitSets
-          .find(_.traitIds == traitSet.traits.flatMap(_.traitId))
-          .map(_.id)
+      val referenceTraitSetId = interpretation.traitSets match {
+        case Nil           => None
+        case single :: Nil => Some(single.id)
+        case many =>
+          directTraitSet.flatMap { traitSet =>
+            many
+              .find(_.traitIds == traitSet.traits.flatMap(_.traitId))
+              .map(_.id)
+          }
       }
       val relatedRcv = referenceAccessions.find { rcv =>
         rcv.traitSetId.isDefined && rcv.traitSetId == referenceTraitSetId
