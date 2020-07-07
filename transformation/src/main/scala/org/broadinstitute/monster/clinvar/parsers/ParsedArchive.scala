@@ -67,6 +67,7 @@ object ParsedArchive {
   /** Parser for "real" VariationArchive payloads, to be used in production. */
   def parser(
     releaseDate: LocalDate,
+    variationParser: ParsedVariation.Parser,
     interpParser: ParsedInterpretation.Parser,
     scvParser: ParsedScv.Parser
   ): Parser = rawArchive => {
@@ -92,7 +93,7 @@ object ParsedArchive {
         throw new IllegalStateException(s"Found an archive with no record: $rawArchive")
       }
 
-    val parsedVariation = ParsedVariation.fromRawRecord(releaseDate, variationRecord)
+    val parsedVariation = variationParser.parse(variationRecord)
 
     // Since IncludedRecords don't contain meaningful provenance, we only
     // bother to do further processing for InterpretedRecords.

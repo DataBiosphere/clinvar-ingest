@@ -23,8 +23,18 @@ case class ParsedVariation(
 object ParsedVariation {
   import org.broadinstitute.monster.common.msg.MsgOps
 
-  /** Extract variation models from a raw InterpretedRecord or IncludedRecord. */
-  def fromRawRecord(releaseDate: LocalDate, rawRecord: Msg): ParsedVariation = {
+  /**
+   * Interface for a utility which can extract variation-related info from
+   * raw ClinVar records, transforming into our target schema.
+   */
+  trait Parser {
+
+    /** Extract variation models from a raw InterpretedRecord or IncludedRecord. */
+    def parse(rawRecord: Msg): ParsedVariation
+  }
+
+  /** Parser for "real" variation payloads, to be used in production. */
+  def parser(releaseDate: LocalDate): Parser = rawRecord => {
     // Get the top-level variation.
     val (rawVariation, variationType) = Constants.VariationTypes
       .foldLeft(Option.empty[(Msg, String)]) { (acc, subtype) =>
@@ -69,8 +79,8 @@ object ParsedVariation {
         id = topId,
         releaseDate = releaseDate,
         subclassType = variationType,
-        childIds = descendants.childIds.toList,
-        descendantIds = (descendants.childIds ::: descendants.descendantIds).toList,
+        childIds = descendants.childIds,
+        descendantIds = (descendants.childIds ::: descendants.descendantIds),
         name = rawVariation.tryExtract[String]("Name", "$"),
         variationType = rawVariation
           .tryExtract[Msg]("VariantType")
