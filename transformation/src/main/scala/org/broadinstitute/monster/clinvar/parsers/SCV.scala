@@ -23,7 +23,7 @@ import scala.util.matching.Regex
   * @param traits conditions observed by the submitter
   * @param observations other information observed by the submitter
   */
-case class ParsedScv(
+case class SCV(
   assertion: ClinicalAssertion,
   submitters: List[Submitter],
   submission: Submission,
@@ -33,7 +33,7 @@ case class ParsedScv(
   observations: List[ClinicalAssertionObservation]
 )
 
-object ParsedScv {
+object SCV {
   import org.broadinstitute.monster.common.msg.MsgOps
 
   /**
@@ -45,24 +45,43 @@ object ParsedScv {
   val SubmissionDatePattern: Regex = """^(\d{4}-\d{1,2}-\d{1,2}).*""".r
 
   /**
-    * Convert a raw ClinicalAssertion payload into our model.
+    * Container for "background" information required to parse an SCV.
     *
     * @param variationId ID of the variation ClinVar has associated with the submission
     * @param vcvId ID of the archive containing the submission
     * @param referenceAccessions parsed RCVs from the archive
     * @param interpretation parsed data about the variation's interpreted effects
     * @param mappingsById links from submitted traits to curated traits, grouped by submission ID
-    * @param rawAssertion payload to parse
     */
-  def fromRawAssertion(
-    releaseDate: LocalDate,
+  case class ParsingContext(
     variationId: String,
     vcvId: String,
     referenceAccessions: List[RcvAccession],
-    interpretation: ParsedInterpretation,
-    mappingsById: Map[String, List[TraitMapping]],
-    rawAssertion: Msg
-  ): ParsedScv = {
+    interpretation: Interpretation,
+    mappingsById: Map[String, List[TraitMapping]]
+  )
+
+  /**
+    * Interface for a utility which can convert raw ClinicalAssertions into
+    * our target schema.
+    */
+  trait Parser {
+
+    /**
+      * Convert a raw ClinicalAssertion payload into our parsed form.
+      *
+      * @param context information required for parsing which isn't included in
+      *                the ClinicalAssertion payload itself
+      * @param rawAssertion raw JSON-ified ClinicalAssertion payload
+      */
+    def parse(context: ParsingContext, rawAssertion: Msg): SCV
+  }
+
+  /** Parser for "real" ClinicalAssertion payloads, to be used in production. */
+  def parser(
+    releaseDate: LocalDate,
+    traitSetParser: SCVTraitSet.Parser
+  ): Parser = (context, rawAssertion) => {
     // Extract submitter and submission data (easy).
     val rawAccession = rawAssertion.read[Msg]("ClinVarAccession")
 
@@ -75,24 +94,19 @@ object ParsedScv {
     // Extract the top-level set of traits described by the assertion.
     val assertionId = rawAssertion.extract[String]("@ID")
     val assertionAccession = rawAccession.extract[String]("@Accession")
-    val relevantTraitMappings = mappingsById.getOrElse(assertionId, List.empty)
+    val relevantTraitMappings = context.mappingsById.getOrElse(assertionId, List.empty)
+    val setContext =
+      SCVTraitSet.ParsingContext(context.interpretation.traits, relevantTraitMappings)
 
-    val directTraitSet = ParsedScvTraitSet.fromRawSetWrapper(
-      releaseDate,
-      assertionAccession,
-      rawAssertion,
-      interpretation.traits,
-      relevantTraitMappings
-    )
+    val directTraitSet = rawAssertion
+      .tryExtract[Msg]("TraitSet")
+      .map(traitSetParser.parse(setContext, assertionAccession, _))
 
     // Extract info about any other traits observed in the submission.
-    val (observations, observedTraitSets) = extractObservations(
-      releaseDate,
-      assertionAccession,
-      rawAssertion,
-      interpretation.traits,
-      relevantTraitMappings
-    ).unzip
+    val (observations, observedTraitSets) =
+      extractObservations(releaseDate, assertionAccession, rawAssertion) {
+        traitSetParser.parse(setContext, _, _)
+      }.unzip
 
     // Flatten out nested trait-set info.
     val (allTraitSets, allTraits) = {
@@ -108,12 +122,17 @@ object ParsedScv {
 
     // Extract remaining top-level info about the submitted assertion.
     val assertion = {
-      val referenceTraitSetId = directTraitSet.flatMap { traitSet =>
-        interpretation.traitSets
-          .find(_.traitIds == traitSet.traits.flatMap(_.traitId))
-          .map(_.id)
+      val referenceTraitSetId = context.interpretation.traitSets match {
+        case Nil           => None
+        case single :: Nil => Some(single.id)
+        case many =>
+          directTraitSet.flatMap { traitSet =>
+            many
+              .find(_.traitIds == traitSet.traits.flatMap(_.traitId))
+              .map(_.id)
+          }
       }
-      val relatedRcv = referenceAccessions.find { rcv =>
+      val relatedRcv = context.referenceAccessions.find { rcv =>
         rcv.traitSetId.isDefined && rcv.traitSetId == referenceTraitSetId
       }
 
@@ -122,8 +141,8 @@ object ParsedScv {
         releaseDate = releaseDate,
         version = rawAccession.extract[Long]("@Version"),
         internalId = assertionId,
-        variationArchiveId = vcvId,
-        variationId = variationId,
+        variationArchiveId = context.vcvId,
+        variationId = context.variationId,
         submitterId = submitter.id,
         submissionId = submission.id,
         rcvAccessionId = relatedRcv.map(_.id),
@@ -168,7 +187,7 @@ object ParsedScv {
       )
     }
 
-    ParsedScv(
+    SCV(
       assertion = assertion,
       submitters = submitter +: additionalSubmitters,
       submission = submission,
@@ -215,33 +234,18 @@ object ParsedScv {
     )
   }
 
-  /**
-    * Extract observation data from a raw clinical assertion.
-    *
-    * @param assertionAccession ID of the assertion
-    * @param rawAssertion raw assertion payload to extract from
-    */
-  private def extractObservations(
-    releaseDate: LocalDate,
-    assertionAccession: String,
-    rawAssertion: Msg,
-    referenceTraits: List[Trait],
-    traitMappings: List[TraitMapping]
-  ): List[(ClinicalAssertionObservation, Option[ParsedScvTraitSet])] = {
+  /** Extract observation entries from a raw ClinicalAssertion payload. */
+  private def extractObservations(releaseDate: LocalDate, idBase: String, rawAssertion: Msg)(
+    parseSet: (String, Msg) => SCVTraitSet
+  ): List[(ClinicalAssertionObservation, Option[SCVTraitSet])] = {
     val observationCounter = new AtomicInteger(0)
     rawAssertion
       .tryExtract[List[Msg]]("ObservedInList", "ObservedIn")
       .getOrElse(List.empty)
       .map { rawObservation =>
         val observationId =
-          s"$assertionAccession.${observationCounter.getAndIncrement()}"
-        val parsedSet = ParsedScvTraitSet.fromRawSetWrapper(
-          releaseDate,
-          observationId,
-          rawObservation,
-          referenceTraits,
-          traitMappings
-        )
+          s"$idBase.${observationCounter.getAndIncrement()}"
+        val parsedSet = rawObservation.tryExtract[Msg]("TraitSet").map(parseSet(observationId, _))
         val observation = ClinicalAssertionObservation(
           id = observationId,
           releaseDate = releaseDate,
@@ -288,8 +292,8 @@ object ParsedScv {
         val allAncestry = descendants.childIds ::: descendants.descendantIds
         buffer.append {
           baseVariation.copy(
-            childIds = descendants.childIds,
-            descendantIds = allAncestry,
+            childIds = descendants.childIds.sorted,
+            descendantIds = allAncestry.sorted,
             content = Content.encode(rawVariation)
           )
         }

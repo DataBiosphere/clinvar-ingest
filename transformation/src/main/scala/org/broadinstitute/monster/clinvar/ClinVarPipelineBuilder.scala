@@ -1,7 +1,7 @@
 package org.broadinstitute.monster.clinvar
 
 import com.spotify.scio.ScioContext
-import org.broadinstitute.monster.clinvar.parsers.ParsedArchive
+import org.broadinstitute.monster.clinvar.parsers._
 import org.broadinstitute.monster.common.{PipelineBuilder, StorageIO}
 
 object ClinVarPipelineBuilder extends PipelineBuilder[Args] {
@@ -24,8 +24,16 @@ object ClinVarPipelineBuilder extends PipelineBuilder[Args] {
     // Split apart all of the entities that exist in the archives.
     // Since individual archives are self-contained, nearly all of the pipeline's
     // logic is done in this step.
+    val parser = {
+      val variationParser = Variation.parser(args.releaseDate)
+      val traitParser = TraitMetadata.parser(args.releaseDate)
+      val interpParser = Interpretation.parser(args.releaseDate, traitParser)
+      val scvTraitSetParser = SCVTraitSet.parser(args.releaseDate, traitParser)
+      val scvParser = SCV.parser(args.releaseDate, scvTraitSetParser)
+      VCV.parser(args.releaseDate, variationParser, interpParser, scvParser)
+    }
     val archiveBranches =
-      ArchiveBranches.fromArchiveStream(ParsedArchive.parser(args.releaseDate), fullArchives)
+      ArchiveBranches.fromArchiveStream(parser, fullArchives)
 
     // Write everything back to storage.
     StorageIO.writeJsonLists(

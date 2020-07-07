@@ -3,7 +3,11 @@ package org.broadinstitute.monster.clinvar.parsers
 import java.time.LocalDate
 
 import org.broadinstitute.monster.clinvar.{Constants, Content}
-import org.broadinstitute.monster.clinvar.jadeschema.table.{Gene, GeneAssociation, Variation}
+import org.broadinstitute.monster.clinvar.jadeschema.table.{
+  Gene,
+  GeneAssociation,
+  Variation => JadeVariation
+}
 import upack.Msg
 
 /**
@@ -14,17 +18,27 @@ import upack.Msg
   * @param genes info about genes associated with the variation
   * @param associations info about how the variation effects the genes
   */
-case class ParsedVariation(
-  variation: Variation,
+case class Variation(
+  variation: JadeVariation,
   genes: List[Gene],
   associations: List[GeneAssociation]
 )
 
-object ParsedVariation {
+object Variation {
   import org.broadinstitute.monster.common.msg.MsgOps
 
-  /** Extract variation models from a raw InterpretedRecord or IncludedRecord. */
-  def fromRawRecord(releaseDate: LocalDate, rawRecord: Msg): ParsedVariation = {
+  /**
+    * Interface for a utility which can extract variation-related info from
+    * raw ClinVar records, transforming into our target schema.
+    */
+  trait Parser {
+
+    /** Extract variation models from a raw InterpretedRecord or IncludedRecord. */
+    def parse(rawRecord: Msg): Variation
+  }
+
+  /** Parser for "real" variation payloads, to be used in production. */
+  def parser(releaseDate: LocalDate): Parser = rawRecord => {
     // Get the top-level variation.
     val (rawVariation, variationType) = Constants.VariationTypes
       .foldLeft(Option.empty[(Msg, String)]) { (acc, subtype) =>
@@ -65,12 +79,12 @@ object ParsedVariation {
     val variation = {
       val descendants = extractDescendantIds(rawVariation)
 
-      Variation(
+      JadeVariation(
         id = topId,
         releaseDate = releaseDate,
         subclassType = variationType,
-        childIds = descendants.childIds.toList,
-        descendantIds = (descendants.childIds ::: descendants.descendantIds).toList,
+        childIds = descendants.childIds,
+        descendantIds = (descendants.childIds ::: descendants.descendantIds),
         name = rawVariation.tryExtract[String]("Name", "$"),
         variationType = rawVariation
           .tryExtract[Msg]("VariantType")
@@ -87,7 +101,7 @@ object ParsedVariation {
       )
     }
 
-    ParsedVariation(variation, genes, geneAssociations)
+    Variation(variation, genes, geneAssociations)
   }
 
   /**

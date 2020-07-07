@@ -23,17 +23,17 @@ import upack.{Msg, Str}
   * @param scvs             fully-parsed submissions that contribute to the reference
   *                         info stored in the archive
   */
-case class ParsedArchive(
-  variation: ParsedVariation,
+case class VCV(
+  variation: Variation,
   vcv: Option[VariationArchive],
   rcvs: List[RcvAccession],
   traitSets: List[TraitSet],
   traits: List[Trait],
   traitMappings: List[TraitMapping],
-  scvs: List[ParsedScv]
+  scvs: List[SCV]
 )
 
-object ParsedArchive {
+object VCV {
   import org.broadinstitute.monster.common.msg.MsgOps
 
   /**
@@ -52,7 +52,7 @@ object ParsedArchive {
       * can be fully constructed between all sub-models without
       * examining other archive instances
       */
-    def parse(rawArchive: Msg): ParsedArchive
+    def parse(rawArchive: Msg): VCV
   }
 
   /** Type for "real" VCVs backed by submissions to ClinVar. */
@@ -65,7 +65,12 @@ object ParsedArchive {
   val IncludedRecord: Msg = Str("IncludedRecord")
 
   /** Parser for "real" VariationArchive payloads, to be used in production. */
-  def parser(releaseDate: LocalDate): Parser = rawArchive => {
+  def parser(
+    releaseDate: LocalDate,
+    variationParser: Variation.Parser,
+    interpParser: Interpretation.Parser,
+    scvParser: SCV.Parser
+  ): Parser = rawArchive => {
     /*
      * ClinVar publishes two types of "record"s:
      *   1. InterpretedRecords are generated for each variation that is sent
@@ -88,7 +93,7 @@ object ParsedArchive {
         throw new IllegalStateException(s"Found an archive with no record: $rawArchive")
       }
 
-    val parsedVariation = ParsedVariation.fromRawRecord(releaseDate, variationRecord)
+    val parsedVariation = variationParser.parse(variationRecord)
 
     // Since IncludedRecords don't contain meaningful provenance, we only
     // bother to do further processing for InterpretedRecords.
@@ -101,10 +106,8 @@ object ParsedArchive {
       val vcvId = rawArchive.extract[String]("@Accession")
 
       // Parse the variation's interpretation.
-      val interpretation = ParsedInterpretation.fromRawInterpretation(
-        releaseDate,
-        variationRecord.extract[Msg]("Interpretations", "Interpretation")
-      )
+      val interpretation =
+        interpParser.parse(variationRecord.extract[Msg]("Interpretations", "Interpretation"))
 
       // Pull out any RCVs, cross-linking to the relevant trait sets.
       val rcvs = variationRecord
@@ -146,20 +149,17 @@ object ParsedArchive {
       val mappingsByScvId = traitMappings.groupBy(_.clinicalAssertionId)
 
       // Pull out any SCVs, and related info.
+      val scvContext = SCV.ParsingContext(
+        parsedVariation.variation.id,
+        vcvId,
+        rcvs,
+        interpretation,
+        mappingsByScvId
+      )
       val parsedScvs = variationRecord
         .tryExtract[List[Msg]]("ClinicalAssertionList", "ClinicalAssertion")
         .getOrElse(Nil)
-        .map {
-          ParsedScv.fromRawAssertion(
-            releaseDate,
-            parsedVariation.variation.id,
-            vcvId,
-            rcvs,
-            interpretation,
-            mappingsByScvId,
-            _
-          )
-        }
+        .map(scvParser.parse(scvContext, _))
 
       // Swap SCV accessions for their numeric IDs so the FK in the mapping table
       // actually works.
@@ -196,7 +196,7 @@ object ParsedArchive {
         content = Content.encode(rawArchive)
       )
 
-      ParsedArchive(
+      VCV(
         variation = parsedVariation,
         vcv = Some(vcv),
         rcvs = rcvs,
@@ -206,7 +206,7 @@ object ParsedArchive {
         traitMappings = mappingsWithAccessionLinks
       )
     } else {
-      ParsedArchive(
+      VCV(
         variation = parsedVariation,
         vcv = None,
         rcvs = Nil,
@@ -231,7 +231,7 @@ object ParsedArchive {
     releaseDate: LocalDate,
     variationId: String,
     vcvId: String,
-    interpretation: ParsedInterpretation,
+    interpretation: Interpretation,
     rawRcv: Msg
   ): RcvAccession = {
     // First locate which trait-set associated with the variation is linked to the

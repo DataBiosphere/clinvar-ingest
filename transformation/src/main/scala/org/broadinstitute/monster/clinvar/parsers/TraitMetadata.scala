@@ -1,5 +1,7 @@
 package org.broadinstitute.monster.clinvar.parsers
 
+import java.time.LocalDate
+
 import org.broadinstitute.monster.clinvar.Constants
 import org.broadinstitute.monster.clinvar.jadeschema.struct.Xref
 import upack.Msg
@@ -8,6 +10,7 @@ import upack.Msg
   * Representation of metadata common to both types of ClinVar traits.
   *
   * @param id identifier for the trait
+  * @param releaseDate datestamp of the ClinVar release containing this trait record
   * @param `type` type of the trait
   * @param name preferred name of the trait
   * @param alternateNames alternative names for the trait
@@ -16,6 +19,7 @@ import upack.Msg
   */
 case class TraitMetadata(
   id: String,
+  releaseDate: LocalDate,
   `type`: Option[String],
   name: Option[String],
   alternateNames: List[String],
@@ -27,14 +31,23 @@ object TraitMetadata {
   import org.broadinstitute.monster.common.msg.MsgOps
 
   /**
-    * Extract common metadata from an unmodeled trait payload.
-    *
-    * @param id unique ID to assign to the trait
-    * @param rawTrait a raw trait payload, nested under either an Interpretation
-    *                 or an SCV
-    */
-  def fromRawTrait(id: String, rawTrait: Msg): TraitMetadata = {
+    * Interface for a utility which can extract common metadata
+    * from unmodeled Trait payloads.
+    * */
+  trait Parser {
 
+    /**
+      * Extract common metadata from an unmodeled Trait payload.
+      *
+      * @param id unique ID to assign to the trait
+      * @param rawTrait a raw trait payload, nested under either an Interpretation
+      *                 or an SCV
+      */
+    def parse(id: String, rawTrait: Msg): TraitMetadata
+  }
+
+  /** Parser for "real" Trait payloads, to be used in production. */
+  def parser(releaseDate: LocalDate): Parser = (id, rawTrait) => {
     // Process any names stored in the trait.
     // Any nested xrefs will be "unzipped" from their names, to be
     // combined with top-level refs in the next step.
@@ -77,6 +90,7 @@ object TraitMetadata {
 
     TraitMetadata(
       id = id,
+      releaseDate = releaseDate,
       medgenId = medgenId,
       `type` = rawTrait.tryExtract[String]("@Type"),
       name = preferredName,

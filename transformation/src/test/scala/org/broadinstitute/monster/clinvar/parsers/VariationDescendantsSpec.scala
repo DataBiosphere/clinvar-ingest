@@ -36,7 +36,7 @@ class VariationDescendantsSpec extends AnyFlatSpec with Matchers {
     val parsed = VariationDescendants.fromVariationWrapper(example) { (_, variation) =>
       variation.read[String]("id") -> Nil
     }
-    parsed.childIds.toSet shouldBe Constants.VariationTypes
+    parsed.childIds should contain theSameElementsAs Constants.VariationTypes
     parsed.descendantIds shouldBe Nil
   }
 
@@ -54,7 +54,7 @@ class VariationDescendantsSpec extends AnyFlatSpec with Matchers {
     val parsed = VariationDescendants.fromVariationWrapper(example) { (subtype, variation) =>
       variation.read[String]("id") -> descendants(subtype)
     }
-    parsed.childIds.toSet shouldBe Constants.VariationTypes
+    parsed.childIds should contain theSameElementsAs Constants.VariationTypes
     parsed.descendantIds should contain theSameElementsAs
       Constants.VariationTypes.flatMap(descendants)
   }
