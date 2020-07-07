@@ -3,7 +3,11 @@ package org.broadinstitute.monster.clinvar.parsers
 import java.time.LocalDate
 
 import org.broadinstitute.monster.clinvar.{Constants, Content}
-import org.broadinstitute.monster.clinvar.jadeschema.table.{Gene, GeneAssociation, Variation}
+import org.broadinstitute.monster.clinvar.jadeschema.table.{
+  Gene,
+  GeneAssociation,
+  Variation => JadeVariation
+}
 import upack.Msg
 
 /**
@@ -14,23 +18,23 @@ import upack.Msg
   * @param genes info about genes associated with the variation
   * @param associations info about how the variation effects the genes
   */
-case class ParsedVariation(
-  variation: Variation,
+case class Variation(
+  variation: JadeVariation,
   genes: List[Gene],
   associations: List[GeneAssociation]
 )
 
-object ParsedVariation {
+object Variation {
   import org.broadinstitute.monster.common.msg.MsgOps
 
   /**
-   * Interface for a utility which can extract variation-related info from
-   * raw ClinVar records, transforming into our target schema.
-   */
+    * Interface for a utility which can extract variation-related info from
+    * raw ClinVar records, transforming into our target schema.
+    */
   trait Parser {
 
     /** Extract variation models from a raw InterpretedRecord or IncludedRecord. */
-    def parse(rawRecord: Msg): ParsedVariation
+    def parse(rawRecord: Msg): Variation
   }
 
   /** Parser for "real" variation payloads, to be used in production. */
@@ -75,7 +79,7 @@ object ParsedVariation {
     val variation = {
       val descendants = extractDescendantIds(rawVariation)
 
-      Variation(
+      JadeVariation(
         id = topId,
         releaseDate = releaseDate,
         subclassType = variationType,
@@ -97,7 +101,7 @@ object ParsedVariation {
       )
     }
 
-    ParsedVariation(variation, genes, geneAssociations)
+    Variation(variation, genes, geneAssociations)
   }
 
   /**

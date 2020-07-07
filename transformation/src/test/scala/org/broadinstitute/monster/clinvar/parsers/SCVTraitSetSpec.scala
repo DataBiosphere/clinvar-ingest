@@ -14,13 +14,13 @@ import org.scalatest.OptionValues
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class ParsedScvTraitSetSpec extends AnyFlatSpec with Matchers with OptionValues {
+class SCVTraitSetSpec extends AnyFlatSpec with Matchers with OptionValues {
   import org.broadinstitute.monster.common.msg.MsgOps
 
-  behavior of "ParsedScvTraitSet.Parser"
+  behavior of "SCVTraitSet.Parser"
 
   val date = LocalDate.now()
-  val context = ParsedScvTraitSet.ParsingContext(Nil, Nil)
+  val context = SCVTraitSet.ParsingContext(Nil, Nil)
   val setId = "imma-cool-set"
 
   it should "parse a minimal TraitSet from an SCV" in {
@@ -30,9 +30,9 @@ class ParsedScvTraitSetSpec extends AnyFlatSpec with Matchers with OptionValues 
          |  "@Type": "foo"
          |}""".stripMargin
     )
-    val parser = ParsedScvTraitSet.parser(date, (_, _) => ???)
+    val parser = SCVTraitSet.parser(date, (_, _) => ???)
 
-    parser.parse(context, setId, rawSet) shouldBe ParsedScvTraitSet(
+    parser.parse(context, setId, rawSet) shouldBe SCVTraitSet(
       ClinicalAssertionTraitSet(setId, date, Nil, Some("foo"), None),
       Nil
     )
@@ -46,9 +46,9 @@ class ParsedScvTraitSetSpec extends AnyFlatSpec with Matchers with OptionValues 
          |  "Wot": { "Wat": "hello" }
          |}""".stripMargin
     )
-    val parser = ParsedScvTraitSet.parser(date, (_, _) => ???)
+    val parser = SCVTraitSet.parser(date, (_, _) => ???)
 
-    parser.parse(context, setId, rawSet) shouldBe ParsedScvTraitSet(
+    parser.parse(context, setId, rawSet) shouldBe SCVTraitSet(
       ClinicalAssertionTraitSet(setId, date, Nil, Some("foo"), Some("""{"Wot":{"Wat":"hello"}}""")),
       Nil
     )
@@ -61,13 +61,13 @@ class ParsedScvTraitSetSpec extends AnyFlatSpec with Matchers with OptionValues 
          |  "@Type": "foo"
          |}""".stripMargin
     )
-    val parser = ParsedScvTraitSet.parser(
+    val parser = SCVTraitSet.parser(
       date,
       (id, raw) =>
         TraitMetadata(id, date, None, raw.tryExtract[String]("blarg"), Nil, None, Set.empty)
     )
 
-    parser.parse(context, setId, rawSet) shouldBe ParsedScvTraitSet(
+    parser.parse(context, setId, rawSet) shouldBe SCVTraitSet(
       ClinicalAssertionTraitSet(
         setId,
         date,
@@ -98,7 +98,7 @@ class ParsedScvTraitSetSpec extends AnyFlatSpec with Matchers with OptionValues 
       Trait.init("baz", date).copy(medgenId = Some("medgen!"))
     )
 
-    ParsedScvTraitSet.findMatchingTrait(metadata, traits, Nil).value shouldBe traits(1)
+    SCVTraitSet.findMatchingTrait(metadata, traits, Nil).value shouldBe traits(1)
   }
 
   it should "link SCV traits to RCV traits based on direct XRef matches" in {
@@ -110,7 +110,7 @@ class ParsedScvTraitSetSpec extends AnyFlatSpec with Matchers with OptionValues 
       Trait.init("baz", date).copy(xrefs = List(xref.copy(id = "qux"), xref.copy(db = "ddddddd")))
     )
 
-    ParsedScvTraitSet.findMatchingTrait(metadata, traits, Nil).value shouldBe traits.head
+    SCVTraitSet.findMatchingTrait(metadata, traits, Nil).value shouldBe traits.head
   }
 
   it should "link SCV traits to RCV traits based on preferred-name mappings" in {
@@ -141,7 +141,7 @@ class ParsedScvTraitSetSpec extends AnyFlatSpec with Matchers with OptionValues 
       Trait.init("3", date).copy(medgenId = Some("idd"))
     )
 
-    ParsedScvTraitSet.findMatchingTrait(metadata, traits, mappings).value shouldBe traits(1)
+    SCVTraitSet.findMatchingTrait(metadata, traits, mappings).value shouldBe traits(1)
   }
 
   it should "link SCV traits to RCV traits based on alternate-name mappings" in {
@@ -168,7 +168,7 @@ class ParsedScvTraitSetSpec extends AnyFlatSpec with Matchers with OptionValues 
       Trait.init("3", date).copy(medgenId = Some("idd"))
     )
 
-    ParsedScvTraitSet.findMatchingTrait(metadata, traits, mappings).value shouldBe traits.head
+    SCVTraitSet.findMatchingTrait(metadata, traits, mappings).value shouldBe traits.head
   }
 
   it should "link SCV traits to RCV traits based on XRef mappings" in {
@@ -203,7 +203,7 @@ class ParsedScvTraitSetSpec extends AnyFlatSpec with Matchers with OptionValues 
       Trait.init("3", date).copy(medgenId = Some("idd"))
     )
 
-    ParsedScvTraitSet.findMatchingTrait(metadata, traits, mappings).value shouldBe traits(2)
+    SCVTraitSet.findMatchingTrait(metadata, traits, mappings).value shouldBe traits(2)
   }
 
   it should "link SCV traits to RCV traits by name if link has no medgen ID" in {
@@ -238,6 +238,6 @@ class ParsedScvTraitSetSpec extends AnyFlatSpec with Matchers with OptionValues 
       Trait.init("3", date).copy(medgenId = Some("idd"), name = Some("fallback"))
     )
 
-    ParsedScvTraitSet.findMatchingTrait(metadata, traits, mappings).value shouldBe traits(2)
+    SCVTraitSet.findMatchingTrait(metadata, traits, mappings).value shouldBe traits(2)
   }
 }

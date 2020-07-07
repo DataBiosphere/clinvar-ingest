@@ -19,12 +19,12 @@ import upack.Msg
   * @param traitSet info about the group of conditions itself
   * @param traits info about the individual conditions contained in the group
   */
-case class ParsedScvTraitSet(
+case class SCVTraitSet(
   traitSet: ClinicalAssertionTraitSet,
   traits: List[ClinicalAssertionTrait]
 )
 
-object ParsedScvTraitSet {
+object SCVTraitSet {
   import org.broadinstitute.monster.common.msg.MsgOps
 
   /**
@@ -53,7 +53,7 @@ object ParsedScvTraitSet {
       * @param setId ID to assign to the parsed set
       * @param rawSet  raw JSON-ified TraitSet payload
       */
-    def parse(context: ParsingContext, setId: String, rawSet: Msg): ParsedScvTraitSet
+    def parse(context: ParsingContext, setId: String, rawSet: Msg): SCVTraitSet
   }
 
   /** Parser for "real" SCV TraitSet payloads, to be used in production. */
@@ -93,7 +93,7 @@ object ParsedScvTraitSet {
         content = Content.encode(rawSet)
       )
 
-      ParsedScvTraitSet(traitSet, traits)
+      SCVTraitSet(traitSet, traits)
     }
 
   /**

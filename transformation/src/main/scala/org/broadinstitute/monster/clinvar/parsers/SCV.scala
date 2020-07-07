@@ -23,7 +23,7 @@ import scala.util.matching.Regex
   * @param traits conditions observed by the submitter
   * @param observations other information observed by the submitter
   */
-case class ParsedScv(
+case class SCV(
   assertion: ClinicalAssertion,
   submitters: List[Submitter],
   submission: Submission,
@@ -33,7 +33,7 @@ case class ParsedScv(
   observations: List[ClinicalAssertionObservation]
 )
 
-object ParsedScv {
+object SCV {
   import org.broadinstitute.monster.common.msg.MsgOps
 
   /**
@@ -57,7 +57,7 @@ object ParsedScv {
     variationId: String,
     vcvId: String,
     referenceAccessions: List[RcvAccession],
-    interpretation: ParsedInterpretation,
+    interpretation: Interpretation,
     mappingsById: Map[String, List[TraitMapping]]
   )
 
@@ -74,13 +74,13 @@ object ParsedScv {
       *                the ClinicalAssertion payload itself
       * @param rawAssertion raw JSON-ified ClinicalAssertion payload
       */
-    def parse(context: ParsingContext, rawAssertion: Msg): ParsedScv
+    def parse(context: ParsingContext, rawAssertion: Msg): SCV
   }
 
   /** Parser for "real" ClinicalAssertion payloads, to be used in production. */
   def parser(
     releaseDate: LocalDate,
-    traitSetParser: ParsedScvTraitSet.Parser
+    traitSetParser: SCVTraitSet.Parser
   ): Parser = (context, rawAssertion) => {
     // Extract submitter and submission data (easy).
     val rawAccession = rawAssertion.read[Msg]("ClinVarAccession")
@@ -96,7 +96,7 @@ object ParsedScv {
     val assertionAccession = rawAccession.extract[String]("@Accession")
     val relevantTraitMappings = context.mappingsById.getOrElse(assertionId, List.empty)
     val setContext =
-      ParsedScvTraitSet.ParsingContext(context.interpretation.traits, relevantTraitMappings)
+      SCVTraitSet.ParsingContext(context.interpretation.traits, relevantTraitMappings)
 
     val directTraitSet = rawAssertion
       .tryExtract[Msg]("TraitSet")
@@ -187,7 +187,7 @@ object ParsedScv {
       )
     }
 
-    ParsedScv(
+    SCV(
       assertion = assertion,
       submitters = submitter +: additionalSubmitters,
       submission = submission,
@@ -236,8 +236,8 @@ object ParsedScv {
 
   /** Extract observation entries from a raw ClinicalAssertion payload. */
   private def extractObservations(releaseDate: LocalDate, idBase: String, rawAssertion: Msg)(
-    parseSet: (String, Msg) => ParsedScvTraitSet
-  ): List[(ClinicalAssertionObservation, Option[ParsedScvTraitSet])] = {
+    parseSet: (String, Msg) => SCVTraitSet
+  ): List[(ClinicalAssertionObservation, Option[SCVTraitSet])] = {
     val observationCounter = new AtomicInteger(0)
     rawAssertion
       .tryExtract[List[Msg]]("ObservedInList", "ObservedIn")

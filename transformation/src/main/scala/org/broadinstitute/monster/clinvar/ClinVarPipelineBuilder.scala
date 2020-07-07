@@ -25,12 +25,12 @@ object ClinVarPipelineBuilder extends PipelineBuilder[Args] {
     // Since individual archives are self-contained, nearly all of the pipeline's
     // logic is done in this step.
     val parser = {
-      val variationParser = ParsedVariation.parser(args.releaseDate)
+      val variationParser = Variation.parser(args.releaseDate)
       val traitParser = TraitMetadata.parser(args.releaseDate)
-      val interpParser = ParsedInterpretation.parser(args.releaseDate, traitParser)
-      val scvTraitSetParser = ParsedScvTraitSet.parser(args.releaseDate, traitParser)
-      val scvParser = ParsedScv.parser(args.releaseDate, scvTraitSetParser)
-      ParsedArchive.parser(args.releaseDate, variationParser, interpParser, scvParser)
+      val interpParser = Interpretation.parser(args.releaseDate, traitParser)
+      val scvTraitSetParser = SCVTraitSet.parser(args.releaseDate, traitParser)
+      val scvParser = SCV.parser(args.releaseDate, scvTraitSetParser)
+      VCV.parser(args.releaseDate, variationParser, interpParser, scvParser)
     }
     val archiveBranches =
       ArchiveBranches.fromArchiveStream(parser, fullArchives)

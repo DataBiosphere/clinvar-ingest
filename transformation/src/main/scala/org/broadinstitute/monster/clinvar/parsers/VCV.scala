@@ -23,17 +23,17 @@ import upack.{Msg, Str}
   * @param scvs             fully-parsed submissions that contribute to the reference
   *                         info stored in the archive
   */
-case class ParsedArchive(
-  variation: ParsedVariation,
+case class VCV(
+  variation: Variation,
   vcv: Option[VariationArchive],
   rcvs: List[RcvAccession],
   traitSets: List[TraitSet],
   traits: List[Trait],
   traitMappings: List[TraitMapping],
-  scvs: List[ParsedScv]
+  scvs: List[SCV]
 )
 
-object ParsedArchive {
+object VCV {
   import org.broadinstitute.monster.common.msg.MsgOps
 
   /**
@@ -52,7 +52,7 @@ object ParsedArchive {
       * can be fully constructed between all sub-models without
       * examining other archive instances
       */
-    def parse(rawArchive: Msg): ParsedArchive
+    def parse(rawArchive: Msg): VCV
   }
 
   /** Type for "real" VCVs backed by submissions to ClinVar. */
@@ -67,9 +67,9 @@ object ParsedArchive {
   /** Parser for "real" VariationArchive payloads, to be used in production. */
   def parser(
     releaseDate: LocalDate,
-    variationParser: ParsedVariation.Parser,
-    interpParser: ParsedInterpretation.Parser,
-    scvParser: ParsedScv.Parser
+    variationParser: Variation.Parser,
+    interpParser: Interpretation.Parser,
+    scvParser: SCV.Parser
   ): Parser = rawArchive => {
     /*
      * ClinVar publishes two types of "record"s:
@@ -149,7 +149,7 @@ object ParsedArchive {
       val mappingsByScvId = traitMappings.groupBy(_.clinicalAssertionId)
 
       // Pull out any SCVs, and related info.
-      val scvContext = ParsedScv.ParsingContext(
+      val scvContext = SCV.ParsingContext(
         parsedVariation.variation.id,
         vcvId,
         rcvs,
@@ -196,7 +196,7 @@ object ParsedArchive {
         content = Content.encode(rawArchive)
       )
 
-      ParsedArchive(
+      VCV(
         variation = parsedVariation,
         vcv = Some(vcv),
         rcvs = rcvs,
@@ -206,7 +206,7 @@ object ParsedArchive {
         traitMappings = mappingsWithAccessionLinks
       )
     } else {
-      ParsedArchive(
+      VCV(
         variation = parsedVariation,
         vcv = None,
         rcvs = Nil,
@@ -231,7 +231,7 @@ object ParsedArchive {
     releaseDate: LocalDate,
     variationId: String,
     vcvId: String,
-    interpretation: ParsedInterpretation,
+    interpretation: Interpretation,
     rawRcv: Msg
   ): RcvAccession = {
     // First locate which trait-set associated with the variation is linked to the

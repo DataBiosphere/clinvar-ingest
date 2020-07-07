@@ -9,14 +9,14 @@ import org.scalatest.OptionValues
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class ParsedScvSpec extends AnyFlatSpec with Matchers with OptionValues {
+class SCVSpec extends AnyFlatSpec with Matchers with OptionValues {
   import org.broadinstitute.monster.common.msg.MsgOps
 
-  behavior of "ParsedScv.Parser"
+  behavior of "SCV.Parser"
 
   val date = LocalDate.now()
-  val interpretation = ParsedInterpretation(None, None, None, None, None, Nil, Nil)
-  val context = ParsedScv.ParsingContext("varId", "vcvId", Nil, interpretation, Map.empty)
+  val interpretation = Interpretation(None, None, None, None, None, Nil, Nil)
+  val context = SCV.ParsingContext("varId", "vcvId", Nil, interpretation, Map.empty)
 
   it should "parse top-level SCV fields" in {
     val raw = JsonParser.parseEncodedJson(
@@ -71,9 +71,9 @@ class ParsedScvSpec extends AnyFlatSpec with Matchers with OptionValues {
         |  }
         |}""".stripMargin
     )
-    val parser = ParsedScv.parser(date, (_, _, _) => ???)
+    val parser = SCV.parser(date, (_, _, _) => ???)
 
-    parser.parse(context, raw) shouldBe ParsedScv(
+    parser.parse(context, raw) shouldBe SCV(
       ClinicalAssertion(
         id = "SCV!",
         releaseDate = date,
@@ -161,9 +161,9 @@ class ParsedScvSpec extends AnyFlatSpec with Matchers with OptionValues {
         |  }
         |}""".stripMargin
     )
-    val parser = ParsedScv.parser(date, (_, _, _) => ???)
+    val parser = SCV.parser(date, (_, _, _) => ???)
 
-    parser.parse(context, raw) shouldBe ParsedScv(
+    parser.parse(context, raw) shouldBe SCV(
       ClinicalAssertion.init(
         id = "SCV!",
         releaseDate = date,
@@ -238,9 +238,9 @@ class ParsedScvSpec extends AnyFlatSpec with Matchers with OptionValues {
         |  "Uh oh": 12345
         |}""".stripMargin
     )
-    val parser = ParsedScv.parser(date, (_, _, _) => ???)
+    val parser = SCV.parser(date, (_, _, _) => ???)
 
-    parser.parse(context, raw) shouldBe ParsedScv(
+    parser.parse(context, raw) shouldBe SCV(
       ClinicalAssertion
         .init(
           id = "SCV!",
@@ -315,7 +315,7 @@ class ParsedScvSpec extends AnyFlatSpec with Matchers with OptionValues {
         |  ]
         |}""".stripMargin
     )
-    val parser = ParsedScv.parser(date, (_, _, _) => ???)
+    val parser = SCV.parser(date, (_, _, _) => ???)
     val parsed = parser.parse(context, raw)
 
     parsed.variations.sortBy(_.id) should contain theSameElementsAs List(
@@ -431,10 +431,10 @@ class ParsedScvSpec extends AnyFlatSpec with Matchers with OptionValues {
         |  }
         |}""".stripMargin
     )
-    val parser = ParsedScv.parser(
+    val parser = SCV.parser(
       date,
       (_, id, raw) =>
-        ParsedScvTraitSet(
+        SCVTraitSet(
           ClinicalAssertionTraitSet.init(id, date).copy(`type` = raw.tryExtract[String]("ayy")),
           Nil
         )
@@ -476,9 +476,9 @@ class ParsedScvSpec extends AnyFlatSpec with Matchers with OptionValues {
         |  "TraitSet": {}
         |}""".stripMargin
     )
-    val parser = ParsedScv.parser(
+    val parser = SCV.parser(
       date,
-      (_, id, _) => ParsedScvTraitSet(ClinicalAssertionTraitSet.init(id, date), Nil)
+      (_, id, _) => SCVTraitSet(ClinicalAssertionTraitSet.init(id, date), Nil)
     )
     val parsed = parser.parse(linkableContext, raw)
 
@@ -522,10 +522,10 @@ class ParsedScvSpec extends AnyFlatSpec with Matchers with OptionValues {
         |  "TraitSet": {}
         |}""".stripMargin
     )
-    val parser = ParsedScv.parser(
+    val parser = SCV.parser(
       date,
       (_, id, _) =>
-        ParsedScvTraitSet(
+        SCVTraitSet(
           ClinicalAssertionTraitSet.init(id, date),
           (2 to 10 by 2).map { i =>
             ClinicalAssertionTrait.init(i.toString, date).copy(traitId = Some(i.toString))
@@ -578,12 +578,12 @@ class ParsedScvSpec extends AnyFlatSpec with Matchers with OptionValues {
         |  }
         |}""".stripMargin
     )
-    val parser = ParsedScv.parser(
+    val parser = SCV.parser(
       date,
       (_, id, raw) => {
         val start = raw.extract[Long]("start")
         val end = raw.extract[Long]("end")
-        ParsedScvTraitSet(
+        SCVTraitSet(
           ClinicalAssertionTraitSet
             .init(id, date)
             .copy(clinicalAssertionTraitIds = (start to end).map(_.toString).toList),

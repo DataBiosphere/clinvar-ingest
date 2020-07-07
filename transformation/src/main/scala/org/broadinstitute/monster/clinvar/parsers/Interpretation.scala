@@ -20,7 +20,7 @@ import scala.collection.mutable
   * @param traitSets groups of conditions described by the interpretation
   * @param traits conditions described by the interpretation
   */
-case class ParsedInterpretation(
+case class Interpretation(
   dateLastEvaluated: Option[LocalDate],
   `type`: Option[String],
   description: Option[String],
@@ -30,7 +30,7 @@ case class ParsedInterpretation(
   traits: List[Trait]
 )
 
-object ParsedInterpretation {
+object Interpretation {
   import org.broadinstitute.monster.common.msg.MsgOps
 
   /**
@@ -40,7 +40,7 @@ object ParsedInterpretation {
   trait Parser {
 
     /** Convert a raw Interpretation payload into our parsed form. */
-    def parse(rawInterpretation: Msg): ParsedInterpretation
+    def parse(rawInterpretation: Msg): Interpretation
   }
 
   /** Parser for "real" Interpretation payloads, to be used in production. */
@@ -64,7 +64,7 @@ object ParsedInterpretation {
             (traitSet +: setAcc, traits ++ traitAcc)
         }
 
-      ParsedInterpretation(
+      Interpretation(
         dateLastEvaluated = rawInterpretation.tryExtract[LocalDate]("@DateLastEvaluated"),
         `type` = rawInterpretation.tryExtract[String]("@Type"),
         description = rawInterpretation.tryExtract[String]("Description", "$"),

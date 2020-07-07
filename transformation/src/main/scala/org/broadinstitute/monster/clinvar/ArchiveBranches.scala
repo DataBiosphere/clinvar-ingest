@@ -5,7 +5,7 @@ import java.time.LocalDate
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.{SCollection, SideOutput}
 import org.broadinstitute.monster.clinvar.jadeschema.table._
-import org.broadinstitute.monster.clinvar.parsers.ParsedArchive
+import org.broadinstitute.monster.clinvar.parsers.VCV
 import org.broadinstitute.monster.common.PipelineCoders
 import upack.{Msg, Str}
 
@@ -46,7 +46,7 @@ object ArchiveBranches extends PipelineCoders {
     * prior to elements being pushed out of the split step.
     */
   def fromArchiveStream(
-    parser: ParsedArchive.Parser,
+    parser: VCV.Parser,
     archiveStream: SCollection[Msg]
   ): ArchiveBranches = {
     val geneOut = SideOutput[(Gene, Option[LocalDate])]
