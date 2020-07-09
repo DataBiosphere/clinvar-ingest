@@ -156,7 +156,7 @@ spec:
                 - name: output-pvc-name
                   value: {{ $extractionPvc | quote }}
                 - name: objects-per-part
-                  value: '1024'
+                  value: '512'
                 - name: gunzip
                   value: 'true'
                 - name: memory-mib
