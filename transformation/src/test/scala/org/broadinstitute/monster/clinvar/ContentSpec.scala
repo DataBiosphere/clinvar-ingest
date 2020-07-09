@@ -21,12 +21,22 @@ class ContentSpec extends AnyFlatSpec with Matchers with OptionValues {
          |  "nested": {
          |    "beepboop": [true, false],
          |    "wat": 1234.01
-         |  }
+         |  },
+         |  "many-objs": [
+         |    { "object1": "should-go-second", "zzzzzz": "sleepy" },
+         |    { "short": "object" },
+         |    { "object2": "should-go-first", "aaaaaa": "awake" }
+         |  ]
          |}""".stripMargin
     )
     val sorted =
       s"""{
          |  "eep": "asdfadsfdasfadsfdasdas",
+         |  "many-objs": [
+         |    { "short": "object" },
+         |    { "aaaaaa": "awake", "object2": "should-go-first" },
+         |    { "object1": "should-go-second", "zzzzzz": "sleepy" }
+         |  ],
          |  "nested": {
          |    "beepboop": [false, true],
          |    "wat": 1234.01
