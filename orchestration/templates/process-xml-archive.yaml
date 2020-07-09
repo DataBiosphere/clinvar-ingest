@@ -6,6 +6,8 @@ spec:
   entrypoint: main
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
   templates:
+    {{- $pipelineVersion := default "latest" .Values.version }}
+
     ##
     ## Entrypoint for processing a ClinVar archive.
     ##
@@ -21,17 +23,18 @@ spec:
           {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
       dag:
         tasks:
-          - name: check-already-processed
-            template: check-processing-history
-            arguments:
-              parameters:
-                - name: release-date
-                  value: {{ $releaseDate | quote }}
-          {{- $shouldProcess := "{{tasks.check-already-processed.outputs.result}} == 0"}}
+          # TODO: Query the processing_history table to see if we've already
+          # done the work to ingest the release-date under the current pipeline
+          # version.
+          #
+          # This is trickier than it sounds because our current dev setup causes
+          # the pipeline version to always be "latest", which isn't very useful.
+          #
+          # A plausible approach would be to only run the pre-check if a version
+          # is pinned, though that will make wiring up the Argo dependencies more
+          # complicated.
 
           - name: process-archive
-            dependencies: [check-already-processed]
-            when: {{ $shouldProcess | quote }}
             template: process-archive
             arguments:
               parameters:
@@ -42,7 +45,6 @@ spec:
 
           - name: ingest-archive
             dependencies: [process-archive]
-            when: {{ $shouldProcess | quote }}
             template: ingest-archive
             arguments:
               parameters:
@@ -51,32 +53,17 @@ spec:
                 - name: gcs-prefix
                   value: {{ $gcsPrefix | quote }}
 
-    {{- $pipelineVersion := default "latest" .Values.version }}
-    ##
-    ## Check the processing_history table for a row matching the target
-    ## release-date and pipeline version, to see if we can short-circuit.
-    ##
-    - name: check-processing-history
-      inputs:
-        parameters:
-          - name: release-date
-          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
-      script:
-        image: google/cloud-sdk:slim
-        env:
-          - name: RELEASE_DATE
-            value: {{ $releaseDate | quote }}
-          - name: VERSION
-            value: {{ $pipelineVersion }}
-          - name: PROJECT
-            value: {{ .Values.staging.bigquery.project }}
-          - name: JADE_PROJECT
-            value: {{ .Values.jade.dataProject }}
-          - name: JADE_DATASET
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
-        command: [bash]
-        source: |
-        {{- include "argo.render-lines" (.Files.Lines "scripts/check-already-processed.sh") | indent 10 }}
+          # TODO: Add remaining 'publish' steps for the Jade context:
+          #  1. Insert a row into the processing_history table, for provenance
+          #     and to short-circuit any reprocessing
+          #  2. Submit & poll a snapshot job, using the release_date asset
+          #
+          # Templates are already defined at the bottom of this file for thing 2,
+          # but they aren't wired up here because we need to think through our
+          # strategy for cutting snapshots when pipeline version can sometimes
+          # be "latest". A plausible approach would be to only auto-snapshot when
+          # a version is pinned, though that will complicate our story for testing
+          # in dev.
 
     ##
     ## Convert a ClinVar archive from XML to JSON, then process it with Dataflow.
@@ -102,10 +89,10 @@ spec:
           # Use the archive's ID to get its gs:// path.
           - name: get-archive-uri
             dependencies: [get-archive-id]
-            template: get-archive-uri
+            template: lookup-archive-path
             arguments:
               parameters:
-                - name: file-id
+                - name: archive-id
                   value: {{ $archiveId | quote }}
             {{- $archivePath := "{{tasks.get-archive-uri.outputs.result}}" }}
 
@@ -416,39 +403,6 @@ spec:
                 - name: table-name
                   value: {{ "{{item}}" | quote }}
 
-          # TODO: Delete the staging BQ dataset here.
-
-          # TODO: Add processing-history row
-
-          # Launch a job to create a snapshot containing all data for the release-date.
-          - name: launch-snapshot-job
-            dependencies: [ingest-tables]
-            template: submit-snapshot
-            arguments:
-              parameters:
-                - name: release-date
-                  value: {{ $releaseDate | quote }}
-            {{ $jobId := "{{tasks.launch-snapshot-job.outputs.result}}" }}
-
-          # Poll the snapshot process to completion.
-          - name: poll-snapshot-job
-            dependencies: [launch-snapshot-job]
-            template: poll-ingest-job
-            arguments:
-              parameters:
-                - name: job-id
-                  value: {{ $jobId | quote }}
-                {{- with .Values.jade }}
-                - name: api-url
-                  value: {{ .url }}
-                - name: timeout
-                  value: {{ .pollTimeout | quote }}
-                - name: sa-secret
-                  value: {{ .accessKey.secretName }}
-                - name: sa-secret-key
-                  value: {{ .accessKey.secretKey }}
-                {{- end }}
-
     ##
     ## Sync the processed outputs of a single table into the TDR.
     ##
@@ -549,6 +503,15 @@ spec:
                 - name: sa-secret-key
                   value: {{ .accessKey.secretKey }}
                 {{- end }}
+
+    ##
+    ## Stage a JSON object in GCS containing data for a row in the processing_history table.
+    ##
+    - name: stage-processing-history-row
+      inputs:
+        parameters:
+          - name: release-date
+
 
     ##
     ## Submit a job to the TDR which will create a snapshot of all data for
