@@ -19,62 +19,24 @@ spec:
           {{- $archivePath := "{{inputs.parameters.archive-path}}" }}
           - name: gcs-prefix
           {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
-          - name: notify-clingen
-          {{- $notifyClingen := "{{inputs.parameters.notify-clingen}}" }}
-          - name: publish-snapshot
-          {{- $publishSnapshot := "{{inputs.parameters.publish-snapshot}}" }}
       dag:
         tasks:
-          # Transfer and process the archive, staging outputs in GCS.
-          - name: process-archive
-            templateRef:
-              name: process-clinvar-archive
-              template: main
+          - name: ingest-archive
+            template: ingest-xml-archive
             arguments:
               parameters:
                 - name: archive-path
                   value: {{ $archivePath | quote }}
                 - name: gcs-prefix
                   value: {{ $gcsPrefix | quote }}
-            {{- $releaseDate := "{{tasks.process-archive.outputs.parameters.release-date}}" }}
+            {{- $releaseDate := "{{tasks.ingest-raw-xml.outputs.parameters.release-date}}" }}
 
-          # Ingest the raw archive into the Repository, for provenance.
-          - name: ingest-raw-archive
-            dependencies: [process-archive]
-            templateRef:
-              name: ingest-raw-archive
-              template: main
+          - name: process-archive
+            dependencies: [ingest-archive]
+            template: process-xml-archive
             arguments:
               parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
                 - name: gcs-prefix
                   value: {{ $gcsPrefix | quote }}
-                - name: release-date
-                  value: {{ $releaseDate | quote }}
-
-          # Ingest the processed archive into the Repository.
-          - name: ingest-processed-archive
-            dependencies: [process-archive]
-            templateRef:
-              name: ingest-processed-archive
-              template: main
-            arguments:
-              parameters:
-                - name: gcs-prefix
-                  value: {{ $gcsPrefix | quote }}
-                - name: release-date
-                  value: {{ $releaseDate | quote }}
-                - name: publish-kafka
-                  value: {{ $notifyClingen | quote }}
-                - name: publish-snapshot
-                  value: {{ $publishSnapshot | quote }}
-
-          - name: snapshot-dataset
-            dependencies: [ingest-raw-archive, ingest-processed-archive]
-            when: {{ printf "%s == true" $publishSnapshot | quote }}
-            templateRef:
-              name: snapshot-dataset
-              template: main
-            arguments:
-              parameters:
-                - name: release-date
-                  value: {{ $releaseDate | quote }}

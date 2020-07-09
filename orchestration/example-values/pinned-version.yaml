@@ -1,3 +1,4 @@
+version: adsaasdf
 staging:
   gcsBucket: buk
   bigquery:

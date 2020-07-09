@@ -40,6 +40,17 @@ spec:
                 - name: gcs-prefix
                   value: {{ $gcsPrefix | quote }}
 
+          - name: ingest-archive
+            dependencies: [process-archive]
+            when: {{ $shouldProcess | quote }}
+            template: ingest-archive
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+                - name: gcs-prefix
+                  value: {{ $gcsPrefix | quote }}
+
     {{- $pipelineVersion := default "latest" .Values.version }}
     ##
     ## Check the processing_history table for a row matching the target
@@ -68,8 +79,7 @@ spec:
         {{- include "argo.render-lines" (.Files.Lines "scripts/check-already-processed.sh") | indent 10 }}
 
     ##
-    ## Convert a ClinVar archive from XML to JSON, process it with Dataflow,
-    ## then ingest it into the TDR.
+    ## Convert a ClinVar archive from XML to JSON, then process it with Dataflow.
     ##
     - name: process-archive
       inputs:
@@ -114,6 +124,7 @@ spec:
                   value: {{ .Values.volumes.storageClass }}
             {{- $downloadPvc := "{{tasks.generate-download-volume.outputs.parameters.pvc-name}}" }}
 
+          # Download the raw XML from the dataset's bucket.
           - name: download-archive
             dependencies: [get-archive-uri, generate-download-volume]
             template: download-gcs-file
@@ -125,6 +136,100 @@ spec:
                   value: {{ include "clinvar.raw-archive-name" . }}
                 - name: gcs-path
                   value: {{ $archivePath | quote }}
+
+          # Generate a PVC to hold extracted JSON-list files.
+          - name: generate-extraction-volume
+            # Don't generate the PVC until we need it.
+            dependencies: [download-archive]
+            templateRef:
+              name: generate-pvc
+              template: main
+            arguments:
+              parameters:
+                - name: name-prefix
+                  value: extracted-json
+                - name: size
+                  value: {{ .Values.volumes.extractSize | quote }}
+                - name: storage-class
+                  value: {{ .Values.volumes.storageClass }}
+            {{- $extractionPvc := "{{tasks.generate-extraction-volume.outputs.parameters.pvc-name}}" }}
+
+          # Extract raw XML to JSON-list.
+          - name: extract-xml
+            dependencies: [generate-extraction-volume]
+            templateRef:
+              name: {{ .Values.xmlToJsonList.templateName }}
+              template: main
+            arguments:
+              parameters:
+                - name: input-pvc-name
+                  value: {{ $downloadPvc | quote }}
+                - name: input-xml-path
+                  value: {{ include "clinvar.raw-archive-name" . }}
+                - name: output-pvc-name
+                  value: {{ $extractionPvc | quote }}
+                - name: objects-per-part
+                  value: '1024'
+                - name: gunzip
+                  value: 'true'
+                - name: memory-mib
+                  value: '2560'
+                - name: cpu-m
+                  value: '1500'
+
+          # Clean up the download PVC
+          - name: delete-download-volume
+            dependencies: [extract-xml]
+            templateRef:
+              name: {{ .Values.argoTemplates.deletePVC.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: {{ $downloadPvc | quote }}
+
+          # Upload extracted JSON-list data to GCS.
+          - name: upload-extracted-archive
+            dependencies: [extract-xml]
+            templateRef:
+              name: {{ .Values.argoTemplates.gsutilRsync.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: {{ $extractionPvc | quote }}
+                - name: local-prefix
+                  value: VariationArchive
+                - name: gcs-bucket
+                  value:  {{ .Values.staging.gcsBucket }}
+                - name: gcs-prefix
+                  value: {{ (printf "%s/raw/VariationArchive" $gcsPrefix) | quote }}
+                - name: memory
+                  value: 2Gi
+                - name: cpu
+                  value: 2000m
+
+          # Clean up the extraction PVC
+          - name: delete-extraction-volume
+            dependencies: [upload-extracted-archive]
+            templateRef:
+              name: {{ .Values.argoTemplates.deletePVC.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: {{ $extractionPvc | quote }}
+
+          # Use Dataflow to process the uploaded JSON-list
+          - name: process-archive
+            dependencies: [upload-extracted-archive]
+            template: run-dataflow
+            arguments:
+              parameters:
+                - name: gcs-prefix
+                  value: {{ $gcsPrefix | quote }}
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
 
     ##
     ## Get the file ID for the XML archive associated with the given release-date
@@ -205,7 +310,284 @@ spec:
       container:
         image: google/cloud-sdk:slim
         command: [gsutil]
-        args: [cp, {{ $gcsPath | quote }}, {{ printf "/state/%s" $localPath }}]
+        args:
+          - cp
+          - {{ $gcsPath | quote }}
+          - {{ printf "/state/%s" $localPath }}
         volumeMounts:
           - name: state
             mountPath: /state
+
+    ##
+    ## Template used to launch a Dataflow processing job on raw ClinVar data,
+    ## transforming it to our target schema.
+    ##
+    - name: run-dataflow
+      inputs:
+        parameters:
+          - name: gcs-prefix
+          {{- $prefix := "{{inputs.parameters.gcs-prefix}}" }}
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+      container:
+        image: us.gcr.io/broad-dsp-gcr-public/clinvar-transformation-pipeline:{{ $pipelineVersion }}
+        command: []
+        args:
+          - --runner=dataflow
+          {{- $bucket := .Values.staging.gcsBucket }}
+          - --inputPrefix=gs://{{ $bucket }}/{{ $prefix }}/raw
+          - --outputPrefix=gs://{{ $bucket }}/{{ $prefix }}/processed
+          - --releaseDate={{ $releaseDate }}
+          {{- with .Values.dataflow }}
+          - --project={{ .project }}
+          - --region={{ .region }}
+          - --tempLocation=gs://{{ .tmpBucketName }}/dataflow
+          - --subnetwork=regions/{{ .region }}/subnetworks/{{ .subnetName }}
+          - --serviceAccount={{ .workerAccount }}
+          - --workerMachineType={{ .workerMachineType }}
+          {{- with .autoscaling }}
+          - --autoscalingAlgorithm=THROUGHPUT_BASED
+          - --numWorkers={{ .minWorkers }}
+          - --maxNumWorkers={{ .maxWorkers }}
+          {{- end }}
+          - --experiments=shuffle_mode=service
+          {{- end }}
+
+    ##
+    ## Sync the JSON outputs of Dataflow processing into the TDR.
+    ##
+    - name: ingest-archive
+      inputs:
+        parameters:
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+      # Limit number of tables processed in parallel to avoid overwhelming
+      # our cluster or the TDR.
+      parallelism: {{ .Values.parallelism }}
+      dag:
+        tasks:
+          # Create a dataset to store intermediate outputs of ETL jobs.
+          {{- $datasetName := printf "%s_%s" .Values.staging.bigquery.datasetPrefix $gcsPrefix }}
+          - name: create-dataset
+            templateRef:
+              name: {{ .Values.argoTemplates.createBQDataset.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: dataset-name
+                  value: {{ $datasetName | quote }}
+                {{- with .Values.staging.bigquery }}
+                - name: bq-project
+                  value: {{ .project }}
+                - name: dataset-description
+                  value: {{ .description }}
+                - name: dataset-expiration
+                  value: {{ .expiration }}
+                {{- end }}
+
+          # Loop over all tables, syncing state in Jade to match data staged in GCS.
+          - name: ingest-tables
+            dependencies: [create-dataset]
+            withItems:
+              - clinical_assertion
+              - clinical_assertion_observation
+              - clinical_assertion_trait
+              - clinical_assertion_trait_set
+              - clinical_assertion_variation
+              - gene
+              - gene_association
+              - rcv_accession
+              - submission
+              - submitter
+              - trait
+              - trait_mapping
+              - trait_set
+              - variation
+              - variation_archive
+            template: ingest-table
+            arguments:
+              parameters:
+                - name: dataset-name
+                  value: {{ $datasetName | quote }}
+                - name: gcs-prefix
+                  value: {{ $gcsPrefix | quote }}
+                - name: table-name
+                  value: {{ "{{item}}" | quote }}
+
+          # TODO: Delete the staging BQ dataset here.
+
+          # TODO: Add processing-history row
+
+          # Launch a job to create a snapshot containing all data for the release-date.
+          - name: launch-snapshot-job
+            dependencies: [ingest-tables]
+            template: submit-snapshot
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+            {{ $jobId := "{{tasks.launch-snapshot-job.outputs.result}}" }}
+
+          # Poll the snapshot process to completion.
+          - name: poll-snapshot-job
+            dependencies: [launch-snapshot-job]
+            template: poll-ingest-job
+            arguments:
+              parameters:
+                - name: job-id
+                  value: {{ $jobId | quote }}
+                {{- with .Values.jade }}
+                - name: api-url
+                  value: {{ .url }}
+                - name: timeout
+                  value: {{ .pollTimeout | quote }}
+                - name: sa-secret
+                  value: {{ .accessKey.secretName }}
+                - name: sa-secret-key
+                  value: {{ .accessKey.secretKey }}
+                {{- end }}
+
+    ##
+    ## Sync the processed outputs of a single table into the TDR.
+    ##
+    - name: ingest-table
+      inputs:
+        parameters:
+          - name: dataset-name
+          {{- $datasetName := "{{inputs.parameters.dataset-name}}" }}
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+          - name: table-name
+          {{- $tableName := "{{inputs.parameters.table-name}}" }}
+      dag:
+        tasks:
+          # Diff staged data against previously-ingested state.
+          {{- $newRowsPrefix := printf "%s/new-rows/%s" $gcsPrefix $tableName }}
+          {{- $oldIdsPrefix := printf "%s/old-ids/%s" $gcsPrefix $tableName }}
+          - name: diff-table
+            templateRef:
+              name: {{ .Values.argoTemplates.diffBQTable.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: table-name
+                  value: {{ $tableName | quote }}
+                - name: gcs-bucket
+                  value: {{ .Values.staging.gcsBucket }}
+                - name: input-prefix
+                  value: {{ printf "%s/processed/%s" $gcsPrefix $tableName | quote }}
+                - name: old-ids-output-prefix
+                  value: {{ $oldIdsPrefix | quote }}
+                - name: new-rows-output-prefix
+                  value: {{ $newRowsPrefix | quote }}
+                - name: staging-bq-project
+                  value: {{ .Values.staging.bigquery.project }}
+                - name: staging-bq-dataset
+                  value: {{ $datasetName | quote }}
+                - name: jade-bq-project
+                  value: {{ .Values.jade.dataProject }}
+                - name: jade-bq-dataset
+                  value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+            {{- $joinTable := "{{tasks.diff-table.outputs.parameters.join-table-name}}" }}
+            {{- $shouldAppend := "{{tasks.diff-table.outputs.parameters.rows-to-append-count}} > 0" }}
+            {{- $shouldDelete := "{{tasks.diff-table.outputs.parameters.ids-to-delete-count}} > 0" }}
+
+          # Soft-delete IDs of outdated rows.
+          - name: soft-delete-table
+            dependencies: [diff-table]
+            when: {{ $shouldDelete | quote }}
+            templateRef:
+              name: {{ .Values.argoTemplates.softDeleteTable.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: table-name
+                  value: {{ $tableName | quote }}
+                - name: gcs-prefix
+                  value: {{ $oldIdsPrefix | quote }}
+                - name: gcs-bucket
+                  value: {{ .Values.staging.gcsBucket }}
+                {{- with .Values.jade }}
+                - name: url
+                  value: {{ .url }}
+                - name: dataset-id
+                  value: {{ .datasetId }}
+                - name: timeout
+                  value: {{ .pollTimeout }}
+                - name: sa-secret
+                  value: {{ .accessKey.secretName }}
+                - name: sa-secret-key
+                  value: {{ .accessKey.secretKey }}
+                {{- end }}
+
+          # Append rows with new data.
+          - name: ingest-table
+            dependencies: [diff-table, soft-delete-table]
+            when: {{ $shouldAppend | quote }}
+            templateRef:
+              name:  {{ .Values.argoTemplates.ingestTable.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: table-name
+                  value: {{ $tableName | quote }}
+                - name: gcs-bucket
+                  value: {{ .Values.staging.gcsBucket }}
+                - name: gcs-prefix
+                  value: {{ $newRowsPrefix | quote }}
+                {{- with .Values.jade }}
+                - name: url
+                  value: {{ .url }}
+                - name: dataset-id
+                  value: {{ .datasetId }}
+                - name: timeout
+                  value: {{ .pollTimeout }}
+                - name: sa-secret
+                  value: {{ .accessKey.secretName }}
+                - name: sa-secret-key
+                  value: {{ .accessKey.secretKey }}
+                {{- end }}
+
+    ##
+    ## Submit a job to the TDR which will create a snapshot of all data for
+    ## a given ClinVar release date.
+    ##
+    - name: submit-snapshot
+      inputs:
+        parameters:
+          - name: release-date
+            {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+      volumes:
+        {{- with .Values.jade }}
+        - name: sa-secret-volume
+          secret:
+            secretName: {{ .accessKey.secretName }}
+      script:
+        image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.1
+        volumeMounts:
+          - name: sa-secret-volume
+            mountPath: /secret
+        env:
+          - name: API_URL
+            value: {{ .url }}
+          - name: DATASET_NAME
+            value: {{ .datasetName }}
+          - name: PROFILE_ID
+            value: {{ .profileId }}
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: {{ printf "/secret/%s" .accessKey.secretKey }}
+          - name: ASSET_NAME
+            value: {{ .snapshotAssetName }}
+        {{- end }}
+          - name: RELEASE_DATE
+            value: {{ $releaseDate | quote }}
+          - name: PIPELINE_VERSION
+            value: {{ $pipelineVersion }}
+        command: [python]
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/request-release-date-snapshot.py") | indent 10 }}
+
+    ## Inject template used to poll TDR jobs.
+    {{- include "argo.poll-ingest-job" . | indent 4 }}

@@ -3,6 +3,7 @@
   "type": "object",
   "properties": {
     "version": { "type": "string" },
+    "parallelism": { "type": "integer", "minimum": 1 },
     "staging": {
       "type": "object",
       "properties": {
@@ -36,9 +37,11 @@
             "secretKey": { "type": "string" }
           },
           "required": ["secretName", "secretKey"]
-        }
+        },
+        "snapshotAssetName": { "type": "string" }
       },
-      "required": ["url", "datasetId", "datasetName", "profileId", "pollTimeout", "dataProject", "accessKey"]
+      "required": ["url", "datasetId", "datasetName", "profileId", "pollTimeout",
+                   "dataProject", "accessKey", "snapshotAssetName"]
     },
     "serviceAccount": {
       "type": "object",
@@ -124,5 +127,6 @@
       "required": ["gcsBucket", "kafka"]
     }
   },
-  "required": ["staging", "jade", "serviceAccount", "volumes", "cron", "dataflow", "notification", "clingen"]
+  "required": ["parallelism", "staging", "jade", "serviceAccount",
+               "volumes", "cron", "dataflow", "notification", "clingen"]
 }
