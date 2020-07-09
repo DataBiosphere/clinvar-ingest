@@ -160,7 +160,7 @@ spec:
                 - name: gunzip
                   value: 'true'
                 - name: memory-mib
-                  value: '2560'
+                  value: '4096'
                 - name: cpu-m
                   value: '1500'
 
