@@ -159,8 +159,8 @@ spec:
                   value: '1024'
                 - name: gunzip
                   value: 'true'
-                - name: memory-mib
-                  value: '4096'
+                - name: memory-gib
+                  value: '4'
                 - name: cpu-m
                   value: '1500'
 
