@@ -37,7 +37,7 @@ object Interpretation {
     * Interface for a utility which can convert raw Interpretations into
     * our target schema.
     */
-  trait Parser {
+  trait Parser extends Serializable {
 
     /** Convert a raw Interpretation payload into our parsed form. */
     def parse(rawInterpretation: Msg): Interpretation
