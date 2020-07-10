@@ -22,7 +22,9 @@ spec:
       dag:
         tasks:
           - name: ingest-archive
-            template: ingest-xml-archive
+            templateRef:
+              name: ingest-xml-archive
+              template: main
             arguments:
               parameters:
                 - name: archive-path
@@ -33,7 +35,9 @@ spec:
 
           - name: process-archive
             dependencies: [ingest-archive]
-            template: process-xml-archive
+            templateRef:
+              name: process-xml-archive
+              template: main
             arguments:
               parameters:
                 - name: release-date
