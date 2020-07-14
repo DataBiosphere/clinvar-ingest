@@ -7,6 +7,7 @@ spec:
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
   templates:
     {{- $pipelineVersion := default "latest" .Values.version }}
+    {{- $versionIsPinned := ne $pipelineVersion "latest" }}
 
     ##
     ## Entrypoint for processing a ClinVar archive.
@@ -33,8 +34,21 @@ spec:
           # A plausible approach would be to only run the pre-check if a version
           # is pinned, though that will make wiring up the Argo dependencies more
           # complicated.
+          {{- if $versionIsPinned }}
+          - name: check-processing-history
+            template: get-processing-history-rows
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+          {{- end }}
+          {{- $processingNeeded := "{{tasks.check-processing-history.outputs.result}} == 0" }}
 
           - name: process-archive
+            {{- if $versionIsPinned }}
+            dependencies: [check-processing-history]
+            when: {{ $processingNeeded | quote }}
+            {{- end }}
             template: process-archive
             arguments:
               parameters:
@@ -45,6 +59,9 @@ spec:
 
           - name: ingest-archive
             dependencies: [process-archive]
+            {{- if $versionIsPinned }}
+            when: {{ $processingNeeded | quote }}
+            {{- end }}
             template: ingest-archive
             arguments:
               parameters:
@@ -52,6 +69,7 @@ spec:
                   value: {{ $releaseDate | quote }}
                 - name: gcs-prefix
                   value: {{ $gcsPrefix | quote }}
+            {{- $stagingDataset := "{{tasks.ingest-archive.outputs.parameters.dataset-name}}" }}
 
           # TODO: Add remaining 'publish' steps for the Jade context:
           #  1. Insert a row into the processing_history table, for provenance
@@ -64,6 +82,56 @@ spec:
           # be "latest". A plausible approach would be to only auto-snapshot when
           # a version is pinned, though that will complicate our story for testing
           # in dev.
+          {{- if $versionIsPinned }}
+          - name: stage-processing-history
+            dependencies: [ingest-archive]
+            template: stage-processing-history-row
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+                - name: gcs-prefix
+                  value: {{ printf "%s/processed" $gcsPrefix | quote }}
+
+          - name: sync-processing-history
+            dependencies: [stage-processing-history]
+            template: ingest-table
+            arguments:
+              parameters:
+                - name: dataset-name
+                  value: {{ $stagingDataset | quote }}
+                - name: gcs-prefix
+                  value: {{ $gcsPrefix | quote }}
+                - name: table-name
+                  value: processing_history
+
+          - name: submit-snapshot
+            dependencies: [sync-processing-history]
+            template: submit-snapshot
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+            {{- $jobId := "{{tasks.submit-snapshot.outputs.result}}" }}
+
+          - name: poll-snapshot
+            dependencies: [submit-snapshot]
+            template: poll-ingest-job
+            arguments:
+              parameters:
+                - name: job-id
+                  value: {{ $jobId | quote }}
+                {{- with .Values.jade }}
+                - name: api-url
+                  value: {{ .url }}
+                - name: timeout
+                  value: {{ .pollTimeout }}
+                - name: sa-secret
+                  value: {{ .accessKey.secretName }}
+                - name: sa-secret-key
+                  value: {{ .accessKey.secretKey }}
+                {{- end }}
+          {{- end }}
 
     ##
     ## Convert a ClinVar archive from XML to JSON, then process it with Dataflow.
@@ -402,6 +470,11 @@ spec:
                   value: {{ $gcsPrefix | quote }}
                 - name: table-name
                   value: {{ "{{item}}" | quote }}
+      outputs:
+        parameters:
+          - name: dataset-name
+            valueFrom:
+              parameter: {{ $datasetName | quote }}
 
     ##
     ## Sync the processed outputs of a single table into the TDR.
@@ -504,6 +577,32 @@ spec:
                   value: {{ .accessKey.secretKey }}
                 {{- end }}
 
+    {{- if $versionIsPinned }}
+    ##
+    ## Count the number of rows in the processing_history table with a given release-date/version pair.
+    ##
+    - name: get-processing-history-rows
+      inputs:
+        parameters:
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+      script:
+        image: google/cloud-sdk:slim
+        command: [bash]
+        env:
+          - name: PROJECT
+            value: {{ .Values.staging.bigquery.project }}
+          - name: JADE_PROJECT
+            value: {{ .Values.jade.dataProject }}
+          - name: JADE_DATASET
+            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+          - name: RELEASE_DATE
+            value: {{ $releaseDate | quote }}
+          - name: VERSION
+            value: {{ $pipelineVersion | quote }}
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/count-processing-history-rows.sh") | indent 10 }}
+
     ##
     ## Stage a JSON object in GCS containing data for a row in the processing_history table.
     ##
@@ -511,7 +610,19 @@ spec:
       inputs:
         parameters:
           - name: release-date
-
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+      script:
+        image: google/cloud-sdk:slim
+        command: [bash]
+        {{- $uploadPath := printf "gs://%s/%s/processing_history/" .Values.staging.gcsBucket $gcsPrefix }}
+        {{- $date := printf "%s-%s-%s" "{{workflow.creationTimestamp.Y}}" "{{workflow.creationTimestamp.m}}" "{{workflow.creationTimestamp.d}}"}}
+        source: |
+          proc_date=$(date '+%Y-%m-%d')
+          json='{"release_date":"{{ $releaseDate }}", "pipeline_version":"{{ $pipelineVersion }}", "processing_date":"{{ $date }}"}'
+          echo "$json" > history.json
+          gsutil cp history.json {{ $uploadPath }}
 
     ##
     ## Submit a job to the TDR which will create a snapshot of all data for
@@ -554,3 +665,4 @@ spec:
 
     ## Inject template used to poll TDR jobs.
     {{- include "argo.poll-ingest-job" . | indent 4 }}
+    {{- end }}
