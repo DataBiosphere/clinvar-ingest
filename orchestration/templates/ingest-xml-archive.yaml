@@ -108,6 +108,12 @@ spec:
                 - name: pvc-name
                   value: {{ $downloadPvc | quote }}
 
+      outputs:
+        parameters:
+          - name: release-date
+            valueFrom:
+              parameter: {{ $releaseDate | quote }}
+
     ##
     ## Extract the value of the "ReleaseDate" attribute from the root node of a ClinVar release.
     ##
@@ -156,9 +162,11 @@ spec:
             value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
           - name: RELEASE_DATE
             value: {{ $releaseDate | quote }}
+          - name: PROPERTY
+            value: 'COUNT(1)'
         command: [bash]
         source: |
-        {{- include "argo.render-lines" (.Files.Lines "scripts/check-for-release.sh") | indent 10 }}
+        {{- include "argo.render-lines" (.Files.Lines "scripts/get-archive-property.sh") | indent 10 }}
 
     ##
     ## Sub-dag to ingest a raw release into the Repo and register it in the xml_archive table.

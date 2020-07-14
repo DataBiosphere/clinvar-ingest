@@ -24,7 +24,7 @@ spec:
         steps:
           - - name: run-main-template
               templateRef:
-                name: ingest-xml-archive
+                name: ingest-clinvar-archive
                 template: main
               arguments:
                 parameters:

@@ -1,3 +1,4 @@
+parallelism: 4
 volumes:
   storageClass: standard
   downloadSize: 1Gi
@@ -17,6 +18,7 @@ dataflow:
 jade:
   # 24 hours -> 86400 seconds
   pollTimeout: 86400
+  snapshotAssetName: clinvar_release
 xmlToJsonList:
   templateName: extract-xml-to-json
 argoTemplates:

@@ -43,7 +43,7 @@ object SCVTraitSet {
     * Interface for a utility which can convert raw TraitSet payloads contained in an SCV
     * into our target schema.
     */
-  trait Parser {
+  trait Parser extends Serializable {
 
     /**
       * Convert a raw TraitSet payload from an SCV into our parsed form.

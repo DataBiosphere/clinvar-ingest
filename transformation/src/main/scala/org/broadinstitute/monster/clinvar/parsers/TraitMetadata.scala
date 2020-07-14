@@ -34,7 +34,7 @@ object TraitMetadata {
     * Interface for a utility which can extract common metadata
     * from unmodeled Trait payloads.
     * */
-  trait Parser {
+  trait Parser extends Serializable {
 
     /**
       * Extract common metadata from an unmodeled Trait payload.

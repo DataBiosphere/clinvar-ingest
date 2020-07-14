@@ -65,7 +65,7 @@ object SCV {
     * Interface for a utility which can convert raw ClinicalAssertions into
     * our target schema.
     */
-  trait Parser {
+  trait Parser extends Serializable {
 
     /**
       * Convert a raw ClinicalAssertion payload into our parsed form.

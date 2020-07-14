@@ -31,7 +31,7 @@ object Variation {
     * Interface for a utility which can extract variation-related info from
     * raw ClinVar records, transforming into our target schema.
     */
-  trait Parser {
+  trait Parser extends Serializable {
 
     /** Extract variation models from a raw InterpretedRecord or IncludedRecord. */
     def parse(rawRecord: Msg): Variation
