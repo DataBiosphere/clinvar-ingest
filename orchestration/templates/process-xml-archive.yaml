@@ -24,16 +24,15 @@ spec:
           {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
       dag:
         tasks:
-          # TODO: Query the processing_history table to see if we've already
+          # Query the processing_history table to see if we've already
           # done the work to ingest the release-date under the current pipeline
           # version.
           #
           # This is trickier than it sounds because our current dev setup causes
           # the pipeline version to always be "latest", which isn't very useful.
           #
-          # A plausible approach would be to only run the pre-check if a version
-          # is pinned, though that will make wiring up the Argo dependencies more
-          # complicated.
+          # For now we assume that "latest" means we should always reprocess the
+          # data, and disable auto-snapshot in that case.
           {{- if $versionIsPinned }}
           - name: check-processing-history
             template: get-processing-history-rows
@@ -71,17 +70,8 @@ spec:
                   value: {{ $gcsPrefix | quote }}
             {{- $stagingDataset := "{{tasks.ingest-archive.outputs.parameters.dataset-name}}" }}
 
-          # TODO: Add remaining 'publish' steps for the Jade context:
-          #  1. Insert a row into the processing_history table, for provenance
-          #     and to short-circuit any reprocessing
-          #  2. Submit & poll a snapshot job, using the release_date asset
-          #
-          # Templates are already defined at the bottom of this file for thing 2,
-          # but they aren't wired up here because we need to think through our
-          # strategy for cutting snapshots when pipeline version can sometimes
-          # be "latest". A plausible approach would be to only auto-snapshot when
-          # a version is pinned, though that will complicate our story for testing
-          # in dev.
+          # If we have provenance information, cut a snapshot of the new data
+          # for the release-date.
           {{- if $versionIsPinned }}
           - name: stage-processing-history
             dependencies: [ingest-archive]
