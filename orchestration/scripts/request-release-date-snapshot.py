@@ -30,7 +30,7 @@ def submit_snapshot(**kwargs):
 cleaned_date = release_date.replace('-', '_')
 cleaned_version = re.sub('[^a-z0-9_]', '_', pipeline_version.lower())
 
-snapshot_name = f"clinvar_{cleaned_date}_{cleaned_version}"
+snapshot_name = f"clinvar_{cleaned_date}_v{cleaned_version}"
 snapshot_description = \
   f"Mirror of NCBI's ClinVar archive as of {release_date} (ingest pipeline version: {pipeline_version})"
 
