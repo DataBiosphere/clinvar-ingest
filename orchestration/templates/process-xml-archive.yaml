@@ -96,6 +96,8 @@ spec:
                   value: {{ $gcsPrefix | quote }}
                 - name: table-name
                   value: processing_history
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
 
           - name: submit-snapshot
             dependencies: [sync-processing-history]
