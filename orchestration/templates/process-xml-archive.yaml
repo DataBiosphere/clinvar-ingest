@@ -75,6 +75,7 @@ spec:
           {{- if $versionIsPinned }}
           - name: stage-processing-history
             dependencies: [ingest-archive]
+            when: {{ $processingNeeded | quote }}
             template: stage-processing-history-row
             arguments:
               parameters:
@@ -85,6 +86,7 @@ spec:
 
           - name: sync-processing-history
             dependencies: [stage-processing-history]
+            when: {{ $processingNeeded | quote }}
             template: ingest-table
             arguments:
               parameters:
@@ -97,6 +99,7 @@ spec:
 
           - name: submit-snapshot
             dependencies: [sync-processing-history]
+            when: {{ $processingNeeded | quote }}
             template: submit-snapshot
             arguments:
               parameters:
@@ -106,6 +109,7 @@ spec:
 
           - name: poll-snapshot
             dependencies: [submit-snapshot]
+            when: {{ $processingNeeded | quote }}
             template: poll-ingest-job
             arguments:
               parameters:
@@ -414,7 +418,6 @@ spec:
       dag:
         tasks:
           # Create a dataset to store intermediate outputs of ETL jobs.
-          {{- $datasetName := printf "%s_%s" .Values.staging.bigquery.datasetPrefix $gcsPrefix }}
           - name: create-dataset
             templateRef:
               name: {{ .Values.argoTemplates.createBQDataset.name }}
@@ -422,7 +425,7 @@ spec:
             arguments:
               parameters:
                 - name: dataset-name
-                  value: {{ $datasetName | quote }}
+                  value: {{ printf "%s_%s" .Values.staging.bigquery.datasetPrefix $gcsPrefix | quote }}
                 {{- with .Values.staging.bigquery }}
                 - name: bq-project
                   value: {{ .project }}
@@ -431,6 +434,7 @@ spec:
                 - name: dataset-expiration
                   value: {{ .expiration }}
                 {{- end }}
+            {{- $datasetName := "{{tasks.create-dataset.outputs.result}}" }}
 
           # Loop over all tables, syncing state in Jade to match data staged in GCS.
           - name: ingest-tables
@@ -460,6 +464,8 @@ spec:
                   value: {{ $gcsPrefix | quote }}
                 - name: table-name
                   value: {{ "{{item}}" | quote }}
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
       outputs:
         parameters:
           - name: dataset-name
@@ -478,6 +484,8 @@ spec:
           {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
           - name: table-name
           {{- $tableName := "{{inputs.parameters.table-name}}" }}
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
       dag:
         tasks:
           # Diff staged data against previously-ingested state.
@@ -507,6 +515,12 @@ spec:
                   value: {{ .Values.jade.dataProject }}
                 - name: jade-bq-dataset
                   value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+                - name: upsert
+                  value: 'false'
+                - name: diff-full-history
+                  value: 'false'
+                - name: jade-table-pre-filter
+                  value: {{ printf "release_date = '%s'" $releaseDate | quote }}
             {{- $joinTable := "{{tasks.diff-table.outputs.parameters.join-table-name}}" }}
             {{- $shouldAppend := "{{tasks.diff-table.outputs.parameters.rows-to-append-count}} > 0" }}
             {{- $shouldDelete := "{{tasks.diff-table.outputs.parameters.ids-to-delete-count}} > 0" }}
