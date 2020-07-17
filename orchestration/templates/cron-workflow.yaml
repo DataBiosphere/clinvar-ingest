@@ -37,7 +37,6 @@ spec:
       ## Send a Slack notifcation if the workflow has failed.
       ##
       - name: send-slack-notification-if-failed
-        dag:
         steps:
           - - name: send-notification
               template: send-slack-notification
