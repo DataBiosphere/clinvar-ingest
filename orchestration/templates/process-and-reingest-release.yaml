@@ -75,60 +75,18 @@ spec:
           # If we have provenance information, cut a snapshot of the new data
           # for the release-date.
           {{- if $versionIsPinned }}
-          - name: stage-processing-history
+          - name: publish-processing-results
             dependencies: [ingest-archive]
             when: {{ $processingNeeded | quote }}
-            template: stage-processing-history-row
+            template: publish-processing-results
             arguments:
               parameters:
                 - name: release-date
                   value: {{ $releaseDate | quote }}
-                - name: gcs-prefix
-                  value: {{ printf "%s/processed" $gcsPrefix | quote }}
-
-          - name: sync-processing-history
-            dependencies: [stage-processing-history]
-            when: {{ $processingNeeded | quote }}
-            template: ingest-table
-            arguments:
-              parameters:
-                - name: dataset-name
-                  value: {{ $stagingDataset | quote }}
                 - name: gcs-prefix
                   value: {{ $gcsPrefix | quote }}
-                - name: table-name
-                  value: processing_history
-                - name: release-date
-                  value: {{ $releaseDate | quote }}
-
-          - name: submit-snapshot
-            dependencies: [sync-processing-history]
-            when: {{ $processingNeeded | quote }}
-            template: submit-snapshot
-            arguments:
-              parameters:
-                - name: release-date
-                  value: {{ $releaseDate | quote }}
-            {{- $jobId := "{{tasks.submit-snapshot.outputs.result}}" }}
-
-          - name: poll-snapshot
-            dependencies: [submit-snapshot]
-            when: {{ $processingNeeded | quote }}
-            template: poll-ingest-job
-            arguments:
-              parameters:
-                - name: job-id
-                  value: {{ $jobId | quote }}
-                {{- with .Values.jade }}
-                - name: api-url
-                  value: {{ .url }}
-                - name: timeout
-                  value: {{ .pollTimeout }}
-                - name: sa-secret
-                  value: {{ .accessKey.secretName }}
-                - name: sa-secret-key
-                  value: {{ .accessKey.secretKey }}
-                {{- end }}
+                - name: bq-dataset
+                  value: {{ $stagingDataset | quote }}
           {{- end }}
 
     ##
@@ -311,6 +269,72 @@ spec:
                 {{- end }}
 
     {{- if $versionIsPinned }}
+    ##
+    ## Publish the data stored in the TDR under a release-date by marking
+    ## it as processed with the current pipeline version, then cutting a
+    ## snapshot.
+    ##
+    - name: publish-processing-results
+      inputs:
+        parameters:
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+          - name: bq-dataset
+          {{- $stagingDataset := "{{inputs.parameters.bq-dataset}}" }}
+      dag:
+        tasks:
+          - name: stage-processing-history
+            template: stage-processing-history-row
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+                - name: gcs-prefix
+                  value: {{ printf "%s/processed" $gcsPrefix | quote }}
+
+          - name: sync-processing-history
+            dependencies: [stage-processing-history]
+            template: ingest-table
+            arguments:
+              parameters:
+                - name: dataset-name
+                  value: {{ $stagingDataset | quote }}
+                - name: gcs-prefix
+                  value: {{ $gcsPrefix | quote }}
+                - name: table-name
+                  value: processing_history
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+
+          - name: submit-snapshot
+            dependencies: [sync-processing-history]
+            template: submit-snapshot
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+            {{- $jobId := "{{tasks.submit-snapshot.outputs.result}}" }}
+
+          - name: poll-snapshot
+            dependencies: [submit-snapshot]
+            template: poll-ingest-job
+            arguments:
+              parameters:
+                - name: job-id
+                  value: {{ $jobId | quote }}
+                {{- with .Values.jade }}
+                - name: api-url
+                  value: {{ .url }}
+                - name: timeout
+                  value: {{ .pollTimeout }}
+                - name: sa-secret
+                  value: {{ .accessKey.secretName }}
+                - name: sa-secret-key
+                  value: {{ .accessKey.secretKey }}
+                {{- end }}
+
     ##
     ## Count the number of rows in the processing_history table with a given release-date/version pair.
     ##
