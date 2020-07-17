@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: process-xml-archive
+  name: process-and-reingest-release
 spec:
   entrypoint: main
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
@@ -48,7 +48,9 @@ spec:
             dependencies: [check-processing-history]
             when: {{ $processingNeeded | quote }}
             {{- end }}
-            template: process-archive
+            templateRef:
+              name: process-xml-release
+              template: main
             arguments:
               parameters:
                 - name: release-date
@@ -73,335 +75,18 @@ spec:
           # If we have provenance information, cut a snapshot of the new data
           # for the release-date.
           {{- if $versionIsPinned }}
-          - name: stage-processing-history
+          - name: publish-processing-results
             dependencies: [ingest-archive]
             when: {{ $processingNeeded | quote }}
-            template: stage-processing-history-row
+            template: publish-processing-results
             arguments:
               parameters:
                 - name: release-date
                   value: {{ $releaseDate | quote }}
                 - name: gcs-prefix
-                  value: {{ printf "%s/processed" $gcsPrefix | quote }}
-
-          - name: sync-processing-history
-            dependencies: [stage-processing-history]
-            when: {{ $processingNeeded | quote }}
-            template: ingest-table
-            arguments:
-              parameters:
-                - name: dataset-name
+                  value: {{ $gcsPrefix | quote }}
+                - name: bq-dataset
                   value: {{ $stagingDataset | quote }}
-                - name: gcs-prefix
-                  value: {{ $gcsPrefix | quote }}
-                - name: table-name
-                  value: processing_history
-                - name: release-date
-                  value: {{ $releaseDate | quote }}
-
-          - name: submit-snapshot
-            dependencies: [sync-processing-history]
-            when: {{ $processingNeeded | quote }}
-            template: submit-snapshot
-            arguments:
-              parameters:
-                - name: release-date
-                  value: {{ $releaseDate | quote }}
-            {{- $jobId := "{{tasks.submit-snapshot.outputs.result}}" }}
-
-          - name: poll-snapshot
-            dependencies: [submit-snapshot]
-            when: {{ $processingNeeded | quote }}
-            template: poll-ingest-job
-            arguments:
-              parameters:
-                - name: job-id
-                  value: {{ $jobId | quote }}
-                {{- with .Values.jade }}
-                - name: api-url
-                  value: {{ .url }}
-                - name: timeout
-                  value: {{ .pollTimeout }}
-                - name: sa-secret
-                  value: {{ .accessKey.secretName }}
-                - name: sa-secret-key
-                  value: {{ .accessKey.secretKey }}
-                {{- end }}
-          {{- end }}
-
-    ##
-    ## Convert a ClinVar archive from XML to JSON, then process it with Dataflow.
-    ##
-    - name: process-archive
-      inputs:
-        parameters:
-          - name: release-date
-          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
-          - name: gcs-prefix
-          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
-      dag:
-        tasks:
-          # Get the file ID of the raw XML.
-          - name: get-archive-id
-            template: get-archive-id
-            arguments:
-              parameters:
-                - name: release-date
-                  value: {{ $releaseDate | quote }}
-            {{- $archiveId := "{{tasks.get-archive-id.outputs.result}}" }}
-
-          # Use the archive's ID to get its gs:// path.
-          - name: get-archive-uri
-            dependencies: [get-archive-id]
-            template: lookup-archive-path
-            arguments:
-              parameters:
-                - name: archive-id
-                  value: {{ $archiveId | quote }}
-            {{- $archivePath := "{{tasks.get-archive-uri.outputs.result}}" }}
-
-          # Generate a PVC to hold the raw XML.
-          - name: generate-download-volume
-            templateRef:
-              name: {{ .Values.argoTemplates.generatePVC.name }}
-              template: main
-            arguments:
-              parameters:
-                - name: name-prefix
-                  value: ftp-download
-                - name: size
-                  value: {{ .Values.volumes.downloadSize | quote }}
-                - name: storage-class
-                  value: {{ .Values.volumes.storageClass }}
-            {{- $downloadPvc := "{{tasks.generate-download-volume.outputs.parameters.pvc-name}}" }}
-
-          # Download the raw XML from the dataset's bucket.
-          - name: download-archive
-            dependencies: [get-archive-uri, generate-download-volume]
-            template: download-gcs-file
-            arguments:
-              parameters:
-                - name: pvc-name
-                  value: {{ $downloadPvc | quote }}
-                - name: local-path
-                  value: {{ include "clinvar.raw-archive-name" . }}
-                - name: gcs-path
-                  value: {{ $archivePath | quote }}
-
-          # Generate a PVC to hold extracted JSON-list files.
-          - name: generate-extraction-volume
-            # Don't generate the PVC until we need it.
-            dependencies: [download-archive]
-            templateRef:
-              name: generate-pvc
-              template: main
-            arguments:
-              parameters:
-                - name: name-prefix
-                  value: extracted-json
-                - name: size
-                  value: {{ .Values.volumes.extractSize | quote }}
-                - name: storage-class
-                  value: {{ .Values.volumes.storageClass }}
-            {{- $extractionPvc := "{{tasks.generate-extraction-volume.outputs.parameters.pvc-name}}" }}
-
-          # Extract raw XML to JSON-list.
-          - name: extract-xml
-            dependencies: [generate-extraction-volume]
-            templateRef:
-              name: {{ .Values.xmlToJsonList.templateName }}
-              template: main
-            arguments:
-              parameters:
-                - name: input-pvc-name
-                  value: {{ $downloadPvc | quote }}
-                - name: input-xml-path
-                  value: {{ include "clinvar.raw-archive-name" . }}
-                - name: output-pvc-name
-                  value: {{ $extractionPvc | quote }}
-                - name: objects-per-part
-                  value: '1024'
-                - name: gunzip
-                  value: 'true'
-                - name: memory-mib
-                  value: '4096'
-                - name: cpu-m
-                  value: '1500'
-
-          # Clean up the download PVC
-          - name: delete-download-volume
-            dependencies: [extract-xml]
-            templateRef:
-              name: {{ .Values.argoTemplates.deletePVC.name }}
-              template: main
-            arguments:
-              parameters:
-                - name: pvc-name
-                  value: {{ $downloadPvc | quote }}
-
-          # Upload extracted JSON-list data to GCS.
-          - name: upload-extracted-archive
-            dependencies: [extract-xml]
-            templateRef:
-              name: {{ .Values.argoTemplates.gsutilRsync.name }}
-              template: main
-            arguments:
-              parameters:
-                - name: pvc-name
-                  value: {{ $extractionPvc | quote }}
-                - name: local-prefix
-                  value: VariationArchive
-                - name: gcs-bucket
-                  value:  {{ .Values.staging.gcsBucket }}
-                - name: gcs-prefix
-                  value: {{ (printf "%s/raw/VariationArchive" $gcsPrefix) | quote }}
-                - name: memory
-                  value: 2Gi
-                - name: cpu
-                  value: 2000m
-
-          # Clean up the extraction PVC
-          - name: delete-extraction-volume
-            dependencies: [upload-extracted-archive]
-            templateRef:
-              name: {{ .Values.argoTemplates.deletePVC.name }}
-              template: main
-            arguments:
-              parameters:
-                - name: pvc-name
-                  value: {{ $extractionPvc | quote }}
-
-          # Use Dataflow to process the uploaded JSON-list
-          - name: process-archive
-            dependencies: [upload-extracted-archive]
-            template: run-dataflow
-            arguments:
-              parameters:
-                - name: gcs-prefix
-                  value: {{ $gcsPrefix | quote }}
-                - name: release-date
-                  value: {{ $releaseDate | quote }}
-
-    ##
-    ## Get the file ID for the XML archive associated with the given release-date
-    ## in the xml_archive TDR table.
-    ##
-    - name: get-archive-id
-      inputs:
-        parameters:
-          - name: release-date
-          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
-      script:
-        image: google/cloud-sdk:slim
-        env:
-          - name: RELEASE_DATE
-            value: {{ $releaseDate | quote }}
-          - name: PROJECT
-            value: {{ .Values.staging.bigquery.project }}
-          - name: JADE_PROJECT
-            value: {{ .Values.jade.dataProject }}
-          - name: JADE_DATASET
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
-          - name: PROPERTY
-            value: archive_path
-        command: [bash]
-        source: |
-        {{- include "argo.render-lines" (.Files.Lines "scripts/get-archive-property.sh") | indent 10 }}
-
-    ##
-    ## Get the gs:// path for the file with the given ID.
-    ##
-    ## NOTE: This is generic, we should move it to monster-helm.
-    ##
-    - name: lookup-archive-path
-      inputs:
-        parameters:
-          - name: archive-id
-          {{- $archiveId := "{{inputs.parameters.archive-id}}" }}
-      volumes:
-        - name: sa-secret-volume
-          secret:
-            secretName: {{ .Values.jade.accessKey.secretName }}
-      script:
-        image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.1
-        volumeMounts:
-          - name: sa-secret-volume
-            mountPath: /secret
-        env:
-          - name: API_URL
-            value: {{ .Values.jade.url }}
-          - name: DATASET_ID
-            value: {{ .Values.jade.datasetId }}
-          - name: FILE_ID
-            value: {{ $archiveId | quote }}
-          - name: GOOGLE_APPLICATION_CREDENTIALS
-            value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
-        command: [python]
-        source: |
-        {{- include "argo.render-lines" (.Files.Lines "scripts/lookup-file-path.py") | indent 10 }}
-
-    ##
-    ## Download a file from GCS to a local volume.
-    ##
-    ## NOTE: This is generic, we should move it to monster-helm.
-    ##
-    - name: download-gcs-file
-      inputs:
-        parameters:
-          - name: pvc-name
-          {{- $pvcName := "{{inputs.parameters.pvc-name}}" }}
-          - name: local-path
-          {{- $localPath := "{{inputs.parameters.local-path}}" }}
-          - name: gcs-path
-          {{- $gcsPath := "{{inputs.parameters.gcs-path}}" }}
-      volumes:
-        - name: state
-          persistentVolumeClaim:
-            claimName: {{ $pvcName | quote }}
-      container:
-        image: google/cloud-sdk:slim
-        command: [gsutil]
-        args:
-          - cp
-          - {{ $gcsPath | quote }}
-          - {{ printf "/state/%s" $localPath }}
-        volumeMounts:
-          - name: state
-            mountPath: /state
-
-    ##
-    ## Template used to launch a Dataflow processing job on raw ClinVar data,
-    ## transforming it to our target schema.
-    ##
-    - name: run-dataflow
-      inputs:
-        parameters:
-          - name: gcs-prefix
-          {{- $prefix := "{{inputs.parameters.gcs-prefix}}" }}
-          - name: release-date
-          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
-      container:
-        image: us.gcr.io/broad-dsp-gcr-public/clinvar-transformation-pipeline:{{ $pipelineVersion }}
-        command: []
-        args:
-          - --runner=dataflow
-          {{- $bucket := .Values.staging.gcsBucket }}
-          - --inputPrefix=gs://{{ $bucket }}/{{ $prefix }}/raw
-          - --outputPrefix=gs://{{ $bucket }}/{{ $prefix }}/processed
-          - --releaseDate={{ $releaseDate }}
-          {{- with .Values.dataflow }}
-          - --project={{ .project }}
-          - --region={{ .region }}
-          - --tempLocation=gs://{{ .tmpBucketName }}/dataflow
-          - --subnetwork=regions/{{ .region }}/subnetworks/{{ .subnetName }}
-          - --serviceAccount={{ .workerAccount }}
-          - --workerMachineType={{ .workerMachineType }}
-          {{- with .autoscaling }}
-          - --autoscalingAlgorithm=THROUGHPUT_BASED
-          - --numWorkers={{ .minWorkers }}
-          - --maxNumWorkers={{ .maxWorkers }}
-          {{- end }}
-          - --experiments=shuffle_mode=service
           {{- end }}
 
     ##
@@ -584,6 +269,72 @@ spec:
                 {{- end }}
 
     {{- if $versionIsPinned }}
+    ##
+    ## Publish the data stored in the TDR under a release-date by marking
+    ## it as processed with the current pipeline version, then cutting a
+    ## snapshot.
+    ##
+    - name: publish-processing-results
+      inputs:
+        parameters:
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+          - name: bq-dataset
+          {{- $stagingDataset := "{{inputs.parameters.bq-dataset}}" }}
+      dag:
+        tasks:
+          - name: stage-processing-history
+            template: stage-processing-history-row
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+                - name: gcs-prefix
+                  value: {{ printf "%s/processed" $gcsPrefix | quote }}
+
+          - name: sync-processing-history
+            dependencies: [stage-processing-history]
+            template: ingest-table
+            arguments:
+              parameters:
+                - name: dataset-name
+                  value: {{ $stagingDataset | quote }}
+                - name: gcs-prefix
+                  value: {{ $gcsPrefix | quote }}
+                - name: table-name
+                  value: processing_history
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+
+          - name: submit-snapshot
+            dependencies: [sync-processing-history]
+            template: submit-snapshot
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+            {{- $jobId := "{{tasks.submit-snapshot.outputs.result}}" }}
+
+          - name: poll-snapshot
+            dependencies: [submit-snapshot]
+            template: poll-ingest-job
+            arguments:
+              parameters:
+                - name: job-id
+                  value: {{ $jobId | quote }}
+                {{- with .Values.jade }}
+                - name: api-url
+                  value: {{ .url }}
+                - name: timeout
+                  value: {{ .pollTimeout }}
+                - name: sa-secret
+                  value: {{ .accessKey.secretName }}
+                - name: sa-secret-key
+                  value: {{ .accessKey.secretKey }}
+                {{- end }}
+
     ##
     ## Count the number of rows in the processing_history table with a given release-date/version pair.
     ##

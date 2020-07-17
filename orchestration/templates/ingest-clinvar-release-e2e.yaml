@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: ingest-clinvar-archive
+  name: ingest-clinvar-release-e2e
 spec:
   entrypoint: main
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
@@ -36,7 +36,7 @@ spec:
           - name: process-archive
             dependencies: [ingest-archive]
             templateRef:
-              name: process-xml-archive
+              name: process-and-reingest-release
               template: main
             arguments:
               parameters:
