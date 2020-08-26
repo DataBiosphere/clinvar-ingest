@@ -40,7 +40,7 @@ spec:
               image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.0
               env:
                 - name: GOOGLE_APPLICATION_CREDENTIALS
-                  value: {{ printf "/secret/%s" .accessKey.secretKey }}
+                  value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
                 - name: TABLE_NAME
                   value: {{ $tableName | quote }}
                 - name: DEST_DATA_PROJECT
