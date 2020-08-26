@@ -72,10 +72,10 @@ spec:
                 - name: GCS_PREFIX
                   value: {{ $gcsPrefix | quote }}
                 - name: KAFKA_TOPIC
-                  value: '{{ .Values.kafka.topic }}'
+                  value: '{{ .Values.clingen.kafka.topic }}'
               envFrom:
                 - secretRef:
-                    name: '{{ .Values.kafka.secretName }}'
+                    name: '{{ .Values.clingen.kafka.secretName }}'
               command: [python]
               source: |
               {{- include "argo.render-lines" (.Files.Lines "scripts/notify-clingen-kafka.py") | indent 10 }}
