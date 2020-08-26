@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: notify-kafka
+  name: export-diff
 spec:
   entrypoint: main
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
@@ -15,22 +15,23 @@ spec:
         parameters:
           - name: release-date
           {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+          - name: dataset-name
+          {{- $datasetName := "{{inputs.parameters.dataset-name}}" }}
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
       dag:
         tasks:
           - name: is-preceding-date-present
             template: is-preceding-date-present
-            {{- $dateNotPresent := "{{tasks.is-preceding-date-present.outputs.result}} == 0" }}
+            {{- $dateAbsent := "{{tasks.is-preceding-date-present.outputs.result}} == 0" }}
 
-          - name: get-preceding-date
-            dependencies: [is-preceding-date-present]
-            when: {{ not $dateNotPresent | quote }}
-            template: get-preceding-date
-            {{- $precedingDate := "{{tasks.get-preceding-date.outputs.result}}" }}
-
+          ## Processes to run when the preceding date is absent
           - name: date-absent
             dependencies: [is-preceding-date-present]
-            when: {{ $dateNotPresent | quote }}
-            template: date-absent
+            when: {{ $dateAbsent | quote }}
+            templateRef:
+              name: date-absent
+              template: main
             withItems:
               - clinical_assertion
               - clinical_assertion_observation
@@ -49,15 +50,22 @@ spec:
               - variation_archive
             arguments:
               parameters:
+                - name: table-name
+                  value: {{ "{{item}}" | quote }}
                 - name: release-date
                   value: {{ $releaseDate | quote }}
                 - name: gcs-prefix
                   value: {{ $gcsPrefix | quote }}
+                - name: dataset-name
+                  value: {{ $datasetName | quote }}
 
+          ## Processes to run when the preceding date is present
           - name: date-present
-            dependencies: [get-preceding-date]
-            when: {{ not $dateNotPresent | quote }}
-            template: date-present
+            dependencies: [is-preceding-date-present]
+            when: {{ not $dateAbsent | quote }}
+            templateRef:
+              name: date-present
+              template: main
             withItems:
               - clinical_assertion
               - clinical_assertion_observation
@@ -76,11 +84,25 @@ spec:
               - variation_archive
             arguments:
               parameters:
+                - name: table-name
+                  value: {{ "{{item}}" | quote }}
                 - name: release-date
-                  value: {{ $releaseDate | quote }}
+                value: {{ $releaseDate | quote }}
+                - name: pipeline-version
+                value: {{ $pipelineVersion | quote}}
                 - name: gcs-prefix
-                  value: {{ $gcsPrefix | quote }}
+                value: {{ $gcsPrefix | quote }}
+                - name: dataset-name
+                value: {{ $datasetName | quote }}
 
+          ## kafka notification, maybe a separate step in the main workflow
+          - name: hit-kafka
+            dependencies: [date-absent, date-present]
+
+
+    #
+    ### Templates to use in above workflow ###
+    #
     - name: is-preceding-date-present
       script:
         image: google/cloud-sdk:slim
@@ -99,40 +121,3 @@ spec:
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/is-preceding-release-date-present.sh") | indent 10 }}
 
-    - name: get-preceding-date
-      script:
-        image: google/cloud-sdk:slim
-        command: [bash]
-        env:
-          - name: PROJECT
-            value: {{ .Values.staging.bigquery.project }}
-          - name: JADE_PROJECT
-            value: {{ .Values.jade.dataProject }}
-          - name: JADE_DATASET
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
-          - name: RELEASE_DATE
-            value: {{ $releaseDate | quote }}
-          - name: VERSION
-            value: {{ $pipelineVersion | quote }}
-        source: |
-        {{- include "argo.render-lines" (.Files.Lines "scripts/get-preceding-release-date.sh") | indent 10 }}
-
-    - name: date-absent
-      script:
-        image: google/cloud-sdk:slim
-        command: [bash]
-        env:
-          - name:
-            value:
-        source: |
-        {{- include "argo.render-lines" (.Files.Lines "scripts/TODO.sh") | indent 10 }}
-
-    - name: date-present
-      script:
-        image: google/cloud-sdk:slim
-        command: [bash]
-        env:
-          - name:
-            value:
-        source: |
-        {{- include "argo.render-lines" (.Files.Lines "scripts/TODO.sh") | indent 10 }}

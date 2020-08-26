@@ -44,3 +44,38 @@ spec:
                   value: {{ $releaseDate | quote }}
                 - name: gcs-prefix
                   value: {{ $gcsPrefix | quote }}
+            {{- $datasetName := "{{tasks.ingest-archive.outputs.parameters.dataset-name}}" }}
+
+          - name: export-diff
+            dependencies: [process-archive]
+            templateRef:
+              name: export-diff
+              template: main
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+                - name: dataset-name
+                  value: {{ $datasetName | quote }}
+
+          - name: notify-clingen-kafka
+            dependencies: [export-diff]
+            script:
+              image: us.gcr.io/broad-dsp-gcr-public/clingen-notifier:1.0.0
+              env:
+                - name: RELEASE_DATE
+                  value: {{ $releaseDate | quote }}
+                - name: GCS_BUCKET
+                  value: '{{ .Values.clingen.gcsBucket }}'
+                - name: STORAGE_PROJECT
+                  value:
+                - name: GCS_PREFIX
+                  value: {{ $gcsPrefix | quote }}
+                - name: KAFKA_TOPIC
+                  value: '{{ .Values.kafka.topic }}'
+              envFrom:
+                - secretRef:
+                    name: '{{ .Values.kafka.secretName }}'
+              command: [python]
+              source: |
+              {{- include "argo.render-lines" (.Files.Lines "scripts/notify-clingen-kafka.py") | indent 10 }}
