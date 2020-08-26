@@ -6,6 +6,8 @@ spec:
   entrypoint: main
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
   templates:
+    {{- $pipelineVersion := default "latest" .Values.version }}
+    {{- $versionIsPinned := ne $pipelineVersion "latest" }}
     ##
     ## Entrypoint for notifying clinvar of changes. Does so using Kafka.
     ##
