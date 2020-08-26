@@ -22,7 +22,7 @@ spec:
           - name: pipeline-version
           {{- $pipelineVersion := "{{inputs.parameters.pipeline-version}}" }}
           - name: dataset-name
-          {{- $datasetName := "{{inputs.parameters.dataset-name}}" }}
+          {{- $destDatasetName := "{{inputs.parameters.dataset-name}}" }}
       dag:
         tasks:
           # get preceding date
