@@ -27,6 +27,7 @@ spec:
             arguments:
               parameters:
                 - name: release-date
+                  value: {{ $releaseDate | quote }}
               {{- $dateAbsent := "{{tasks.is-preceding-date-present.outputs.result}} == 0" }}
           ## Processes to run when the preceding date is absent
           - name: date-absent
