@@ -168,7 +168,7 @@ spec:
           secret:
             secretName: {{ .Values.jade.accessKey.secretName }}
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.1
+        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.0
         env:
           - name: GOOGLE_APPLICATION_CREDENTIALS
             value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
@@ -190,10 +190,7 @@ spec:
             value: release_date
           - name: DIFF_TYPE
             value: CREATE
-        command: [python]
-        source: |
-          from diff import get_created_rows
-          get_created_rows()
+        command: [-c, "import diff; diff.get_created_rows()"]
 
     - name: get-deleted-rows
       inputs:
@@ -211,7 +208,7 @@ spec:
           secret:
             secretName: {{ .Values.jade.accessKey.secretName }}
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.1
+        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.0
         env:
           - name: GOOGLE_APPLICATION_CREDENTIALS
             value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
@@ -233,10 +230,7 @@ spec:
             value: release_date
           - name: DIFF_TYPE
             value: DELETE
-        command: [python]
-        source: |
-          from diff import get_deleted_rows
-          get_deleted_rows()
+        command: [-c, "import diff; diff.get_deleted_rows()"]
 
     - name: get-updated-rows
       inputs:
@@ -254,7 +248,7 @@ spec:
           secret:
             secretName: {{ .Values.jade.accessKey.secretName }}
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.1
+        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.0
         env:
           - name: GOOGLE_APPLICATION_CREDENTIALS
             value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
@@ -276,10 +270,7 @@ spec:
             value: release_date
           - name: DIFF_TYPE
             value: UPDATE
-        command: [python]
-        source: |
-          from diff import get_updated_rows
-          get_updated_rows()
+        command: [-c, "import diff; diff.get_updated_rows()"]
 
     - name: export-rows
       inputs:
@@ -295,7 +286,7 @@ spec:
           secret:
             secretName: {{ .Values.jade.accessKey.secretName }}
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.1
+        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.0
         env:
           - name: GOOGLE_APPLICATION_CREDENTIALS
             value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
@@ -309,7 +300,4 @@ spec:
             value: {{ .Values.clingen.gcsBucket }}
           - name: DIFF_TYPE
             value: {{ $diffType | quote }}
-        command: [python]
-        source: |
-          from diff import extract_rows
-          extract_rows()
+        command: [-c, "import diff; diff.extract_rows()"]

@@ -11,4 +11,4 @@ RUN pip install -r requirements.txt
 # Bundle app source
 COPY diff.py /app
 
-ENTRYPOINT ["python", "-m", "diff"]
+ENTRYPOINT ["python"]
