@@ -72,11 +72,11 @@ spec:
             arguments:
               parameters:
                 - name: release-date
-                value: {{ $releaseDate | quote }}
+                  value: {{ $releaseDate | quote }}
                 - name: pipeline-version
-                value: {{ $pipelineVersion | quote }}
+                  value: {{ $pipelineVersion | quote }}
                 - name: table-name
-                value: {{ $tableName | quote }}
+                  value: {{ $tableName | quote }}
           {{- $precedingDate := "{{tasks.get-preceding-date.outputs.result}}" }}
 
           ## Processes to run when the preceding date is present
