@@ -27,6 +27,7 @@ spec:
         tasks:
           # get preceding date
           - name: get-preceding-date
+            template: get-preceding-date
             arguments:
               parameters:
                 - name: release-date
@@ -120,6 +121,10 @@ spec:
                   value: {{ $destDatasetName | quote }}
                 - name: diff-type
                   value: UPDATE
+
+    #
+    # TEMPLATES FOR ABOVE WORKFLOW
+    #
 
     - name: get-preceding-date
       inputs:

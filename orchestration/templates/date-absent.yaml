@@ -53,6 +53,7 @@ spec:
               source: |
                 from diff import get_all_rows
                 get_all_rows()
+
           - name: export-all-rows
             dependencies: [get-all-rows]
             volumes:
