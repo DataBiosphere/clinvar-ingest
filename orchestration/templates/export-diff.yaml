@@ -67,7 +67,7 @@ spec:
           # get preceding date
           - name: get-preceding-date
             template: get-preceding-date
-            dependences: [is-preceding-date-present]
+            dependencies: [is-preceding-date-present]
             when: {{ $datePresent | quote }}
             arguments:
               parameters:
@@ -79,7 +79,8 @@ spec:
 
           ## Processes to run when the preceding date is present
           - name: date-present
-            dependencies: [get-preceding-date]
+            dependencies: [is-preceding-date-present, get-preceding-date]
+            when: {{ $datePresent | quote }}
             templateRef:
               name: date-present
               template: main
