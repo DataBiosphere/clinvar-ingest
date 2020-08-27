@@ -23,9 +23,24 @@ spec:
       dag:
         tasks:
           - name: is-preceding-date-present
-            template: is-preceding-date-present
-            {{- $dateAbsent := "{{tasks.is-preceding-date-present.outputs.result}} == 0" }}
+            script:
+              image: google/cloud-sdk:slim
+              command: [bash]
+              env:
+                - name: PROJECT
+                  value: {{ .Values.staging.bigquery.project }}
+                - name: JADE_PROJECT
+                  value: {{ .Values.jade.dataProject }}
+                - name: JADE_DATASET
+                  value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+                - name: RELEASE_DATE
+                  value: {{ $releaseDate | quote }}
+                - name: VERSION
+                  value: {{ $pipelineVersion | quote }}
+              source: |
+              {{- include "argo.render-lines" (.Files.Lines "scripts/is-preceding-release-date-present.sh") | indent 10 }}
 
+              {{- $dateAbsent := "{{tasks.is-preceding-date-present.outputs.result}} == 0" }}
           ## Processes to run when the preceding date is absent
           - name: date-absent
             dependencies: [is-preceding-date-present]
@@ -87,38 +102,15 @@ spec:
               parameters:
                 - name: table-name
                   value: {{ "{{item}}" | quote }}
+                - name: gcs-prefix
+                  value: {{ $gcsPrefix | quote }}
                 - name: release-date
                 value: {{ $releaseDate | quote }}
                 - name: pipeline-version
                 value: {{ $pipelineVersion | quote}}
-                - name: gcs-prefix
-                value: {{ $gcsPrefix | quote }}
                 - name: dataset-name
                 value: {{ $datasetName | quote }}
 
           ## kafka notification, maybe a separate step in the main workflow
           - name: hit-kafka
             dependencies: [date-absent, date-present]
-
-
-    #
-    ### Templates to use in above workflow ###
-    #
-    - name: is-preceding-date-present
-      script:
-        image: google/cloud-sdk:slim
-        command: [bash]
-        env:
-          - name: PROJECT
-            value: {{ .Values.staging.bigquery.project }}
-          - name: JADE_PROJECT
-            value: {{ .Values.jade.dataProject }}
-          - name: JADE_DATASET
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
-          - name: RELEASE_DATE
-            value: {{ $releaseDate | quote }}
-          - name: VERSION
-            value: {{ $pipelineVersion | quote }}
-        source: |
-        {{- include "argo.render-lines" (.Files.Lines "scripts/is-preceding-release-date-present.sh") | indent 10 }}
-
