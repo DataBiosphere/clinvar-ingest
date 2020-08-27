@@ -1,238 +1,238 @@
-apiVersion: argoproj.io/v1alpha1
-kind: WorkflowTemplate
-metadata:
-  name: date-present
-spec:
-  entrypoint: main
-  serviceAccountName: {{ .Values.serviceAccount.k8sName }}
-  templates:
-    ##
-    ## Entrypoint for if there is a previous date against which to diff.
-    ##
-    ##
-    - name: main
-      inputs:
-        parameters:
-          - name: table-name
-          {{- $tableName := "{{inputs.parameters.table-name}}" }}
-          - name: gcs-prefix
-          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
-          - name: release-date
-          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
-          - name: pipeline-version
-          {{- $pipelineVersion := "{{inputs.parameters.pipeline-version}}" }}
-          - name: dataset-name
-          {{- $destDatasetName := "{{inputs.parameters.dataset-name}}" }}
-      dag:
-        tasks:
-          # get preceding date
-          - name: get-preceding-date
-            script:
-              image: google/cloud-sdk:slim
-              command: [bash]
-              env:
-                - name: JADE_PROJECT
-                  value: {{ .Values.jade.dataProject }}
-                - name: JADE_DATASET
-                  value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
-                - name: RELEASE_DATE
-                  value: {{ $releaseDate | quote }}
-                - name: VERSION
-                  value: {{ $pipelineVersion | quote }}
-                - name: TABLE
-                  value: {{ $tableName | quote }}
-              source: |
-              {{- include "argo.render-lines" (.Files.Lines "scripts/get-preceding-release-date.sh") | indent 6 }}
-
-              {{- $precedingDate := "{{tasks.get-preceding-date.outputs.result}}" }}
-          ## get created rows
-          - name: get-created-rows
-            dependencies: [get-preceding-date]
-            volumes:
-              - name: sa-secret-volume
-                secret:
-                  secretName: {{ .Values.jade.accessKey.secretName }}
-            script:
-              image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.0
-              env:
-                - name: GOOGLE_APPLICATION_CREDENTIALS
-                  value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
-                - name: TABLE_NAME
-                  value: {{ $tableName | quote }}
-                - name: DEST_DATA_PROJECT
-                  value: {{ .Values.clingen.project }}
-                - name: DEST_DATASET_NAME
-                  value: {{ $destDatasetName | quote }}
-                {{- with .Values.jade }}
-                - name: REPO_DATA_PROJECT
-                  value: {{ .dataProject }}
-                - name: REPO_DATASET_NAME
-                  value: {{ .datasetName }}
-                {{- end }}
-                - name: RELEASE_DATE
-                  value: {{ $releaseDate | quote }}
-                - name: PREV_DATE
-                  value: {{ $precedingDate | quote }}
-                - name: VERSION_COL
-                  value: release_date
-                - name: DIFF_TYPE
-                  value: CREATE
-              command: [python]
-              source: |
-                from diff import get_created_rows
-                get_created_rows()
-
-          # export created rows to bucket
-          - name: export-created-rows
-            dependencies: [get-created-rows]
-            volumes:
-              - name: sa-secret-volume
-                secret:
-                  secretName: {{ .Values.jade.accessKey.secretName }}
-            script:
-              image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.0
-              env:
-                - name: GOOGLE_APPLICATION_CREDENTIALS
-                  value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
-                - name: TABLE_NAME
-                  value: {{ $tableName | quote }}
-                - name: DEST_DATA_PROJECT
-                  value: {{ .Values.clingen.project }}
-                - name: DEST_DATASET_NAME
-                  value: {{ $destDatasetName | quote }}
-                - name: DEST_BUCKET_NAME
-                  value: {{ .Values.clingen.gcsBucket }}
-                - name: DIFF_TYPE
-                  value: CREATE
-              command: [python]
-              source: |
-                from diff import extract_rows
-                extract_rows()
-
-          ## get deleted rows
-          - name: get-deleted-rows
-            dependencies: [get-preceding-date]
-            volumes:
-              - name: sa-secret-volume
-                secret:
-                  secretName: {{ .Values.jade.accessKey.secretName }}
-            script:
-              image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.0
-              env:
-                - name: GOOGLE_APPLICATION_CREDENTIALS
-                  value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
-                - name: TABLE_NAME
-                  value: {{ $tableName | quote }}
-                - name: DEST_DATA_PROJECT
-                  value: {{ .Values.clingen.project }}
-                - name: DEST_DATASET_NAME
-                  value: {{ $destDatasetName | quote }}
-                {{- with .Values.jade }}
-                - name: REPO_DATA_PROJECT
-                  value: {{ .dataProject }}
-                - name: REPO_DATASET_NAME
-                  value: {{ .datasetName }}
-                {{- end }}
-                - name: RELEASE_DATE
-                  value: {{ $releaseDate | quote }}
-                - name: PREV_DATE
-                  value: {{ $precedingDate | quote }}
-                - name: VERSION_COL
-                  value: release_date
-                - name: DIFF_TYPE
-                  value: DELETE
-              command: [python]
-              source: |
-                from diff import get_deleted_rows
-                get_deleted_rows()
-
-          # export deleted rows to bucket
-          - name: export-deleted-rows
-            dependencies: [get-deleted-rows]
-            volumes:
-              - name: sa-secret-volume
-                secret:
-                  secretName: {{ .Values.jade.accessKey.secretName }}
-            script:
-              image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.0
-              env:
-                - name: GOOGLE_APPLICATION_CREDENTIALS
-                  value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
-                - name: TABLE_NAME
-                  value: {{ $tableName | quote }}
-                - name: DEST_DATA_PROJECT
-                  value: {{ .Values.clingen.project }}
-                - name: DEST_DATASET_NAME
-                  value: {{ $destDatasetName | quote }}
-                - name: DEST_BUCKET_NAME
-                  value: {{ .Values.clingen.gcsBucket }}
-                - name: DIFF_TYPE
-                  value: DELETE
-              command: [python]
-              source: |
-                from diff import extract_rows
-                extract_rows()
-
-          ## get updated rows
-          - name: get-updated-rows
-            dependencies: [get-preceding-date]
-            volumes:
-              - name: sa-secret-volume
-                secret:
-                  secretName: {{ .Values.jade.accessKey.secretName }}
-            script:
-              image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.0
-              env:
-                - name: GOOGLE_APPLICATION_CREDENTIALS
-                  value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
-                - name: TABLE_NAME
-                  value: {{ $tableName | quote }}
-                - name: DEST_DATA_PROJECT
-                  value: {{ .Values.clingen.project }}
-                - name: DEST_DATASET_NAME
-                  value: {{ $destDatasetName | quote }}
-                {{- with .Values.jade }}
-                - name: REPO_DATA_PROJECT
-                  value: {{ .dataProject }}
-                - name: REPO_DATASET_NAME
-                  value: {{ .datasetName }}
-                {{- end }}
-                - name: RELEASE_DATE
-                  value: {{ $releaseDate | quote }}
-                - name: PREV_DATE
-                  value: {{ $precedingDate | quote }}
-                - name: VERSION_COL
-                  value: release_date
-                - name: DIFF_TYPE
-                  value: DELETE
-              command: [python]
-              source: |
-                from diff import get_updated_rows
-                get_updated_rows()
-
-          # export updated rows to bucket
-          - name: export-updated-rows
-            dependencies: [get-updated-rows]
-            volumes:
-              - name: sa-secret-volume
-                secret:
-                  secretName: {{ .Values.jade.accessKey.secretName }}
-            script:
-              image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.0
-              env:
-                - name: GOOGLE_APPLICATION_CREDENTIALS
-                  value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
-                - name: TABLE_NAME
-                  value: {{ $tableName | quote }}
-                - name: DEST_DATA_PROJECT
-                  value: {{ .Values.clingen.project }}
-                - name: DEST_DATASET_NAME
-                  value: {{ $destDatasetName | quote }}
-                - name: DEST_BUCKET_NAME
-                  value: {{ .Values.clingen.gcsBucket }}
-                - name: DIFF_TYPE
-                  value: DELETE
-              command: [python]
-              source: |
-                from diff import extract_rows
-                extract_rows()
+#apiVersion: argoproj.io/v1alpha1
+#kind: WorkflowTemplate
+#metadata:
+#  name: date-present
+#spec:
+#  entrypoint: main
+#  serviceAccountName: {{ .Values.serviceAccount.k8sName }}
+#  templates:
+#    ##
+#    ## Entrypoint for if there is a previous date against which to diff.
+#    ##
+#    ##
+#    - name: main
+#      inputs:
+#        parameters:
+#          - name: table-name
+#          {{- $tableName := "{{inputs.parameters.table-name}}" }}
+#          - name: gcs-prefix
+#          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+#          - name: release-date
+#          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+#          - name: pipeline-version
+#          {{- $pipelineVersion := "{{inputs.parameters.pipeline-version}}" }}
+#          - name: dataset-name
+#          {{- $destDatasetName := "{{inputs.parameters.dataset-name}}" }}
+#      dag:
+#        tasks:
+#          # get preceding date
+#          - name: get-preceding-date
+#            script:
+#              image: google/cloud-sdk:slim
+#              command: [bash]
+#              env:
+#                - name: JADE_PROJECT
+#                  value: {{ .Values.jade.dataProject }}
+#                - name: JADE_DATASET
+#                  value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+#                - name: RELEASE_DATE
+#                  value: {{ $releaseDate | quote }}
+#                - name: VERSION
+#                  value: {{ $pipelineVersion | quote }}
+#                - name: TABLE
+#                  value: {{ $tableName | quote }}
+#              source: |
+#              {{- include "argo.render-lines" (.Files.Lines "scripts/get-preceding-release-date.sh") | indent 6 }}
+#
+#              {{- $precedingDate := "{{tasks.get-preceding-date.outputs.result}}" }}
+#          ## get created rows
+#          - name: get-created-rows
+#            dependencies: [get-preceding-date]
+#            volumes:
+#              - name: sa-secret-volume
+#                secret:
+#                  secretName: {{ .Values.jade.accessKey.secretName }}
+#            script:
+#              image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.0
+#              env:
+#                - name: GOOGLE_APPLICATION_CREDENTIALS
+#                  value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
+#                - name: TABLE_NAME
+#                  value: {{ $tableName | quote }}
+#                - name: DEST_DATA_PROJECT
+#                  value: {{ .Values.clingen.project }}
+#                - name: DEST_DATASET_NAME
+#                  value: {{ $destDatasetName | quote }}
+#                {{- with .Values.jade }}
+#                - name: REPO_DATA_PROJECT
+#                  value: {{ .dataProject }}
+#                - name: REPO_DATASET_NAME
+#                  value: {{ .datasetName }}
+#                {{- end }}
+#                - name: RELEASE_DATE
+#                  value: {{ $releaseDate | quote }}
+#                - name: PREV_DATE
+#                  value: {{ $precedingDate | quote }}
+#                - name: VERSION_COL
+#                  value: release_date
+#                - name: DIFF_TYPE
+#                  value: CREATE
+#              command: [python]
+#              source: |
+#                from diff import get_created_rows
+#                get_created_rows()
+#
+#          # export created rows to bucket
+#          - name: export-created-rows
+#            dependencies: [get-created-rows]
+#            volumes:
+#              - name: sa-secret-volume
+#                secret:
+#                  secretName: {{ .Values.jade.accessKey.secretName }}
+#            script:
+#              image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.0
+#              env:
+#                - name: GOOGLE_APPLICATION_CREDENTIALS
+#                  value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
+#                - name: TABLE_NAME
+#                  value: {{ $tableName | quote }}
+#                - name: DEST_DATA_PROJECT
+#                  value: {{ .Values.clingen.project }}
+#                - name: DEST_DATASET_NAME
+#                  value: {{ $destDatasetName | quote }}
+#                - name: DEST_BUCKET_NAME
+#                  value: {{ .Values.clingen.gcsBucket }}
+#                - name: DIFF_TYPE
+#                  value: CREATE
+#              command: [python]
+#              source: |
+#                from diff import extract_rows
+#                extract_rows()
+#
+#          ## get deleted rows
+#          - name: get-deleted-rows
+#            dependencies: [get-preceding-date]
+#            volumes:
+#              - name: sa-secret-volume
+#                secret:
+#                  secretName: {{ .Values.jade.accessKey.secretName }}
+#            script:
+#              image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.0
+#              env:
+#                - name: GOOGLE_APPLICATION_CREDENTIALS
+#                  value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
+#                - name: TABLE_NAME
+#                  value: {{ $tableName | quote }}
+#                - name: DEST_DATA_PROJECT
+#                  value: {{ .Values.clingen.project }}
+#                - name: DEST_DATASET_NAME
+#                  value: {{ $destDatasetName | quote }}
+#                {{- with .Values.jade }}
+#                - name: REPO_DATA_PROJECT
+#                  value: {{ .dataProject }}
+#                - name: REPO_DATASET_NAME
+#                  value: {{ .datasetName }}
+#                {{- end }}
+#                - name: RELEASE_DATE
+#                  value: {{ $releaseDate | quote }}
+#                - name: PREV_DATE
+#                  value: {{ $precedingDate | quote }}
+#                - name: VERSION_COL
+#                  value: release_date
+#                - name: DIFF_TYPE
+#                  value: DELETE
+#              command: [python]
+#              source: |
+#                from diff import get_deleted_rows
+#                get_deleted_rows()
+#
+#          # export deleted rows to bucket
+#          - name: export-deleted-rows
+#            dependencies: [get-deleted-rows]
+#            volumes:
+#              - name: sa-secret-volume
+#                secret:
+#                  secretName: {{ .Values.jade.accessKey.secretName }}
+#            script:
+#              image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.0
+#              env:
+#                - name: GOOGLE_APPLICATION_CREDENTIALS
+#                  value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
+#                - name: TABLE_NAME
+#                  value: {{ $tableName | quote }}
+#                - name: DEST_DATA_PROJECT
+#                  value: {{ .Values.clingen.project }}
+#                - name: DEST_DATASET_NAME
+#                  value: {{ $destDatasetName | quote }}
+#                - name: DEST_BUCKET_NAME
+#                  value: {{ .Values.clingen.gcsBucket }}
+#                - name: DIFF_TYPE
+#                  value: DELETE
+#              command: [python]
+#              source: |
+#                from diff import extract_rows
+#                extract_rows()
+#
+#          ## get updated rows
+#          - name: get-updated-rows
+#            dependencies: [get-preceding-date]
+#            volumes:
+#              - name: sa-secret-volume
+#                secret:
+#                  secretName: {{ .Values.jade.accessKey.secretName }}
+#            script:
+#              image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.0
+#              env:
+#                - name: GOOGLE_APPLICATION_CREDENTIALS
+#                  value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
+#                - name: TABLE_NAME
+#                  value: {{ $tableName | quote }}
+#                - name: DEST_DATA_PROJECT
+#                  value: {{ .Values.clingen.project }}
+#                - name: DEST_DATASET_NAME
+#                  value: {{ $destDatasetName | quote }}
+#                {{- with .Values.jade }}
+#                - name: REPO_DATA_PROJECT
+#                  value: {{ .dataProject }}
+#                - name: REPO_DATASET_NAME
+#                  value: {{ .datasetName }}
+#                {{- end }}
+#                - name: RELEASE_DATE
+#                  value: {{ $releaseDate | quote }}
+#                - name: PREV_DATE
+#                  value: {{ $precedingDate | quote }}
+#                - name: VERSION_COL
+#                  value: release_date
+#                - name: DIFF_TYPE
+#                  value: DELETE
+#              command: [python]
+#              source: |
+#                from diff import get_updated_rows
+#                get_updated_rows()
+#
+#          # export updated rows to bucket
+#          - name: export-updated-rows
+#            dependencies: [get-updated-rows]
+#            volumes:
+#              - name: sa-secret-volume
+#                secret:
+#                  secretName: {{ .Values.jade.accessKey.secretName }}
+#            script:
+#              image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.0
+#              env:
+#                - name: GOOGLE_APPLICATION_CREDENTIALS
+#                  value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
+#                - name: TABLE_NAME
+#                  value: {{ $tableName | quote }}
+#                - name: DEST_DATA_PROJECT
+#                  value: {{ .Values.clingen.project }}
+#                - name: DEST_DATASET_NAME
+#                  value: {{ $destDatasetName | quote }}
+#                - name: DEST_BUCKET_NAME
+#                  value: {{ .Values.clingen.gcsBucket }}
+#                - name: DIFF_TYPE
+#                  value: DELETE
+#              command: [python]
+#              source: |
+#                from diff import extract_rows
+#                extract_rows()
