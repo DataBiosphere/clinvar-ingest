@@ -14,7 +14,6 @@ kafka_url = os.getenv("KAFKA_URL")
 kafka_user = os.getenv("KAFKA_USERNAME")
 kafka_password = os.getenv("KAFKA_PASSWORD")
 
-client = storage.Client()
 client = storage.Client(storage_project)
 bucket = client.get_bucket(bucket_name)
 all_files = [blob.name for blob in bucket.list_blobs(prefix=gcs_prefix)]

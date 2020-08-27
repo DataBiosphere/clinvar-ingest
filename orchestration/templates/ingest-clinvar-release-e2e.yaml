@@ -85,7 +85,7 @@ spec:
           - name: GCS_BUCKET
             value: {{ .Values.clingen.gcsBucket }}
           - name: STORAGE_PROJECT
-            value:
+            value: {{ .Values.clingen.project }}
           - name: GCS_PREFIX
             value: {{ $gcsPrefix | quote }}
           - name: KAFKA_TOPIC
