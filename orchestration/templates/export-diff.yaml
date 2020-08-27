@@ -142,8 +142,6 @@ spec:
         {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
         - name: pipeline-version
         {{- $pipelineVersion := "{{inputs.parameters.pipeline-version}}" }}
-        - name: table-name
-        {{- $tableName := "{{inputs.parameters.table-name}}" }}
       script:
         image: google/cloud-sdk:slim
         command: [bash]
