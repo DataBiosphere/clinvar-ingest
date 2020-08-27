@@ -68,41 +68,6 @@ spec:
                 - name: dataset-name
                   value: {{ $datasetName | quote }}
 
-          ## Processes to run when the preceding date is present
-#          - name: date-present
-#            dependencies: [is-preceding-date-present]
-#            when: {{ not $dateAbsent | quote }}
-#            templateRef:
-#              name: date-present
-#              template: main
-#            withItems:
-#              - clinical_assertion
-#              - clinical_assertion_observation
-#              - clinical_assertion_trait
-#              - clinical_assertion_trait_set
-#              - clinical_assertion_variation
-#              - gene
-#              - gene_association
-#              - rcv_accession
-#              - submission
-#              - submitter
-#              - trait
-#              - trait_mapping
-#              - trait_set
-#              - variation
-#              - variation_archive
-#            arguments:
-#              parameters:
-#                - name: table-name
-#                  value: {{ "{{item}}" | quote }}
-#                - name: gcs-prefix
-#                  value: {{ $gcsPrefix | quote }}
-#                - name: release-date
-#                value: {{ $releaseDate | quote }}
-#                - name: pipeline-version
-#                value: {{ $pipelineVersion | quote}}
-#                - name: dataset-name
-#                value: {{ $datasetName | quote }}
 
     - name: is-preceding-date-present
         inputs:
