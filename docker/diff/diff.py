@@ -163,11 +163,13 @@ def get_rows(diff_type: DiffType, cols: Dict[str, str], table_name: str = table_
 
 
 def extract_rows(table_name: str = table_name, bucket_name: str = dest_bucket_name, path: str = dest_path,
-                 diff_type: DiffType = diff_type, dest_data_project: str = dest_data_project,
+                 diff_type: str = diff_type, dest_data_project: str = dest_data_project,
                  dest_dataset_name: str = dest_dataset_name, client: bigquery.Client = dest_client):
     job_config = bigquery.ExtractJobConfig(printHeader=False, destination_format="NEWLINE_DELIMITED_JSON")
 
-    destination_uri = f"gs://{bucket_name}/{path}/{table_name}/{diff_type.value}/*"
+    diff_type_val = DiffType[diff_type].value
+
+    destination_uri = f"gs://{bucket_name}/{path}/{table_name}/{diff_type_val}/*"
     dataset_ref = bigquery.DatasetReference(dest_data_project, dest_dataset_name)
     table_ref = dataset_ref.table(table_name)
 
