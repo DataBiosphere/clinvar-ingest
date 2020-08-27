@@ -89,15 +89,15 @@ spec:
             arguments:
               parameters:
                 - name: table-name
-                value: {{ "{{item}}" | quote }}
+                  value: {{ "{{item}}" | quote }}
                 - name: gcs-prefix
-                value: {{ $gcsPrefix | quote }}
+                  value: {{ $gcsPrefix | quote }}
                 - name: release-date
-                value: {{ $releaseDate | quote }}
+                  value: {{ $releaseDate | quote }}
                 - name: pipeline-version
-                value: {{ $pipelineVersion | quote}}
+                  value: {{ $pipelineVersion | quote}}
                 - name: dataset-name
-                value: {{ $datasetName | quote }}
+                  value: {{ $datasetName | quote }}
 
 
     - name: is-preceding-date-present
