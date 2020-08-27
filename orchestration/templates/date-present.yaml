@@ -27,21 +27,23 @@ spec:
         tasks:
           # get preceding date
           - name: get-preceding-date
-            template: get-preceding-date
-            arguments:
-              parameters:
-                {{- with .Values.jade }}
-                - name: jade-project
-                  value: {{ .dataProject }}
-                - name: jade-dataset
-                  value: {{ .datasetName }}
-                {{- end }}
-                - name: release-date
+            script:
+              image: google/cloud-sdk:slim
+              command: [bash]
+              env:
+                - name: JADE_PROJECT
+                  value: {{ .Values.jade.dataProject }}
+                - name: JADE_DATASET
+                  value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+                - name: RELEASE_DATE
                   value: {{ $releaseDate | quote }}
-                - name: version
+                - name: VERSION
                   value: {{ $pipelineVersion | quote }}
-                - name: table-name
+                - name: TABLE
                   value: {{ $tableName | quote }}
+              source: |
+              {{- include "argo.render-lines" (.Files.Lines "scripts/get-preceding-release-date.sh") | indent 6 }}
+
               {{- $precedingDate := "{{tasks.get-preceding-date.outputs.result}}" }}
 
           ## get created rows
@@ -226,34 +228,3 @@ spec:
               source: |
                 from diff import extract_rows
                 extract_rows()
-
-
-    - name: get-preceding-date
-      inputs:
-        parameters:
-          - name: jade-project
-          {{- $jadeProject := "{{inputs.parameters.jade-project}}" }}
-          - name: jade-dataset
-          {{- $jadeDataset := "{{inputs.parameters.jade-dataset}}" }}
-          - name: release-date
-          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
-          - name: version
-          {{- $version := "{{inputs.parameters.version}}" }}
-          - name: table-name
-          {{- $tableName := "{{inputs.parameters.table-name}}" }}
-      script:
-        image: google/cloud-sdk:slim
-        command: [bash]
-        env:
-          - name: JADE_PROJECT
-            value: {{ $jadeProject | quote }}
-          - name: JADE_DATASET
-            value: {{ printf "datarepo_%s" $jadeDataset }}
-          - name: RELEASE_DATE
-            value: {{ $releaseDate | quote }}
-          - name: VERSION
-            value: {{ $version | quote }}
-          - name: TABLE
-            value: {{ $tableName | quote }}
-        source: |
-        {{- include "argo.render-lines" (.Files.Lines "scripts/get-preceding-release-date.sh") | indent 6 }}
