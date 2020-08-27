@@ -190,7 +190,7 @@ spec:
             value: release_date
           - name: DIFF_TYPE
             value: CREATE
-        command: [-c, "import diff; diff.get_created_rows()"]
+        command: ["python", "-c", "import diff; diff.get_created_rows()"]
 
     - name: get-deleted-rows
       inputs:
@@ -230,7 +230,7 @@ spec:
             value: release_date
           - name: DIFF_TYPE
             value: DELETE
-        command: [-c, "import diff; diff.get_deleted_rows()"]
+        command: ["python", "-c", "import diff; diff.get_deleted_rows()"]
 
     - name: get-updated-rows
       inputs:
