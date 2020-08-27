@@ -220,9 +220,9 @@ spec:
         command: [bash]
         env:
           - name: PROJECT
-            value: {{ .Values.staging.bigquery.project | quote }}
+            value: '{{ .Values.staging.bigquery.project }}'
           - name: JADE_PROJECT
-            value: {{ .Values.jade.dataProject | quote }}
+            value: '{{ .Values.jade.dataProject }}'
           - name: JADE_DATASET
             value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
           - name: RELEASE_DATE
