@@ -28,7 +28,8 @@ spec:
               parameters:
                 - name: release-date
                   value: {{ $releaseDate | quote }}
-              {{- $dateAbsent := "{{tasks.is-preceding-date-present.outputs.result}} == 0" }}
+          {{- $dateAbsent := "{{tasks.is-preceding-date-present.outputs.result}} == 0" }}
+          {{- $datePresent := "{{tasks.is-preceding-date-present.outputs.result}} > 0" }}
           ## Processes to run when the preceding date is absent
           - name: date-absent
             dependencies: [is-preceding-date-present]
@@ -66,7 +67,7 @@ spec:
           ## Processes to run when the preceding date is present
           - name: date-present
             dependencies: [is-preceding-date-present]
-            when: {{ not $dateAbsent | quote }}
+            when: {{ $datePresent | quote }}
             templateRef:
               name: date-present
               template: main
