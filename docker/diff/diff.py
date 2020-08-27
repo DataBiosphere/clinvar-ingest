@@ -171,7 +171,7 @@ def extract_rows(table_name: str = table_name, bucket_name: str = dest_bucket_na
 
     destination_uri = f"gs://{bucket_name}/{path}/{table_name}/{diff_type_val}/*"
     dataset_ref = bigquery.DatasetReference(dest_data_project, dest_dataset_name)
-    table_ref = dataset_ref.table(table_name)
+    table_ref = dataset_ref.table(f"{table_name}_{diff_type_val}")
 
     extract_job = client.extract_table(
         table_ref,

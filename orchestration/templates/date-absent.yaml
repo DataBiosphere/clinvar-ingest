@@ -29,7 +29,7 @@ spec:
                 secret:
                   secretName: {{ .Values.jade.accessKey.secretName }}
             script:
-              image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.2
+              image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.3
               volumeMounts:
                 - name: sa-secret-volume
                   mountPath: /secret
@@ -59,7 +59,7 @@ spec:
                 secret:
                   secretName: {{ .Values.jade.accessKey.secretName }}
             script:
-              image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.2
+              image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.3
               volumeMounts:
                 - name: sa-secret-volume
                   mountPath: /secret
