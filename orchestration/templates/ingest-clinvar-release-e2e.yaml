@@ -57,6 +57,8 @@ spec:
                   value: {{ $releaseDate | quote }}
                 - name: dataset-name
                   value: {{ $datasetName | quote }}
+                - name: gcs-prefix
+                  value: {{ $gcsPrefix | quote }}
 
           - name: notify-clingen-kafka
             dependencies: [export-diff]

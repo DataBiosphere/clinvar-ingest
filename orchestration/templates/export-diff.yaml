@@ -6,8 +6,6 @@ spec:
   entrypoint: main
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
   templates:
-    {{- $pipelineVersion := default "latest" .Values.version }}
-    {{- $versionIsPinned := ne $pipelineVersion "latest" }}
     ##
     ## Entrypoint for notifying clinvar of changes. Does so using Kafka.
     ##
@@ -21,6 +19,7 @@ spec:
           {{- $datasetName := "{{inputs.parameters.dataset-name}}" }}
           - name: gcs-prefix
           {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+          {{- $pipelineVersion := default "latest" .Values.version }}
       dag:
         tasks:
           - name: is-preceding-date-present

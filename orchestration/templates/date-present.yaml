@@ -26,9 +26,29 @@ spec:
           {{- $precedingDate := "2020-05-06" }}
       dag:
         tasks:
+          # get preceding date
+          - name: get-preceding-date
+            script:
+              image: google/cloud-sdk:slim
+              command: [bash]
+              env:
+                - name: JADE_PROJECT
+                  value: {{ .Values.jade.dataProject }}
+                - name: JADE_DATASET
+                  value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+                - name: RELEASE_DATE
+                  value: {{ $releaseDate | quote }}
+                - name: VERSION
+                  value: {{ $pipelineVersion | quote }}
+                - name: TABLE
+                  value: {{ $tableName | quote }}
+              source: |
+              {{- include "argo.render-lines" (.Files.Lines "scripts/get-preceding-release-date.sh") | indent 6 }}
+
+              {{- $precedingDate := "{{tasks.get-preceding-date.outputs.result}}" }}
           ## get created rows
           - name: get-created-rows
-#            dependencies: [get-preceding-date]
+            dependencies: [get-preceding-date]
             volumes:
               - name: sa-secret-volume
                 secret:
@@ -64,7 +84,7 @@ spec:
                 get_created_rows()
           # export created rows to bucket
           - name: export-created-rows
-#            dependencies: [get-created-rows]
+            dependencies: [get-created-rows]
             volumes:
               - name: sa-secret-volume
                 secret:
@@ -91,7 +111,7 @@ spec:
 
           ## get deleted rows
           - name: get-deleted-rows
-#            dependencies: [get-preceding-date]
+            dependencies: [get-preceding-date]
             volumes:
               - name: sa-secret-volume
                 secret:
@@ -127,7 +147,7 @@ spec:
                 get_deleted_rows()
           # export deleted rows to bucket
           - name: export-deleted-rows
-#            dependencies: [get-deleted-rows]
+            dependencies: [get-deleted-rows]
             volumes:
               - name: sa-secret-volume
                 secret:
@@ -154,7 +174,7 @@ spec:
 
           ## get updated rows
           - name: get-updated-rows
-#            dependencies: [get-preceding-date]
+            dependencies: [get-preceding-date]
             volumes:
               - name: sa-secret-volume
                 secret:
@@ -190,7 +210,7 @@ spec:
                 get_updated_rows()
           # export updated rows to bucket
           - name: export-updated-rows
-#            dependencies: [get-updated-rows]
+            dependencies: [get-updated-rows]
             volumes:
               - name: sa-secret-volume
                 secret:
