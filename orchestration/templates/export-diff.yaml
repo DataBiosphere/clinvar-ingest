@@ -65,10 +65,10 @@ spec:
 
 
     - name: is-preceding-date-present
-        inputs:
-          parameters:
-            - name: release-date
-            {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+      inputs:
+        parameters:
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
       script:
         image: google/cloud-sdk:slim
         command: [bash]
