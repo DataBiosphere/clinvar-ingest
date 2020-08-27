@@ -5,24 +5,24 @@ metadata:
 spec:
   entrypoint: main
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
-  arguments:
-    parameters:
-      - name: table-name
-      {{- $tableName := "{{workflow.parameters.table-name}}" }}
-      - name: gcs-prefix
-      {{- $gcsPrefix := "{{workflow.parameters.gcs-prefix}}" }}
-      - name: release-date
-      {{- $releaseDate := "{{workflow.parameters.release-date}}" }}
-      - name: pipeline-version
-      {{- $pipelineVersion := "{{workflow.parameters.pipeline-version}}" }}
-      - name: dataset-name
-      {{- $destDatasetName := "{{workflow.parameters.dataset-name}}" }}
   templates:
     ##
     ## Entrypoint for if there is a previous date against which to diff.
     ##
     ##
     - name: main
+      inputs:
+        parameters:
+          - name: table-name
+          {{- $tableName := "{{inputs.parameters.table-name}}" }}
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+          - name: pipeline-version
+          {{- $pipelineVersion := "{{inputs.parameters.pipeline-version}}" }}
+          - name: dataset-name
+          {{- $destDatasetName := "{{inputs.parameters.dataset-name}}" }}
       dag:
         tasks:
           # get preceding date
