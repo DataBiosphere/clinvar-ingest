@@ -42,12 +42,10 @@ spec:
                   value: {{ .Values.clingen.project }}
                 - name: DEST_DATASET_NAME
                   value: {{ $destDatasetName | quote }}
-                {{- with .Values.jade }}
                 - name: REPO_DATA_PROJECT
-                  value: {{ .dataProject }}
+                  value: {{ Values.jade.dataProject }}
                 - name: REPO_DATASET_NAME
-                  value: {{ .datasetName }}
-                {{- end }}
+                  value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
                 - name: RELEASE_DATE
                   value: {{ $releaseDate | quote }}
                 - name: VERSION_COL
