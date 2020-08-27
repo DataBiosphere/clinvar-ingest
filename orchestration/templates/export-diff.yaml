@@ -31,11 +31,6 @@ spec:
               {{- $dateAbsent := "{{tasks.is-preceding-date-present.outputs.result}} == 0" }}
           ## Processes to run when the preceding date is absent
           - name: date-absent
-            inputs:
-              parameters:
-                - name: release-date
-                - name: gcs-prefix
-                - name: dataset-name
             dependencies: [is-preceding-date-present]
             when: {{ $dateAbsent | quote }}
             templateRef:
