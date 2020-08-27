@@ -30,15 +30,15 @@ spec:
             script:
               image: google/cloud-sdk:slim
               command: [bash]
-              env:
-                - name: JADE_PROJECT
-                  value: {{ .Values.jade.dataProject }}
-                - name: JADE_DATASET
-                  value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
-                - name: RELEASE_DATE
-                  value: {{ $releaseDate | quote }}
-                - name: VERSION
-                  value: {{ $pipelineVersion | quote }}
+#              env:
+#                - name: JADE_PROJECT
+#                  value: {{ .Values.jade.dataProject }}
+#                - name: JADE_DATASET
+#                  value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+#                - name: RELEASE_DATE
+#                  value: {{ $releaseDate | quote }}
+#                - name: VERSION
+#                  value: {{ $pipelineVersion | quote }}
 #                - name: TABLE
 #                  value: {{ $tableName | quote }}
               source: |
