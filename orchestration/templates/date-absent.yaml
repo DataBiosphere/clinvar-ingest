@@ -43,7 +43,7 @@ spec:
                 - name: DEST_DATASET_NAME
                   value: {{ $destDatasetName | quote }}
                 - name: REPO_DATA_PROJECT
-                  value: {{ Values.jade.dataProject }}
+                  value: {{ .Values.jade.dataProject }}
                 - name: REPO_DATASET_NAME
                   value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
                 - name: RELEASE_DATE
