@@ -110,7 +110,3 @@ spec:
                 value: {{ $pipelineVersion | quote}}
                 - name: dataset-name
                 value: {{ $datasetName | quote }}
-
-          ## kafka notification, maybe a separate step in the main workflow
-          - name: hit-kafka
-            dependencies: [date-absent, date-present]
