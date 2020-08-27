@@ -39,8 +39,8 @@ spec:
                   value: {{ $releaseDate | quote }}
                 - name: VERSION
                   value: {{ $pipelineVersion | quote }}
-                - name: TABLE
-                  value: {{ $tableName | quote }}
+#                - name: TABLE
+#                  value: {{ $tableName | quote }}
               source: |
               {{- include "argo.render-lines" (.Files.Lines "scripts/get-preceding-release-date.sh") | indent 6 }}
 
