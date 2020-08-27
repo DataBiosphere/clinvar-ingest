@@ -109,8 +109,6 @@ spec:
         image: google/cloud-sdk:slim
         command: [bash]
         env:
-          - name: PROJECT
-            value: {{ .Values.staging.bigquery.project }}
           - name: JADE_PROJECT
             value: {{ .Values.jade.dataProject }}
           - name: JADE_DATASET
