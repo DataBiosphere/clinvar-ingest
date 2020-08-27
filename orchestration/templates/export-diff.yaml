@@ -99,7 +99,6 @@ spec:
                 - name: dataset-name
                   value: {{ $datasetName | quote }}
 
-
     - name: is-preceding-date-present
       inputs:
         parameters:
