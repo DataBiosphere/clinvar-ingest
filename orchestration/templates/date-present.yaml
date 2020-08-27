@@ -49,30 +49,30 @@ spec:
               env:
                 - name: GOOGLE_APPLICATION_CREDENTIALS
                   value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
-          - name: TABLE_NAME
-            value: {{ $tableName | quote }}
-          - name: DEST_DATA_PROJECT
-            value: {{ .Values.clingen.project }}
-          - name: DEST_DATASET_NAME
-            value: {{ $destDatasetName | quote }}
-          {{- with .Values.jade }}
-          - name: REPO_DATA_PROJECT
-            value: {{ .dataProject }}
-          - name: REPO_DATASET_NAME
-            value: {{ .datasetName }}
-          {{- end }}
-          - name: RELEASE_DATE
-            value: {{ $releaseDate | quote }}
-          - name: PREV_DATE
-            value: {{ $precedingDate | quote }}
-          - name: VERSION_COL
-            value: release_date
-          - name: DIFF_TYPE
-            value: CREATE
-          command: [python]
-          source: |
-            from diff import get_created_rows
-            get_created_rows()
+                - name: TABLE_NAME
+                  value: {{ $tableName | quote }}
+                - name: DEST_DATA_PROJECT
+                  value: {{ .Values.clingen.project }}
+                - name: DEST_DATASET_NAME
+                  value: {{ $destDatasetName | quote }}
+                  {{- with .Values.jade }}
+                - name: REPO_DATA_PROJECT
+                  value: {{ .dataProject }}
+                - name: REPO_DATASET_NAME
+                  value: {{ .datasetName }}
+                  {{- end }}
+                - name: RELEASE_DATE
+                  value: {{ $releaseDate | quote }}
+                - name: PREV_DATE
+                  value: {{ $precedingDate | quote }}
+                - name: VERSION_COL
+                  value: release_date
+                - name: DIFF_TYPE
+                  value: CREATE
+              command: [python]
+              source: |
+                from diff import get_created_rows
+                get_created_rows()
 
           # export created rows to bucket
           - name: export-created-rows
