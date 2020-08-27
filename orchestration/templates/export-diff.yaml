@@ -75,8 +75,6 @@ spec:
                   value: {{ $releaseDate | quote }}
                 - name: pipeline-version
                   value: {{ $pipelineVersion | quote }}
-                - name: table-name
-                  value: {{ $tableName | quote }}
           {{- $precedingDate := "{{tasks.get-preceding-date.outputs.result}}" }}
 
           ## Processes to run when the preceding date is present
@@ -158,7 +156,5 @@ spec:
             value: {{ $releaseDate | quote }}
           - name: VERSION
             value: {{ $pipelineVersion | quote }}
-          - name: TABLE
-            value: {{ $tableName | quote }}
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/get-preceding-release-date.sh") | indent 10 }}
