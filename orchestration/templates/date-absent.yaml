@@ -29,7 +29,7 @@ spec:
                 secret:
                   secretName: {{ .Values.jade.accessKey.secretName }}
             script:
-              image: MYCLINVARIMAGE
+              image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.0
               env:
                 - name: GOOGLE_APPLICATION_CREDENTIALS
                   value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
@@ -60,7 +60,7 @@ spec:
                 secret:
                   secretName: {{ .Values.jade.accessKey.secretName }}
             script:
-              image: MYCLINVARIMAGE
+              image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.0
               env:
                 - name: GOOGLE_APPLICATION_CREDENTIALS
                   value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
