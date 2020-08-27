@@ -30,6 +30,9 @@ spec:
                   secretName: {{ .Values.jade.accessKey.secretName }}
             script:
               image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.0
+              volumeMounts:
+                - name: sa-secret-volume
+                  mountPath: /secret
               env:
                 - name: GOOGLE_APPLICATION_CREDENTIALS
                   value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
@@ -49,10 +52,7 @@ spec:
                   value: {{ $releaseDate | quote }}
                 - name: VERSION_COL
                   value: release_date
-              command: [python]
-              source: |
-                from diff import get_all_rows
-                get_all_rows()
+              command: ["python", "-c", "import diff; diff.get_all_rows()"]
 
           - name: export-all-rows
             dependencies: [get-all-rows]
@@ -62,6 +62,9 @@ spec:
                   secretName: {{ .Values.jade.accessKey.secretName }}
             script:
               image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.0
+              volumeMounts:
+                - name: sa-secret-volume
+                  mountPath: /secret
               env:
                 - name: GOOGLE_APPLICATION_CREDENTIALS
                   value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
@@ -75,7 +78,4 @@ spec:
                   value: {{ .Values.clingen.gcsBucket }}
                 - name: DIFF_TYPE
                   value: CREATE
-              command: [python]
-              source: |
-                from diff import extract_rows
-                extract_rows()
+              command: ["python", "-c", "import diff; diff.extract_rows()"]

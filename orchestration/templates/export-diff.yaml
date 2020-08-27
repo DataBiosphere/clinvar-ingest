@@ -64,9 +64,24 @@ spec:
                 - name: dataset-name
                   value: {{ $datasetName | quote }}
 
+          # get preceding date
+          - name: get-preceding-date
+            template: get-preceding-date
+            dependences: [is-preceding-date-present]
+            when: {{ $datePresent | quote }}
+            arguments:
+              parameters:
+                - name: release-date
+                value: {{ $releaseDate | quote }}
+                - name: pipeline-version
+                value: {{ $pipelineVersion | quote }}
+                - name: table-name
+                value: {{ $tableName | quote }}
+          {{- $precedingDate := "{{tasks.get-preceding-date.outputs.result}}" }}
+
           ## Processes to run when the preceding date is present
           - name: date-present
-            dependencies: [is-preceding-date-present]
+            dependencies: [is-preceding-date-present, get-preceding-date]
             when: {{ $datePresent | quote }}
             templateRef:
               name: date-present
@@ -99,6 +114,8 @@ spec:
                   value: {{ $pipelineVersion | quote}}
                 - name: dataset-name
                   value: {{ $datasetName | quote }}
+                - name: preceding-date
+                  value: {{ $precedingDate | quote }}
 
     - name: is-preceding-date-present
       inputs:
@@ -119,3 +136,29 @@ spec:
             value: {{ $pipelineVersion | quote }}
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/is-preceding-release-date-present.sh") | indent 10 }}
+
+    - name: get-preceding-date
+      inputs:
+        parameters:
+        - name: release-date
+        {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+        - name: pipeline-version
+        {{- $pipelineVersion := "{{inputs.parameters.pipeline-version}}" }}
+        - name: table-name
+        {{- $tableName := "{{inputs.parameters.table-name}}" }}
+      script:
+        image: google/cloud-sdk:slim
+        command: [bash]
+        env:
+          - name: JADE_PROJECT
+            value: {{ .Values.jade.dataProject }}
+          - name: JADE_DATASET
+            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+          - name: RELEASE_DATE
+            value: {{ $releaseDate | quote }}
+          - name: VERSION
+            value: {{ $pipelineVersion | quote }}
+          - name: TABLE
+            value: {{ $tableName | quote }}
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/get-preceding-release-date.sh") | indent 10 }}

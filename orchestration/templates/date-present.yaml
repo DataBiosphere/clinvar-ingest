@@ -23,24 +23,12 @@ spec:
           {{- $pipelineVersion := "{{inputs.parameters.pipeline-version}}" }}
           - name: dataset-name
           {{- $destDatasetName := "{{inputs.parameters.dataset-name}}" }}
+          - name: preceding-date
+          {{- $precedingDate := "{{inputs.parameters.preceding-date}}" }}
       dag:
         tasks:
-          # get preceding date
-          - name: get-preceding-date
-            template: get-preceding-date
-            arguments:
-              parameters:
-                - name: release-date
-                  value: {{ $releaseDate | quote }}
-                - name: pipeline-version
-                  value: {{ $pipelineVersion | quote }}
-                - name: table-name
-                  value: {{ $tableName | quote }}
-
-          {{- $precedingDate := "{{tasks.get-preceding-date.outputs.result}}" }}
           ## get created rows
           - name: get-created-rows
-            dependencies: [get-preceding-date]
             template: get-created-rows
             arguments:
               parameters:
@@ -68,7 +56,6 @@ spec:
 
           ## get deleted rows
           - name: get-deleted-rows
-            dependencies: [get-preceding-date]
             template: get-deleted-rows
             arguments:
               parameters:
@@ -96,7 +83,6 @@ spec:
 
           ## get updated rows
           - name: get-updated-rows
-            dependencies: [get-preceding-date]
             template: get-updated-rows
             arguments:
               parameters:
@@ -125,33 +111,6 @@ spec:
     #
     # TEMPLATES FOR ABOVE WORKFLOW
     #
-
-    - name: get-preceding-date
-      inputs:
-        parameters:
-          - name: release-date
-          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
-          - name: pipeline-version
-          {{- $pipelineVersion := "{{inputs.parameters.pipeline-version}}" }}
-          - name: table-name
-          {{- $tableName := "{{inputs.parameters.table-name}}" }}
-      script:
-        image: google/cloud-sdk:slim
-        command: [bash]
-        env:
-          - name: JADE_PROJECT
-            value: {{ .Values.jade.dataProject }}
-          - name: JADE_DATASET
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
-          - name: RELEASE_DATE
-            value: {{ $releaseDate | quote }}
-          - name: VERSION
-            value: {{ $pipelineVersion | quote }}
-          - name: TABLE
-            value: {{ $tableName | quote }}
-        source: |
-        {{- include "argo.render-lines" (.Files.Lines "scripts/get-preceding-release-date.sh") | indent 10 }}
-
     - name: get-created-rows
       inputs:
         parameters:
@@ -169,6 +128,9 @@ spec:
             secretName: {{ .Values.jade.accessKey.secretName }}
       script:
         image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.0
+        volumeMounts:
+          - name: sa-secret-volume
+            mountPath: /secret
         env:
           - name: GOOGLE_APPLICATION_CREDENTIALS
             value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
@@ -209,6 +171,9 @@ spec:
             secretName: {{ .Values.jade.accessKey.secretName }}
       script:
         image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.0
+        volumeMounts:
+          - name: sa-secret-volume
+            mountPath: /secret
         env:
           - name: GOOGLE_APPLICATION_CREDENTIALS
             value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
@@ -249,6 +214,9 @@ spec:
             secretName: {{ .Values.jade.accessKey.secretName }}
       script:
         image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.0
+        volumeMounts:
+          - name: sa-secret-volume
+            mountPath: /secret
         env:
           - name: GOOGLE_APPLICATION_CREDENTIALS
             value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
@@ -270,7 +238,7 @@ spec:
             value: release_date
           - name: DIFF_TYPE
             value: UPDATE
-        command: [-c, "import diff; diff.get_updated_rows()"]
+        command: ["python", "-c", "import diff; diff.get_updated_rows()"]
 
     - name: export-rows
       inputs:
@@ -287,6 +255,9 @@ spec:
             secretName: {{ .Values.jade.accessKey.secretName }}
       script:
         image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.0
+        volumeMounts:
+          - name: sa-secret-volume
+            mountPath: /secret
         env:
           - name: GOOGLE_APPLICATION_CREDENTIALS
             value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
@@ -300,4 +271,4 @@ spec:
             value: {{ .Values.clingen.gcsBucket }}
           - name: DIFF_TYPE
             value: {{ $diffType | quote }}
-        command: [-c, "import diff; diff.extract_rows()"]
+        command: ["python", "-c", "import diff; diff.extract_rows()"]
