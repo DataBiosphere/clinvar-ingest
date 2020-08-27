@@ -28,7 +28,21 @@ spec:
           # get preceding date
           - name: get-preceding-date
             template: get-preceding-date
-            {{- $precedingDate := "{{tasks.get-preceding-date.outputs.result}}" }}
+            arguments:
+              parameters:
+                {{- with .Values.jade }}
+                - name: jade-project
+                  value: {{ .dataProject }}
+                - name: jade-dataset
+                  value: {{ .datasetName }}
+                {{- end }}
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+                - name: version
+                  value: {{ $pipelineVersion | quote }}
+                - name: table-name
+                  value: {{ $tableName | quote }}
+              {{- $precedingDate := "{{tasks.get-preceding-date.outputs.result}}" }}
 
           ## get created rows
           - name: get-created-rows
@@ -215,19 +229,31 @@ spec:
 
 
     - name: get-preceding-date
+      inputs:
+        parameters:
+          - name: jade-project
+          {{- $jadeProject := "{{inputs.parameters.jade-project}}" }}
+          - name: jade-dataset
+          {{- $jadeDataset := "{{inputs.parameters.jade-dataset}}" }}
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+          - name: version
+          {{- $version := "{{inputs.parameters.version}}" }}
+          - name: table-name
+          {{- $tableName := "{{inputs.parameters.table-name}}" }}
       script:
         image: google/cloud-sdk:slim
         command: [bash]
         env:
-          - name: PROJECT
-            value: '{{ .Values.staging.bigquery.project }}'
           - name: JADE_PROJECT
-            value: '{{ .Values.jade.dataProject }}'
+            value: {{ $jadeProject | quote }}
           - name: JADE_DATASET
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+            value: {{ printf "datarepo_%s" $jadeDataset }}
           - name: RELEASE_DATE
             value: {{ $releaseDate | quote }}
           - name: VERSION
-            value: {{ $pipelineVersion | quote }}
+            value: {{ $version | quote }}
+          - name: TABLE
+            value: {{ $tableName | quote }}
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/get-preceding-release-date.sh") | indent 6 }}

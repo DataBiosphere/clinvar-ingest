@@ -3,7 +3,7 @@ set -euo pipefail
 declare -ra BQ_QUERY=(
   bq
   --location=US
-  --project_id=${PROJECT}
+  --project_id=${JADE_PROJECT}
   --synchronous_mode=true
   --headless=true
   --format=csv
