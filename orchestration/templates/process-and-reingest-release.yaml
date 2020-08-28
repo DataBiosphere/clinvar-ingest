@@ -88,6 +88,11 @@ spec:
                 - name: bq-dataset
                   value: {{ $stagingDataset | quote }}
           {{- end }}
+      outputs:
+        parameters:
+          - name: dataset-name
+            valueFrom:
+              parameter: {{ $stagingDataset | quote }}
 
     ##
     ## Sync the JSON outputs of Dataflow processing into the TDR.

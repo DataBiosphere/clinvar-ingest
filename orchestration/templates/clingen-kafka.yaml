@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: clingen-kafka
+spec:
+  entrypoint: main
+  serviceAccountName: {{ .Values.serviceAccount.k8sName }}
+  templates:
+    - name: main
+      inputs:
+        parameters:
+          - name: release-date
+              {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+              - name: gcs-prefix
+              {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+      script:
+        image: us.gcr.io/broad-dsp-gcr-public/clingen-notifier:1.0.0
+        env:
+          - name: RELEASE_DATE
+            value: {{ $releaseDate | quote }}
+          - name: GCS_BUCKET
+            value: {{ .Values.clingen.gcsBucket }}
+          - name: STORAGE_PROJECT
+            value: {{ .Values.clingen.project }}
+          - name: GCS_PREFIX
+            value: {{ $gcsPrefix | quote }}
+          - name: KAFKA_TOPIC
+            value: {{ .Values.clingen.kafka.topic }}
+        envFrom:
+          - secretRef:
+              name: {{ .Values.clingen.kafka.secretName }}
+        command: [python]
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/notify-clingen-kafka.py") | indent 10 }}
