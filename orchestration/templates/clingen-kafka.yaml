@@ -11,8 +11,8 @@ spec:
         parameters:
           - name: release-date
               {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
-              - name: gcs-prefix
-              {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
       script:
         image: us.gcr.io/broad-dsp-gcr-public/clingen-notifier:1.0.0
         env:
