@@ -70,7 +70,7 @@ spec:
                   value: {{ $releaseDate | quote }}
                 - name: gcs-prefix
                   value: {{ $gcsPrefix | quote }}
-            {{- $stagingDataset := default "None" "{{tasks.ingest-archive.outputs.parameters.dataset-name}}" }}
+            {{- $stagingDataset := "{{tasks.ingest-archive.outputs.parameters.dataset-name}}" }}
 
           # If we have provenance information, cut a snapshot of the new data
           # for the release-date.
@@ -92,6 +92,7 @@ spec:
         parameters:
           - name: dataset-name
             valueFrom:
+              default: "none"
               parameter: {{ $stagingDataset | quote }}
           - name: processing-needed
             valueFrom:
