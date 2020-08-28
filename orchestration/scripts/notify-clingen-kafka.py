@@ -24,6 +24,9 @@ message = {
   'files': all_files
 }
 
+print("The message we're sending is:")
+print(message)
+
 kafka_producer = Producer({
   'bootstrap.servers': kafka_url,
   'security.protocol': 'SASL_SSL',
