@@ -43,6 +43,8 @@ spec:
                   value: {{ $tableName | quote }}
                 - name: dest-dataset-name
                   value: {{ $destDatasetName | quote }}
+                - name: dest-path
+                  value: {{ $gcsPrefix | quote }}
 
     - name: get-all-rows
       inputs:
@@ -88,6 +90,8 @@ spec:
               {{- $tableName := "{{inputs.parameters.table-name}}" }}
             - name: dest-dataset-name
               {{- $destDatasetName := "{{inputs.parameters.dest-dataset-name}}" }}
+            - name: dest-path
+              {{- $destPath := "{{inputs.parameters.dest-path}}" }}
         volumes:
           - name: sa-secret-volume
             secret:
@@ -108,6 +112,8 @@ spec:
               value: {{ $destDatasetName | quote }}
             - name: DEST_BUCKET_NAME
               value: {{ .Values.clingen.gcsBucket }}
+            - name: DEST_PATH
+              value: {{ $destPath | quote }}
             - name: DIFF_TYPE
               value: CREATE
           command: ["python", "-c", "import diff; diff.extract_rows()"]
