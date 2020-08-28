@@ -93,6 +93,9 @@ spec:
           - name: dataset-name
             valueFrom:
               parameter: {{ $stagingDataset | quote }}
+          - name: processing-needed
+            valueFrom:
+              parameter: {{ $processingNeeded | quote }}
 
     ##
     ## Sync the JSON outputs of Dataflow processing into the TDR.
