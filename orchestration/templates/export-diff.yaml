@@ -30,6 +30,17 @@ spec:
                   value: {{ $releaseDate | quote }}
           {{- $dateAbsent := "{{tasks.is-preceding-date-present.outputs.result}} == 0" }}
           {{- $datePresent := "{{tasks.is-preceding-date-present.outputs.result}} > 0" }}
+
+          - name: write-release-date
+            dependencies: [is-preceding-date-present]
+            template: write-release-date
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+                - name: file-path
+                  value: {{ $gcsPrefix | quote }}
+
           ## Processes to run when the preceding date is absent
           - name: date-absent
             dependencies: [is-preceding-date-present]
@@ -134,6 +145,26 @@ spec:
             value: {{ $pipelineVersion | quote }}
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/is-preceding-release-date-present.sh") | indent 10 }}
+
+    - name: write-release-date
+      inputs:
+        parameters:
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+          - name: file-path
+          {{- $filePath := "{{inputs.parameters.file-path}}" }}
+      script:
+        image: google/cloud-sdk:slim
+        command: [bash]
+        env:
+          - name: RELEASE_DATE
+            value: {{ $releaseDate | quote }}
+          - name: BUCKET
+            value: {{ .Values.clingen.gcsBucket }}
+          - name: FILE_PATH
+            value: {{ $filePath | quote }}
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/write-release-date-txt.sh") | indent 10 }}
 
     - name: get-preceding-date
       inputs:

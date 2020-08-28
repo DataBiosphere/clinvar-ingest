@@ -53,6 +53,8 @@ spec:
                   value: {{ $destDatasetName | quote }}
                 - name: diff-type
                   value: CREATE
+                - name: dest-path
+                  value: {{ $gcsPrefix | quote }}
 
           ## get deleted rows
           - name: get-deleted-rows
@@ -80,6 +82,8 @@ spec:
                   value: {{ $destDatasetName | quote }}
                 - name: diff-type
                   value: DELETE
+                - name: dest-path
+                  value: {{ $gcsPrefix | quote }}
 
           ## get updated rows
           - name: get-updated-rows
@@ -107,6 +111,8 @@ spec:
                   value: {{ $destDatasetName | quote }}
                 - name: diff-type
                   value: UPDATE
+                - name: dest-path
+                  value: {{ $gcsPrefix | quote }}
 
     #
     # TEMPLATES FOR ABOVE WORKFLOW
@@ -127,7 +133,7 @@ spec:
           secret:
             secretName: {{ .Values.jade.accessKey.secretName }}
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.3
+        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.4
         volumeMounts:
           - name: sa-secret-volume
             mountPath: /secret
@@ -170,7 +176,7 @@ spec:
           secret:
             secretName: {{ .Values.jade.accessKey.secretName }}
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.3
+        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.4
         volumeMounts:
           - name: sa-secret-volume
             mountPath: /secret
@@ -213,7 +219,7 @@ spec:
           secret:
             secretName: {{ .Values.jade.accessKey.secretName }}
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.3
+        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.4
         volumeMounts:
           - name: sa-secret-volume
             mountPath: /secret
@@ -249,12 +255,14 @@ spec:
           {{- $destDatasetName := "{{inputs.parameters.dest-dataset-name}}" }}
           - name: diff-type
           {{- $diffType := "{{inputs.parameters.diff-type}}" }}
+          - name: dest-path
+          {{- $destPath := "{{inputs.parameters.dest-path}}" }}
       volumes:
         - name: sa-secret-volume
           secret:
             secretName: {{ .Values.jade.accessKey.secretName }}
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.3
+        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.4
         volumeMounts:
           - name: sa-secret-volume
             mountPath: /secret
@@ -269,6 +277,8 @@ spec:
             value: {{ $destDatasetName | quote }}
           - name: DEST_BUCKET_NAME
             value: {{ .Values.clingen.gcsBucket }}
+          - name: DEST_PATH
+            value: {{ $destPath | quote }}
           - name: DIFF_TYPE
             value: {{ $diffType | quote }}
         command: ["python", "-c", "import diff; diff.extract_rows()"]

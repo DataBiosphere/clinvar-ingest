@@ -176,8 +176,6 @@ def extract_rows(table_name: str = table_name, bucket_name: str = dest_bucket_na
     extract_job = client.extract_table(
         table_ref,
         destination_uri,
-        # Location must match that of the source table.
-        location="US",
         job_config=job_config
     )  # API request
-    return extract_job.result()
+    # don't need to return anything, if it doesn't write, that's okay
