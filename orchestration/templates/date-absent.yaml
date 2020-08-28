@@ -50,11 +50,11 @@ spec:
       inputs:
         parameters:
           - name: table-name
-            {{- $tableName := "{{inputs.parameters.table-name}}" }}
+          {{- $tableName := "{{inputs.parameters.table-name}}" }}
           - name: dest-dataset-name
-            {{- $destDatasetName := "{{inputs.parameters.dest-dataset-name}}" }}
+          {{- $destDatasetName := "{{inputs.parameters.dest-dataset-name}}" }}
           - name: release-date
-            {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
       volumes:
         - name: sa-secret-volume
           secret:
@@ -87,11 +87,11 @@ spec:
         inputs:
           parameters:
             - name: table-name
-              {{- $tableName := "{{inputs.parameters.table-name}}" }}
+            {{- $tableName := "{{inputs.parameters.table-name}}" }}
             - name: dest-dataset-name
-              {{- $destDatasetName := "{{inputs.parameters.dest-dataset-name}}" }}
+            {{- $destDatasetName := "{{inputs.parameters.dest-dataset-name}}" }}
             - name: dest-path
-              {{- $destPath := "{{inputs.parameters.dest-path}}" }}
+            {{- $destPath := "{{inputs.parameters.dest-path}}" }}
         volumes:
           - name: sa-secret-volume
             secret:
