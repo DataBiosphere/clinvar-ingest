@@ -133,7 +133,7 @@ spec:
           secret:
             secretName: {{ .Values.jade.accessKey.secretName }}
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.7
+        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.8
         volumeMounts:
           - name: sa-secret-volume
             mountPath: /secret
@@ -154,7 +154,7 @@ spec:
             value: {{ $releaseDate | quote }}
           - name: PREV_DATE
             value: {{ $precedingDate | quote }}
-          - name: VERSION_COL
+          - name: VERSION_COL_NAME
             value: release_date
           - name: DIFF_TYPE
             value: CREATE
@@ -176,7 +176,7 @@ spec:
           secret:
             secretName: {{ .Values.jade.accessKey.secretName }}
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.7
+        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.8
         volumeMounts:
           - name: sa-secret-volume
             mountPath: /secret
@@ -197,7 +197,7 @@ spec:
             value: {{ $releaseDate | quote }}
           - name: PREV_DATE
             value: {{ $precedingDate | quote }}
-          - name: VERSION_COL
+          - name: VERSION_COL_NAME
             value: release_date
           - name: DIFF_TYPE
             value: DELETE
@@ -219,7 +219,7 @@ spec:
           secret:
             secretName: {{ .Values.jade.accessKey.secretName }}
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.7
+        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.8
         volumeMounts:
           - name: sa-secret-volume
             mountPath: /secret
@@ -240,7 +240,7 @@ spec:
             value: {{ $releaseDate | quote }}
           - name: PREV_DATE
             value: {{ $precedingDate | quote }}
-          - name: VERSION_COL
+          - name: VERSION_COL_NAME
             value: release_date
           - name: DIFF_TYPE
             value: UPDATE
@@ -262,7 +262,7 @@ spec:
           secret:
             secretName: {{ .Values.jade.accessKey.secretName }}
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.7
+        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.8
         volumeMounts:
           - name: sa-secret-volume
             mountPath: /secret
