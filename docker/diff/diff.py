@@ -155,10 +155,16 @@ def get_rows(diff_type: DiffType, cols: Dict[str, str], table_name: str = table_
 
     query_job = client.query(query, job_config=job_config)
     # wait till job is completed
-    client.get_job(
-        query_job.job_id, location=query_job.location
-    )
+    print("The query submitted is:")
+    print(query)
+    print(f"The destination table is: {table_id}")
     # return the destination table name
+    try:
+        query_job.result()
+    except GoogleCloudError as err:
+        print(f"There was a {type(err)}")
+        print(f"with args {err.args}")
+        print(err)
     return dest_table_name
 
 
@@ -178,4 +184,10 @@ def extract_rows(table_name: str = table_name, bucket_name: str = dest_bucket_na
         destination_uri,
         job_config=job_config
     )  # API request
-    # don't need to return anything, if it doesn't write, that's okay
+    print(f"The write destination is: {destination_uri}")
+    try:
+        extract_job.result()
+    except GoogleCloudError as err:
+        print(f"There was a {type(err)}")
+        print(f"with args {err.args}")
+        print(err)
