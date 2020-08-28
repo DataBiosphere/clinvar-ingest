@@ -1,4 +1,5 @@
 from google.cloud import bigquery
+from google.cloud.exceptions import GoogleCloudError
 from typing import Dict
 from enum import Enum
 import os

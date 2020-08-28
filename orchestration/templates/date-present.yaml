@@ -133,7 +133,7 @@ spec:
           secret:
             secretName: {{ .Values.jade.accessKey.secretName }}
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.5
+        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.6
         volumeMounts:
           - name: sa-secret-volume
             mountPath: /secret
@@ -176,7 +176,7 @@ spec:
           secret:
             secretName: {{ .Values.jade.accessKey.secretName }}
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.5
+        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.6
         volumeMounts:
           - name: sa-secret-volume
             mountPath: /secret
@@ -219,7 +219,7 @@ spec:
           secret:
             secretName: {{ .Values.jade.accessKey.secretName }}
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.5
+        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.6
         volumeMounts:
           - name: sa-secret-volume
             mountPath: /secret
@@ -262,7 +262,7 @@ spec:
           secret:
             secretName: {{ .Values.jade.accessKey.secretName }}
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.5
+        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.6
         volumeMounts:
           - name: sa-secret-volume
             mountPath: /secret
