@@ -24,56 +24,90 @@ spec:
       dag:
         tasks:
           - name: get-all-rows
-            volumes:
-              - name: sa-secret-volume
-                secret:
-                  secretName: {{ .Values.jade.accessKey.secretName }}
-            script:
-              image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.4
-              volumeMounts:
-                - name: sa-secret-volume
-                  mountPath: /secret
-              env:
-                - name: GOOGLE_APPLICATION_CREDENTIALS
-                  value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
-                - name: TABLE_NAME
+            template: get-all-rows
+            arguments:
+              parameters:
+                - name: table-name
                   value: {{ $tableName | quote }}
-                - name: DEST_DATA_PROJECT
-                  value: {{ .Values.clingen.project }}
-                - name: DEST_DATASET_NAME
+                - name: dest-dataset-name
                   value: {{ $destDatasetName | quote }}
-                - name: REPO_DATA_PROJECT
-                  value: {{ .Values.jade.dataProject }}
-                - name: REPO_DATASET_NAME
-                  value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
-                - name: RELEASE_DATE
+                - name: release-date
                   value: {{ $releaseDate | quote }}
-                - name: VERSION_COL
-                  value: release_date
-              command: ["python", "-c", "import diff; diff.get_all_rows()"]
 
           - name: export-all-rows
             dependencies: [get-all-rows]
-            volumes:
-              - name: sa-secret-volume
-                secret:
-                  secretName: {{ .Values.jade.accessKey.secretName }}
-            script:
-              image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.4
-              volumeMounts:
-                - name: sa-secret-volume
-                  mountPath: /secret
-              env:
-                - name: GOOGLE_APPLICATION_CREDENTIALS
-                  value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
-                - name: TABLE_NAME
+            template: export-all-rows
+            arguments:
+              parameters:
+                - name: table-name
                   value: {{ $tableName | quote }}
-                - name: DEST_DATA_PROJECT
-                  value: {{ .Values.clingen.project }}
-                - name: DEST_DATASET_NAME
+                - name: dest-dataset-name
                   value: {{ $destDatasetName | quote }}
-                - name: DEST_BUCKET_NAME
-                  value: {{ .Values.clingen.gcsBucket }}
-                - name: DIFF_TYPE
-                  value: CREATE
-              command: ["python", "-c", "import diff; diff.extract_rows()"]
+
+    - name: get-all-rows
+      inputs:
+        parameters:
+          - name: table-name
+            {{- $tableName := "{{inputs.parameters.table-name}}" }}
+          - name: dest-dataset-name
+            {{- $destDatasetName := "{{inputs.parameters.dest-dataset-name}}" }}
+          - name: release-date
+            {{- $releaseDate := "{{inputs.parameters.release-date-name}}" }}
+      volumes:
+        - name: sa-secret-volume
+          secret:
+            secretName: {{ .Values.jade.accessKey.secretName }}
+      script:
+        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.4
+        volumeMounts:
+          - name: sa-secret-volume
+            mountPath: /secret
+        env:
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
+          - name: TABLE_NAME
+            value: {{ $tableName | quote }}
+          - name: DEST_DATA_PROJECT
+            value: {{ .Values.clingen.project }}
+          - name: DEST_DATASET_NAME
+            value: {{ $destDatasetName | quote }}
+          - name: REPO_DATA_PROJECT
+            value: {{ .Values.jade.dataProject }}
+          - name: REPO_DATASET_NAME
+            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+          - name: RELEASE_DATE
+            value: {{ $releaseDate | quote }}
+          - name: VERSION_COL
+            value: release_date
+        command: ["python", "-c", "import diff; diff.get_all_rows()"]
+
+      - name: export-all-rows
+        inputs:
+          parameters:
+            - name: table-name
+              {{- $tableName := "{{inputs.parameters.table-name}}" }}
+            - name: dest-dataset-name
+              {{- $destDatasetName := "{{inputs.parameters.dest-dataset-name}}" }}
+        volumes:
+          - name: sa-secret-volume
+            secret:
+              secretName: {{ .Values.jade.accessKey.secretName }}
+        script:
+          image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.4
+          volumeMounts:
+            - name: sa-secret-volume
+              mountPath: /secret
+          env:
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
+            - name: TABLE_NAME
+              value: {{ $tableName | quote }}
+            - name: DEST_DATA_PROJECT
+              value: {{ .Values.clingen.project }}
+            - name: DEST_DATASET_NAME
+              value: {{ $destDatasetName | quote }}
+            - name: DEST_BUCKET_NAME
+              value: {{ .Values.clingen.gcsBucket }}
+            - name: DIFF_TYPE
+              value: CREATE
+          command: ["python", "-c", "import diff; diff.extract_rows()"]
