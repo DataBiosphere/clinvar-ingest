@@ -96,7 +96,7 @@ spec:
               parameter: {{ $stagingDataset | quote }}
           - name: processing-needed
             valueFrom:
-              default: false
+              default: {{ "false" }}
               parameter: {{ $processingNeeded | quote }}
 
     ##
