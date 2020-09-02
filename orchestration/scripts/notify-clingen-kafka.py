@@ -5,38 +5,27 @@ import json
 import os
 import sys
 
-release_date = os.environ["RELEASE_DATE"]
-bucket_name = os.environ["GCS_BUCKET"]
-ingest_summary = json.loads(os.environ["INGEST_SUMMARY"])
+release_date = os.getenv("RELEASE_DATE")
+bucket_name = os.getenv("GCS_BUCKET")
+storage_project = os.getenv("STORAGE_PROJECT")
+gcs_prefix = os.getenv("GCS_PREFIX")
+kafka_topic = os.getenv("KAFKA_TOPIC")
+kafka_url = os.getenv("KAFKA_URL")
+kafka_user = os.getenv("KAFKA_USERNAME")
+kafka_password = os.getenv("KAFKA_PASSWORD")
 
-kafka_topic = os.environ["KAFKA_TOPIC"]
-kafka_url = os.environ["KAFKA_URL"]
-kafka_user = os.environ["KAFKA_USERNAME"]
-kafka_password = os.environ["KAFKA_PASSWORD"]
-
-client = storage.Client()
+client = storage.Client(storage_project)
 bucket = client.get_bucket(bucket_name)
-
-def get_data_files(summary):
-  files = []
-  for event in ['created', 'updated', 'deleted']:
-    count = summary[f'{event}-count']
-    if int(count) > 0:
-      gs_path = summary[f'{event}-prefix']
-      blobs = bucket.list_blobs(prefix=gs_path)
-      files.extend([blob.name for blob in blobs])
-
-  return files
-
-all_files = []
-for table_summary in ingest_summary:
-  all_files.extend(get_data_files(table_summary))
+all_files = [blob.name for blob in bucket.list_blobs(prefix=gcs_prefix)]
 
 message = {
   'release_date': release_date,
   'bucket': bucket_name,
   'files': all_files
 }
+
+print("The message we're sending is:")
+print(message)
 
 kafka_producer = Producer({
   'bootstrap.servers': kafka_url,

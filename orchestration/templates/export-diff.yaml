@@ -1,0 +1,189 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: export-diff
+spec:
+  entrypoint: main
+  serviceAccountName: {{ .Values.serviceAccount.k8sName }}
+  templates:
+    ##
+    ## Entrypoint for notifying clinvar of changes. Does so using Kafka.
+    ##
+    ##
+    - name: main
+      inputs:
+        parameters:
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+          - name: dataset-name
+          {{- $datasetName := "{{inputs.parameters.dataset-name}}" }}
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+          {{- $pipelineVersion := default "latest" .Values.version }}
+      dag:
+        tasks:
+          - name: is-preceding-date-present
+            template: is-preceding-date-present
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+          {{- $dateAbsent := "{{tasks.is-preceding-date-present.outputs.result}} == 0" }}
+          {{- $datePresent := "{{tasks.is-preceding-date-present.outputs.result}} > 0" }}
+
+          - name: write-release-date
+            dependencies: [is-preceding-date-present]
+            template: write-release-date
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+                - name: file-path
+                  value: {{ $gcsPrefix | quote }}
+
+          ## Processes to run when the preceding date is absent
+          - name: date-absent
+            dependencies: [is-preceding-date-present]
+            when: {{ $dateAbsent | quote }}
+            templateRef:
+              name: date-absent
+              template: main
+            withItems:
+              - clinical_assertion
+              - clinical_assertion_observation
+              - clinical_assertion_trait
+              - clinical_assertion_trait_set
+              - clinical_assertion_variation
+              - gene
+              - gene_association
+              - rcv_accession
+              - submission
+              - submitter
+              - trait
+              - trait_mapping
+              - trait_set
+              - variation
+              - variation_archive
+            arguments:
+              parameters:
+                - name: table-name
+                  value: {{ "{{item}}" | quote }}
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+                - name: gcs-prefix
+                  value: {{ $gcsPrefix | quote }}
+                - name: dataset-name
+                  value: {{ $datasetName | quote }}
+
+          # get preceding date
+          - name: get-preceding-date
+            template: get-preceding-date
+            dependencies: [is-preceding-date-present]
+            when: {{ $datePresent | quote }}
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+                - name: pipeline-version
+                  value: {{ $pipelineVersion | quote }}
+          {{- $precedingDate := "{{tasks.get-preceding-date.outputs.result}}" }}
+
+          ## Processes to run when the preceding date is present
+          - name: date-present
+            dependencies: [get-preceding-date]
+            when: {{ $datePresent | quote }}
+            templateRef:
+              name: date-present
+              template: main
+            withItems:
+              - clinical_assertion
+              - clinical_assertion_observation
+              - clinical_assertion_trait
+              - clinical_assertion_trait_set
+              - clinical_assertion_variation
+              - gene
+              - gene_association
+              - rcv_accession
+              - submission
+              - submitter
+              - trait
+              - trait_mapping
+              - trait_set
+              - variation
+              - variation_archive
+            arguments:
+              parameters:
+                - name: table-name
+                  value: {{ "{{item}}" | quote }}
+                - name: gcs-prefix
+                  value: {{ $gcsPrefix | quote }}
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+                - name: pipeline-version
+                  value: {{ $pipelineVersion | quote}}
+                - name: dataset-name
+                  value: {{ $datasetName | quote }}
+                - name: preceding-date
+                  value: {{ $precedingDate | quote }}
+
+    - name: is-preceding-date-present
+      inputs:
+        parameters:
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+      script:
+        image: google/cloud-sdk:slim
+        command: [bash]
+        env:
+          - name: JADE_PROJECT
+            value: {{ .Values.jade.dataProject }}
+          - name: JADE_DATASET
+            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+          - name: RELEASE_DATE
+            value: {{ $releaseDate | quote }}
+          - name: VERSION
+            value: {{ $pipelineVersion | quote }}
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/is-preceding-release-date-present.sh") | indent 10 }}
+
+    - name: write-release-date
+      inputs:
+        parameters:
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+          - name: file-path
+          {{- $filePath := "{{inputs.parameters.file-path}}" }}
+      script:
+        image: google/cloud-sdk:slim
+        command: [bash]
+        env:
+          - name: RELEASE_DATE
+            value: {{ $releaseDate | quote }}
+          - name: BUCKET
+            value: {{ .Values.clingen.gcsBucket }}
+          - name: FILE_PATH
+            value: {{ $filePath | quote }}
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/write-release-date-txt.sh") | indent 10 }}
+
+    - name: get-preceding-date
+      inputs:
+        parameters:
+        - name: release-date
+        {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+        - name: pipeline-version
+        {{- $pipelineVersion := "{{inputs.parameters.pipeline-version}}" }}
+      script:
+        image: google/cloud-sdk:slim
+        command: [bash]
+        env:
+          - name: JADE_PROJECT
+            value: {{ .Values.jade.dataProject }}
+          - name: JADE_DATASET
+            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+          - name: RELEASE_DATE
+            value: {{ $releaseDate | quote }}
+          - name: VERSION
+            value: {{ $pipelineVersion | quote }}
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/get-preceding-release-date.sh") | indent 10 }}

@@ -1,0 +1,119 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: date-absent
+spec:
+  entrypoint: main
+  serviceAccountName: {{ .Values.serviceAccount.k8sName }}
+  templates:
+    ##
+    ## Entrypoint for if there is not a previous date against which to diff.
+    ##
+    ##
+    - name: main
+      inputs:
+        parameters:
+          - name: table-name
+          {{- $tableName := "{{inputs.parameters.table-name}}" }}
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+          - name: dataset-name
+          {{- $destDatasetName := "{{inputs.parameters.dataset-name}}" }}
+      dag:
+        tasks:
+          - name: get-all-rows
+            template: get-all-rows
+            arguments:
+              parameters:
+                - name: table-name
+                  value: {{ $tableName | quote }}
+                - name: dest-dataset-name
+                  value: {{ $destDatasetName | quote }}
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+
+          - name: export-all-rows
+            dependencies: [get-all-rows]
+            template: export-all-rows
+            arguments:
+              parameters:
+                - name: table-name
+                  value: {{ $tableName | quote }}
+                - name: dest-dataset-name
+                  value: {{ $destDatasetName | quote }}
+                - name: dest-path
+                  value: {{ $gcsPrefix | quote }}
+
+    - name: get-all-rows
+      inputs:
+        parameters:
+          - name: table-name
+          {{- $tableName := "{{inputs.parameters.table-name}}" }}
+          - name: dest-dataset-name
+          {{- $destDatasetName := "{{inputs.parameters.dest-dataset-name}}" }}
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+      volumes:
+        - name: sa-secret-volume
+          secret:
+            secretName: {{ .Values.jade.accessKey.secretName }}
+      script:
+        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.8
+        volumeMounts:
+          - name: sa-secret-volume
+            mountPath: /secret
+        env:
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
+          - name: TABLE_NAME
+            value: {{ $tableName | quote }}
+          - name: DEST_DATA_PROJECT
+            value: {{ .Values.clingen.project }}
+          - name: DEST_DATASET_NAME
+            value: {{ $destDatasetName | quote }}
+          - name: REPO_DATA_PROJECT
+            value: {{ .Values.jade.dataProject }}
+          - name: REPO_DATASET_NAME
+            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+          - name: RELEASE_DATE
+            value: {{ $releaseDate | quote }}
+          - name: VERSION_COL_NAME
+            value: release_date
+        command: ["python", "-c", "import diff; diff.get_all_rows()"]
+
+    - name: export-all-rows
+      inputs:
+        parameters:
+          - name: table-name
+          {{- $tableName := "{{inputs.parameters.table-name}}" }}
+          - name: dest-dataset-name
+          {{- $destDatasetName := "{{inputs.parameters.dest-dataset-name}}" }}
+          - name: dest-path
+          {{- $destPath := "{{inputs.parameters.dest-path}}" }}
+      volumes:
+        - name: sa-secret-volume
+          secret:
+            secretName: {{ .Values.jade.accessKey.secretName }}
+      script:
+        image: us.gcr.io/broad-dsp-gcr-public/monster-bq-diff:1.0.8
+        volumeMounts:
+          - name: sa-secret-volume
+            mountPath: /secret
+        env:
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
+          - name: TABLE_NAME
+            value: {{ $tableName | quote }}
+          - name: DEST_DATA_PROJECT
+            value: {{ .Values.clingen.project }}
+          - name: DEST_DATASET_NAME
+            value: {{ $destDatasetName | quote }}
+          - name: DEST_BUCKET_NAME
+            value: {{ .Values.clingen.gcsBucket }}
+          - name: DEST_PATH
+            value: {{ $destPath | quote }}
+          - name: DIFF_TYPE
+            value: CREATE
+        command: ["python", "-c", "import diff; diff.extract_rows()"]
