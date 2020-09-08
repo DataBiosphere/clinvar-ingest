@@ -45,7 +45,7 @@ spec:
                 - name: gcs-prefix
                   value: {{ $gcsPrefix | quote }}
             {{- $datasetName := "{{tasks.process-archive.outputs.parameters.dataset-name}}" }}
-            {{- $processingNeeded := "{{tasks.process-archive.outputs.parameters.processing-needed}}" }}
+            {{- $processingNeeded := "{{tasks.process-archive.outputs.parameters.processing}} == 0" }}
 
           - name: export-diff
             dependencies: [process-archive]

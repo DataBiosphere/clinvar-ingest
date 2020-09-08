@@ -41,6 +41,7 @@ spec:
                 - name: release-date
                   value: {{ $releaseDate | quote }}
           {{- end }}
+          {{- $processing := "{{tasks.check-processing-history.outputs.result}}" }}
           {{- $processingNeeded := "{{tasks.check-processing-history.outputs.result}} == 0" }}
 
           - name: process-archive
@@ -94,10 +95,10 @@ spec:
             valueFrom:
               default: none
               parameter: {{ $stagingDataset | quote }}
-          - name: processing-needed
+          - name: processing
             valueFrom:
-              default: {{ "1==0" }}
-              parameter: {{ $processingNeeded | quote }}
+              default: {{ "1" }}
+              parameter: {{ $processing | quote }}
 
     ##
     ## Sync the JSON outputs of Dataflow processing into the TDR.
