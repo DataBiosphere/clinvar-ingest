@@ -23,10 +23,18 @@ spec:
           {{- $pipelineVersion := "{{inputs.parameters.pipeline-version}}" }}
           - name: dataset-name
           {{- $destDatasetName := "{{inputs.parameters.dataset-name}}" }}
-          - name: preceding-date
-          {{- $precedingDate := "{{inputs.parameters.preceding-date}}" }}
       dag:
         tasks:
+          # get preceding date
+          - name: get-preceding-date
+            template: get-preceding-date
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+                - name: pipeline-version
+                  value: {{ $pipelineVersion | quote }}
+            {{- $precedingDate := "{{tasks.get-preceding-date.outputs.result}}" }}
           ## get created rows
           - name: get-created-rows
             template: get-created-rows
@@ -282,3 +290,25 @@ spec:
           - name: DIFF_TYPE
             value: {{ $diffType | quote }}
         command: ["python", "-c", "import diff; diff.extract_rows()"]
+
+    - name: get-preceding-date
+      inputs:
+        parameters:
+          - name: release-date
+        {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+      - name: pipeline-version
+      {{- $pipelineVersion := "{{inputs.parameters.pipeline-version}}" }}
+      script:
+        image: google/cloud-sdk:slim
+        command: [bash]
+        env:
+          - name: JADE_PROJECT
+            value: {{ .Values.jade.dataProject }}
+          - name: JADE_DATASET
+            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+          - name: RELEASE_DATE
+            value: {{ $releaseDate | quote }}
+          - name: VERSION
+            value: {{ $pipelineVersion | quote }}
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/get-preceding-release-date.sh") | indent 10 }}
