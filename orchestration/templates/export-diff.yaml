@@ -63,7 +63,7 @@ spec:
           - name: date-absent
             dependencies: [is-preceding-date-present]
             {{- if $versionIsPinned }}
-            when: {{ "and" $dateAbsent $processingNeeded | quote }}
+            when: {{ and $dateAbsent $processingNeeded | quote }}
             {{- else }}
             when: {{ $dateAbsent | quote }}
             {{- end }}
@@ -102,7 +102,7 @@ spec:
             template: get-preceding-date
             dependencies: [is-preceding-date-present]
             {{- if $versionIsPinned }}
-            when: {{ "and" $datePresent $processingNeeded | quote }}
+            when: {{ and $datePresent $processingNeeded | quote }}
             {{- else }}
             when: {{ $datePresent | quote }}
             {{- end }}
@@ -118,7 +118,7 @@ spec:
           - name: date-present
             dependencies: [get-preceding-date]
             {{- if $versionIsPinned }}
-            when: {{ "and" $datePresent $processingNeeded | quote }}
+            when: {{ and $datePresent $processingNeeded | quote }}
             {{- else }}
             when: {{ $datePresent | quote }}
             {{- end }}
