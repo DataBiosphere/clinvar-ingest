@@ -299,8 +299,8 @@ spec:
         parameters:
           - name: release-date
         {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
-      - name: pipeline-version
-      {{- $pipelineVersion := "{{inputs.parameters.pipeline-version}}" }}
+          - name: pipeline-version
+        {{- $pipelineVersion := "{{inputs.parameters.pipeline-version}}" }}
       script:
         image: google/cloud-sdk:slim
         command: [bash]
