@@ -102,7 +102,7 @@ spec:
             template: get-preceding-date
             dependencies: [is-preceding-date-present]
             {{- if $versionIsPinned }}
-            when: {{ "({{tasks.is-preceding-date-present.outputs.result}} > 0) && ({{tasks.check-processing-history.outputs.result}} == 0)" }}
+            when: "{{ "({{tasks.is-preceding-date-present.outputs.result}} > 0) && ({{tasks.check-processing-history.outputs.result}} == 0)" }}"
             {{- else }}
             when: {{ $datePresent | quote }}
             {{- end }}
