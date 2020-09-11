@@ -37,6 +37,7 @@ spec:
             {{- $precedingDate := "{{tasks.get-preceding-date.outputs.result}}" }}
           ## get created rows
           - name: get-created-rows
+            dependencies: [get-preceding-date]
             template: get-created-rows
             arguments:
               parameters:
@@ -66,6 +67,7 @@ spec:
 
           ## get deleted rows
           - name: get-deleted-rows
+            dependencies: [get-preceding-date]
             template: get-deleted-rows
             arguments:
               parameters:
@@ -95,6 +97,7 @@ spec:
 
           ## get updated rows
           - name: get-updated-rows
+            dependencies: [get-preceding-date]
             template: get-updated-rows
             arguments:
               parameters:
