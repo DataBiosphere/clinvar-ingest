@@ -228,8 +228,8 @@ spec:
             value: {{ $releaseDate | quote }}
           - name: VERSION
             value: {{ $pipelineVersion | quote }}
-      source: |
-      {{- include "argo.render-lines" (.Files.Lines "scripts/count-processing-history-rows.sh") | indent 10 }}
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/count-processing-history-rows.sh") | indent 10 }}
 
     - name: get-preceding-date
       inputs:
