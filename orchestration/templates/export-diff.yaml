@@ -209,6 +209,28 @@ spec:
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/write-release-date-txt.sh") | indent 10 }}
 
+    - name: get-processing-history-rows
+      inputs:
+        parameters:
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+      script:
+        image: google/cloud-sdk:slim
+        command: [bash]
+        env:
+          - name: PROJECT
+            value: {{ .Values.staging.bigquery.project }}
+          - name: JADE_PROJECT
+            value: {{ .Values.jade.dataProject }}
+          - name: JADE_DATASET
+            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+          - name: RELEASE_DATE
+            value: {{ $releaseDate | quote }}
+          - name: VERSION
+            value: {{ $pipelineVersion | quote }}
+      source: |
+      {{- include "argo.render-lines" (.Files.Lines "scripts/count-processing-history-rows.sh") | indent 10 }}
+
     - name: get-preceding-date
       inputs:
         parameters:
