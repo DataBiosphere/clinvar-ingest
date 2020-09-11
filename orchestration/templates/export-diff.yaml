@@ -43,7 +43,7 @@ spec:
           {{- $datePresent := "{{tasks.is-preceding-date-present.outputs.result}} > 0" }}
 
           - name: write-release-date
-            dependencies: [is-preceding-date-present]
+            dependencies: [is-preceding-date-present, check-processing-history]
             {{- if $versionIsPinned }}
             when: {{ $processingNeeded | quote }}
             {{- end }}
@@ -57,7 +57,7 @@ spec:
 
           ## Processes to run when the preceding date is absent
           - name: date-absent
-            dependencies: [is-preceding-date-present]
+            dependencies: [is-preceding-date-present, check-processing-history]
             {{- if $versionIsPinned }}
             when: {{ "({{tasks.is-preceding-date-present.outputs.result}} == 0) && ({{tasks.check-processing-history.outputs.result}} == 0)" }}
             {{- else }}
@@ -95,7 +95,7 @@ spec:
 
           ## Processes to run when the preceding date is present
           - name: date-present
-            dependencies: [is-preceding-date-present]
+            dependencies: [is-preceding-date-present, check-processing-history]
             {{- if $versionIsPinned }}
             when: {{ "({{tasks.is-preceding-date-present.outputs.result}} > 0) && ({{tasks.check-processing-history.outputs.result}} == 0)" }}
             {{- else }}
