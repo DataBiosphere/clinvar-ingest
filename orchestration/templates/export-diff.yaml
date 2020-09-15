@@ -59,7 +59,7 @@ spec:
           - name: date-absent
             dependencies: [is-preceding-date-present, check-processing-history]
             {{- if $versionIsPinned }}
-            when: {{ "({{tasks.is-preceding-date-present.outputs.result}} == 0) && ({{tasks.check-processing-history.outputs.result}} == 0)" }}
+            when: {{ "({{tasks.is-preceding-date-present.outputs.result}} == 0) && ({{tasks.check-processing-history.outputs.result}} == 1)" }}
             {{- else }}
             when: {{ $dateAbsent | quote }}
             {{- end }}
@@ -97,7 +97,7 @@ spec:
           - name: date-present
             dependencies: [is-preceding-date-present, check-processing-history]
             {{- if $versionIsPinned }}
-            when: {{ "({{tasks.is-preceding-date-present.outputs.result}} > 0) && ({{tasks.check-processing-history.outputs.result}} == 0)" }}
+            when: {{ "({{tasks.is-preceding-date-present.outputs.result}} > 0) && ({{tasks.check-processing-history.outputs.result}} == 1)" }}
             {{- else }}
             when: {{ $datePresent | quote }}
             {{- end }}
