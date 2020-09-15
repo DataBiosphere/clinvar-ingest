@@ -31,7 +31,7 @@ spec:
                 - name: release-date
                   value: {{ $releaseDate | quote }}
           {{- end }}
-          {{- $processingNeeded := "{{tasks.check-processing-history.outputs.result}} == 0" }}
+          {{- $processingNeeded := "{{tasks.check-processing-history.outputs.result}} == 1" }}
 
           - name: is-preceding-date-present
             template: is-preceding-date-present
