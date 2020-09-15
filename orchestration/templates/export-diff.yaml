@@ -6,6 +6,8 @@ spec:
   entrypoint: main
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
   templates:
+    {{- $pipelineVersion := default "latest" .Values.version }}
+    {{- $versionIsPinned := ne $pipelineVersion "latest" }}
     ##
     ## Entrypoint for notifying clinvar of changes. Does so using Kafka.
     ##
@@ -19,9 +21,18 @@ spec:
           {{- $datasetName := "{{inputs.parameters.dataset-name}}" }}
           - name: gcs-prefix
           {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
-          {{- $pipelineVersion := default "latest" .Values.version }}
       dag:
         tasks:
+          {{- if $versionIsPinned }}
+          - name: check-processing-history
+            template: get-processing-history-rows
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+          {{- end }}
+          {{- $processingNeeded := "{{tasks.check-processing-history.outputs.result}} == 1" }}
+
           - name: is-preceding-date-present
             template: is-preceding-date-present
             arguments:
@@ -32,7 +43,10 @@ spec:
           {{- $datePresent := "{{tasks.is-preceding-date-present.outputs.result}} > 0" }}
 
           - name: write-release-date
-            dependencies: [is-preceding-date-present]
+            dependencies: [is-preceding-date-present, check-processing-history]
+            {{- if $versionIsPinned }}
+            when: {{ $processingNeeded | quote }}
+            {{- end }}
             template: write-release-date
             arguments:
               parameters:
@@ -43,8 +57,12 @@ spec:
 
           ## Processes to run when the preceding date is absent
           - name: date-absent
-            dependencies: [is-preceding-date-present]
+            dependencies: [is-preceding-date-present, check-processing-history]
+            {{- if $versionIsPinned }}
+            when: {{ "({{tasks.is-preceding-date-present.outputs.result}} == 0) && ({{tasks.check-processing-history.outputs.result}} == 1)" }}
+            {{- else }}
             when: {{ $dateAbsent | quote }}
+            {{- end }}
             templateRef:
               name: date-absent
               template: main
@@ -75,23 +93,14 @@ spec:
                 - name: dataset-name
                   value: {{ $datasetName | quote }}
 
-          # get preceding date
-          - name: get-preceding-date
-            template: get-preceding-date
-            dependencies: [is-preceding-date-present]
-            when: {{ $datePresent | quote }}
-            arguments:
-              parameters:
-                - name: release-date
-                  value: {{ $releaseDate | quote }}
-                - name: pipeline-version
-                  value: {{ $pipelineVersion | quote }}
-          {{- $precedingDate := "{{tasks.get-preceding-date.outputs.result}}" }}
-
           ## Processes to run when the preceding date is present
           - name: date-present
-            dependencies: [get-preceding-date]
+            dependencies: [is-preceding-date-present, check-processing-history]
+            {{- if $versionIsPinned }}
+            when: {{ "({{tasks.is-preceding-date-present.outputs.result}} > 0) && ({{tasks.check-processing-history.outputs.result}} == 1)" }}
+            {{- else }}
             when: {{ $datePresent | quote }}
+            {{- end }}
             templateRef:
               name: date-present
               template: main
@@ -123,8 +132,19 @@ spec:
                   value: {{ $pipelineVersion | quote}}
                 - name: dataset-name
                   value: {{ $datasetName | quote }}
-                - name: preceding-date
-                  value: {{ $precedingDate | quote }}
+
+          - name: notify-clingen-kafka
+            dependencies: [date-absent, date-present]
+            when: {{ $processingNeeded | quote }}
+            templateRef:
+              name: clingen-kafka
+              template: main
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+                - name: gcs-prefix
+                  value: {{ $gcsPrefix | quote }}
 
     - name: is-preceding-date-present
       inputs:
@@ -166,17 +186,17 @@ spec:
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/write-release-date-txt.sh") | indent 10 }}
 
-    - name: get-preceding-date
+    - name: get-processing-history-rows
       inputs:
         parameters:
-        - name: release-date
-        {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
-        - name: pipeline-version
-        {{- $pipelineVersion := "{{inputs.parameters.pipeline-version}}" }}
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
       script:
         image: google/cloud-sdk:slim
         command: [bash]
         env:
+          - name: PROJECT
+            value: {{ .Values.staging.bigquery.project }}
           - name: JADE_PROJECT
             value: {{ .Values.jade.dataProject }}
           - name: JADE_DATASET
@@ -186,4 +206,4 @@ spec:
           - name: VERSION
             value: {{ $pipelineVersion | quote }}
         source: |
-        {{- include "argo.render-lines" (.Files.Lines "scripts/get-preceding-release-date.sh") | indent 10 }}
+        {{- include "argo.render-lines" (.Files.Lines "scripts/count-processing-history-rows.sh") | indent 10 }}

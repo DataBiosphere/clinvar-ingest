@@ -45,11 +45,9 @@ spec:
                 - name: gcs-prefix
                   value: {{ $gcsPrefix | quote }}
             {{- $datasetName := "{{tasks.process-archive.outputs.parameters.dataset-name}}" }}
-            {{- $processingNeeded := "{{tasks.process-archive.outputs.parameters.processing-needed}}" }}
 
           - name: export-diff
             dependencies: [process-archive]
-            when: {{ $processingNeeded | quote }}
             templateRef:
               name: export-diff
               template: main
@@ -59,18 +57,5 @@ spec:
                   value: {{ $releaseDate | quote }}
                 - name: dataset-name
                   value: {{ $datasetName | quote }}
-                - name: gcs-prefix
-                  value: {{ $gcsPrefix | quote }}
-
-          - name: notify-clingen-kafka
-            dependencies: [export-diff]
-            when: {{ $processingNeeded | quote }}
-            templateRef:
-              name: clingen-kafka
-              template: main
-            arguments:
-              parameters:
-                - name: release-date
-                  value: {{ $releaseDate | quote }}
                 - name: gcs-prefix
                   value: {{ $gcsPrefix | quote }}
