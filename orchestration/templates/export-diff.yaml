@@ -25,11 +25,7 @@ spec:
         tasks:
           {{- if $versionIsPinned }}
           - name: check-processing-history
-            template: get-processing-history-rows
-            arguments:
-              parameters:
-                - name: release-date
-                  value: {{ $releaseDate | quote }}
+            template: check-if-processed-today
           {{- end }}
           {{- $processingNeeded := "{{tasks.check-processing-history.outputs.result}} == 1" }}
 
@@ -186,11 +182,7 @@ spec:
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/write-release-date-txt.sh") | indent 10 }}
 
-    - name: get-processing-history-rows
-      inputs:
-        parameters:
-          - name: release-date
-          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+    - name: check-if-processed-today
       script:
         image: google/cloud-sdk:slim
         command: [bash]
@@ -201,9 +193,7 @@ spec:
             value: {{ .Values.jade.dataProject }}
           - name: JADE_DATASET
             value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
-          - name: RELEASE_DATE
-            value: {{ $releaseDate | quote }}
           - name: VERSION
             value: {{ $pipelineVersion | quote }}
         source: |
-        {{- include "argo.render-lines" (.Files.Lines "scripts/count-processing-history-rows.sh") | indent 10 }}
+        {{- include "argo.render-lines" (.Files.Lines "scripts/check-if-processed-today.sh") | indent 10 }}
