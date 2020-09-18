@@ -24,14 +24,10 @@ spec:
       dag:
         tasks:
           {{- if $versionIsPinned }}
-          - name: check-processing-history
-            template: get-processing-history-rows
-            arguments:
-              parameters:
-                - name: release-date
-                  value: {{ $releaseDate | quote }}
+          - name: check-processing-needed
+            template: check-if-processed-today
           {{- end }}
-          {{- $processingNeeded := "{{tasks.check-processing-history.outputs.result}} == 1" }}
+          {{- $processingNeeded := "{{tasks.check-processing-needed.outputs.result}} == 1" }}
 
           - name: is-preceding-date-present
             template: is-preceding-date-present
@@ -43,7 +39,7 @@ spec:
           {{- $datePresent := "{{tasks.is-preceding-date-present.outputs.result}} > 0" }}
 
           - name: write-release-date
-            dependencies: [is-preceding-date-present, check-processing-history]
+            dependencies: [is-preceding-date-present, check-processing-needed]
             {{- if $versionIsPinned }}
             when: {{ $processingNeeded | quote }}
             {{- end }}
@@ -57,9 +53,9 @@ spec:
 
           ## Processes to run when the preceding date is absent
           - name: date-absent
-            dependencies: [is-preceding-date-present, check-processing-history]
+            dependencies: [is-preceding-date-present, check-processing-needed]
             {{- if $versionIsPinned }}
-            when: {{ "({{tasks.is-preceding-date-present.outputs.result}} == 0) && ({{tasks.check-processing-history.outputs.result}} == 1)" }}
+            when: {{ "({{tasks.is-preceding-date-present.outputs.result}} == 0) && ({{tasks.check-processing-needed.outputs.result}} == 1)" }}
             {{- else }}
             when: {{ $dateAbsent | quote }}
             {{- end }}
@@ -95,9 +91,9 @@ spec:
 
           ## Processes to run when the preceding date is present
           - name: date-present
-            dependencies: [is-preceding-date-present, check-processing-history]
+            dependencies: [is-preceding-date-present, check-processing-needed]
             {{- if $versionIsPinned }}
-            when: {{ "({{tasks.is-preceding-date-present.outputs.result}} > 0) && ({{tasks.check-processing-history.outputs.result}} == 1)" }}
+            when: {{ "({{tasks.is-preceding-date-present.outputs.result}} > 0) && ({{tasks.check-processing-needed.outputs.result}} == 1)" }}
             {{- else }}
             when: {{ $datePresent | quote }}
             {{- end }}
@@ -186,11 +182,7 @@ spec:
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/write-release-date-txt.sh") | indent 10 }}
 
-    - name: get-processing-history-rows
-      inputs:
-        parameters:
-          - name: release-date
-          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+    - name: check-if-processed-today
       script:
         image: google/cloud-sdk:slim
         command: [bash]
@@ -201,9 +193,7 @@ spec:
             value: {{ .Values.jade.dataProject }}
           - name: JADE_DATASET
             value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
-          - name: RELEASE_DATE
-            value: {{ $releaseDate | quote }}
           - name: VERSION
             value: {{ $pipelineVersion | quote }}
         source: |
-        {{- include "argo.render-lines" (.Files.Lines "scripts/count-processing-history-rows.sh") | indent 10 }}
+        {{- include "argo.render-lines" (.Files.Lines "scripts/check-if-processed-today.sh") | indent 10 }}
