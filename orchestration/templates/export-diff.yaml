@@ -24,10 +24,10 @@ spec:
       dag:
         tasks:
           {{- if $versionIsPinned }}
-          - name: check-processing-history
+          - name: check-processing-needed
             template: check-if-processed-today
           {{- end }}
-          {{- $processingNeeded := "{{tasks.check-processing-history.outputs.result}} == 1" }}
+          {{- $processingNeeded := "{{tasks.check-processing-needed.outputs.result}} == 1" }}
 
           - name: is-preceding-date-present
             template: is-preceding-date-present
@@ -39,7 +39,7 @@ spec:
           {{- $datePresent := "{{tasks.is-preceding-date-present.outputs.result}} > 0" }}
 
           - name: write-release-date
-            dependencies: [is-preceding-date-present, check-processing-history]
+            dependencies: [is-preceding-date-present, check-processing-needed]
             {{- if $versionIsPinned }}
             when: {{ $processingNeeded | quote }}
             {{- end }}
@@ -53,9 +53,9 @@ spec:
 
           ## Processes to run when the preceding date is absent
           - name: date-absent
-            dependencies: [is-preceding-date-present, check-processing-history]
+            dependencies: [is-preceding-date-present, check-processing-needed]
             {{- if $versionIsPinned }}
-            when: {{ "({{tasks.is-preceding-date-present.outputs.result}} == 0) && ({{tasks.check-processing-history.outputs.result}} == 1)" }}
+            when: {{ "({{tasks.is-preceding-date-present.outputs.result}} == 0) && ({{tasks.check-processing-needed.outputs.result}} == 1)" }}
             {{- else }}
             when: {{ $dateAbsent | quote }}
             {{- end }}
@@ -91,9 +91,9 @@ spec:
 
           ## Processes to run when the preceding date is present
           - name: date-present
-            dependencies: [is-preceding-date-present, check-processing-history]
+            dependencies: [is-preceding-date-present, check-processing-needed]
             {{- if $versionIsPinned }}
-            when: {{ "({{tasks.is-preceding-date-present.outputs.result}} > 0) && ({{tasks.check-processing-history.outputs.result}} == 1)" }}
+            when: {{ "({{tasks.is-preceding-date-present.outputs.result}} > 0) && ({{tasks.check-processing-needed.outputs.result}} == 1)" }}
             {{- else }}
             when: {{ $datePresent | quote }}
             {{- end }}

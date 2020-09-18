@@ -3,7 +3,7 @@ set -euo pipefail
 declare -ra BQ_QUERY=(
   bq
   --location=US
-  --project_id=${PROJECT}
+  --project_id="${PROJECT}"
   --synchronous_mode=true
   --headless=true
   --format=csv
@@ -12,4 +12,4 @@ declare -ra BQ_QUERY=(
 )
 declare -r TABLE="\`${JADE_PROJECT}.${JADE_DATASET}.processing_history\`"
 
-${BQ_QUERY[@]} "SELECT COUNT(1) FROM ${TABLE} WHERE processing_date = CURRENT_DATE() AND pipeline_version = '${VERSION}'" | tail -n 1
+"${BQ_QUERY[@]}" "SELECT COUNT(1) FROM ${TABLE} WHERE processing_date = CURRENT_DATE() AND pipeline_version = '${VERSION}'" | tail -n 1
