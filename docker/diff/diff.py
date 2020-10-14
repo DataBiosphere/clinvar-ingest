@@ -119,17 +119,26 @@ def get_rows(diff_type: DiffType, cols: Dict[str, str], table_name: str = table_
              repo_data_project: str = repo_data_project, repo_dataset_name: str = repo_dataset_name,
              release_date: str = release_date, prev_date: str = prev_date, version_col: str = version_col,
              client: bigquery.Client = repo_client) -> str:
+    if table_name.lower() == "gene_association":
+        # if gene_association, then use these as ON vals
+        pk_cols = ["gene_id", "variation_id"]
+    elif table_name.lower() == "trait_mapping":
+        # if trait_mapping, then use these as ON vals
+        pk_cols = ["clinical_assertion_id", "mapping_ref", "mapping_type", "mapping_value"]
+    else:
+        pk_cols = ["id"]
+    select_cols = set(pk_cols + [col for col in tuple(cols)])
+
+    on = " AND ".join([f"A.{y} = B.{y}" for y in pk_cols])
     # should use the jade client
     if diff_type is DiffType.CREATE:
         select_table = "A"
         join = "LEFT JOIN"
-        on = "ON A.id = B.id"
-        where = "WHERE B.id IS NULL"
+        where = "WHERE " + " AND ".join([f"B.{pk} IS NULL" for pk in pk_cols])
     elif diff_type is DiffType.DELETE:
         select_table = "B"
         join = "RIGHT JOIN"
-        on = "ON A.id = B.id"
-        where = "WHERE A.id IS NULL"
+        where = "WHERE " + " AND ".join([f"A.{pk} IS NULL" for pk in pk_cols])
     elif diff_type is DiffType.UPDATE:
         select_table = "A"
         join = "JOIN"
@@ -139,19 +148,19 @@ def get_rows(diff_type: DiffType, cols: Dict[str, str], table_name: str = table_
         diff_join = " OR ".join([
             f"ARRAY_TO_STRING(A.{col_name}, \" \") != ARRAY_TO_STRING(B.{col_name}, \" \")"
             if "ARRAY" in col_type else f"A.{col_name} != B.{col_name}"
-            for col_name, col_type in cols.items()])
-        on = f"ON A.id = B.id AND ({diff_join})"
+            for col_name, col_type in cols.items() if col_name not in pk_cols])
+        on = f"({on}) AND ({diff_join})"
         where = ""
     else:
         raise ValueError("Invalid DiffType for get_rows")
 
-    selected_cols = ", ".join([f"{select_table}.{col}" for col in tuple(cols)])
+    select_statement = ", ".join([f"{select_table}.{col}" for col in select_cols])
     query = f"""
-    SELECT {select_table}.id, {selected_cols} FROM
+    SELECT {select_statement} FROM
     (SELECT * FROM `{repo_data_project}.{repo_dataset_name}.{table_name}` WHERE {version_col} = "{release_date}") AS A
     {join}
     (SELECT * FROM `{repo_data_project}.{repo_dataset_name}.{table_name}` WHERE {version_col} = "{prev_date}") AS B
-    {on} {where};
+    ON {on} {where};
     """
 
     dest_table_name = f"{table_name}_{diff_type.value}"
