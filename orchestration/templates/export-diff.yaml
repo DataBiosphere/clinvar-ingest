@@ -135,7 +135,9 @@ spec:
 
           - name: notify-clingen-kafka
             dependencies: [date-absent, date-present]
+            {{- if $versionIsPinned }}
             when: {{ $processingNeeded | quote }}
+            {{- end }}
             templateRef:
               name: clingen-kafka
               template: main
