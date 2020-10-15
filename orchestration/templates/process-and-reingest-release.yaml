@@ -40,8 +40,8 @@ spec:
               parameters:
                 - name: release-date
                   value: {{ $releaseDate | quote }}
-          {{- end }}
           {{- $processingNeeded := "{{tasks.check-processing-history.outputs.result}} == 0" }}
+          {{- end }}
 
           - name: process-archive
             {{- if $versionIsPinned }}
