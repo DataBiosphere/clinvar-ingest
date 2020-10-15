@@ -39,9 +39,11 @@ spec:
           {{- $datePresent := "{{tasks.is-preceding-date-present.outputs.result}} > 0" }}
 
           - name: write-release-date
-            dependencies: [is-preceding-date-present, check-processing-needed]
             {{- if $versionIsPinned }}
+            dependencies: [is-preceding-date-present, check-processing-needed]
             when: {{ $processingNeeded | quote }}
+            {{- else}}
+            dependencies: [is-preceding-date-present]
             {{- end }}
             template: write-release-date
             arguments:
@@ -53,10 +55,11 @@ spec:
 
           ## Processes to run when the preceding date is absent
           - name: date-absent
-            dependencies: [is-preceding-date-present, check-processing-needed]
             {{- if $versionIsPinned }}
+            dependencies: [is-preceding-date-present, check-processing-needed]
             when: {{ "({{tasks.is-preceding-date-present.outputs.result}} == 0) && ({{tasks.check-processing-needed.outputs.result}} == 1)" }}
             {{- else }}
+            dependencies: [is-preceding-date-present]
             when: {{ $dateAbsent | quote }}
             {{- end }}
             templateRef:
@@ -91,10 +94,11 @@ spec:
 
           ## Processes to run when the preceding date is present
           - name: date-present
-            dependencies: [is-preceding-date-present, check-processing-needed]
             {{- if $versionIsPinned }}
+            dependencies: [is-preceding-date-present, check-processing-needed]
             when: {{ "({{tasks.is-preceding-date-present.outputs.result}} > 0) && ({{tasks.check-processing-needed.outputs.result}} == 1)" }}
             {{- else }}
+            dependencies: [is-preceding-date-present]
             when: {{ $datePresent | quote }}
             {{- end }}
             templateRef:
@@ -131,7 +135,9 @@ spec:
 
           - name: notify-clingen-kafka
             dependencies: [date-absent, date-present]
+            {{- if $versionIsPinned }}
             when: {{ $processingNeeded | quote }}
+            {{- end }}
             templateRef:
               name: clingen-kafka
               template: main
