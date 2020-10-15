@@ -26,9 +26,8 @@ spec:
           {{- if $versionIsPinned }}
           - name: check-processing-needed
             template: check-if-processed-today
-            {{- $processingNeeded := "{{tasks.check-processing-needed.outputs.result}} == 1" }}
           {{- end }}
-
+          {{- $processingNeeded := "{{tasks.check-processing-needed.outputs.result}} == 1" }}
 
           - name: is-preceding-date-present
             template: is-preceding-date-present
