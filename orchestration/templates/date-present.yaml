@@ -311,7 +311,5 @@ spec:
             value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
           - name: RELEASE_DATE
             value: {{ $releaseDate | quote }}
-          - name: VERSION
-            value: {{ $pipelineVersion | quote }}
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/get-preceding-release-date.sh") | indent 10 }}
