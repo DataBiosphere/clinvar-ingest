@@ -212,7 +212,7 @@ spec:
           # If we've already ingested a file, use it to ingest the matching row.
           - name: ingest-xml-archive-existing-file
             dependencies: [check-for-existing-file]
-            when: {{ (printf "%s != null" $existingFileId) | quote }}
+            when: {{ (printf "'%s' != null" $existingFileId) | quote }}
             template: ingest-xml-archive
             arguments:
               parameters:
