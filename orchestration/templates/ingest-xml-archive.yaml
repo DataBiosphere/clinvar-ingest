@@ -207,7 +207,7 @@ spec:
                   value: {{ .accessKey.secretKey }}
                 {{- end }}
             {{- $existingFileId := "{{tasks.check-for-existing-file.outputs.result}}" }}
-            {{- $shouldIngestFile := printf "%s == null" $existingFileId }}
+            {{- $shouldIngestFile := printf "'%s' == null" $existingFileId }}
 
           # If we've already ingested a file, use it to ingest the matching row.
           - name: ingest-xml-archive-existing-file
