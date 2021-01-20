@@ -253,7 +253,7 @@ spec:
               template: main
             arguments:
               parameters:
-                {{ $gcsFilePath := printf "%s/xml/%s" $gcsPrefix (include "clinvar.raw-archive-name" .) | quote }}
+                {{- $gcsFilePath := printf "%s/xml/%s" $gcsPrefix (include "clinvar.raw-archive-name" .) | quote }}
                 {{- with .Values.jade }}
                 - name: url
                   value: {{ .url }}
@@ -345,8 +345,6 @@ spec:
                   value: {{ .accessKey.secretName }}
                 - name: sa-secret-key
                   value: {{ .accessKey.secretKey }}
-                - name: load-tag
-                  value: {{ .Values.staging.gcsBucket  }}
                 {{- end }}
 
     ##
