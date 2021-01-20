@@ -253,6 +253,7 @@ spec:
               template: main
             arguments:
               parameters:
+                {{ $gcsFilePath := printf "%s/xml/%s" $gcsPrefix (include "clinvar.raw-archive-name" .) | quote }}
                 {{- with .Values.jade }}
                 - name: url
                   value: {{ .url }}
@@ -272,7 +273,9 @@ spec:
                 - name: gcs-bucket
                   value: {{ .Values.staging.gcsBucket }}
                 - name: gcs-file-path
-                  value: {{ printf "%s/xml/%s" $gcsPrefix (include "clinvar.raw-archive-name" .) | quote }}
+                  value: {{ $gcsFilePath }}
+                - name: load-tag
+                  value: {{ $gcsFilePath }}
             {{- $newFileId := "{{tasks.ingest-archive.outputs.parameters.file-id}}" }}
 
           # Ingest a row for the new file.
@@ -342,6 +345,8 @@ spec:
                   value: {{ .accessKey.secretName }}
                 - name: sa-secret-key
                   value: {{ .accessKey.secretKey }}
+                - name: load-tag
+                  value: {{ .Values.staging.gcsBucket  }}
                 {{- end }}
 
     ##
