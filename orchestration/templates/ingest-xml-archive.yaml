@@ -207,12 +207,12 @@ spec:
                   value: {{ .accessKey.secretKey }}
                 {{- end }}
             {{- $existingFileId := "{{tasks.check-for-existing-file.outputs.result}}" }}
-            {{- $shouldIngestFile := printf "%s == null" $existingFileId }}
+            {{- $shouldIngestFile := printf "'%s' == null" $existingFileId }}
 
           # If we've already ingested a file, use it to ingest the matching row.
           - name: ingest-xml-archive-existing-file
             dependencies: [check-for-existing-file]
-            when: {{ (printf "%s != null" $existingFileId) | quote }}
+            when: {{ (printf "'%s' != null" $existingFileId) | quote }}
             template: ingest-xml-archive
             arguments:
               parameters:
@@ -253,6 +253,7 @@ spec:
               template: main
             arguments:
               parameters:
+                {{- $gcsFilePath := printf "%s/xml/%s" $gcsPrefix (include "clinvar.raw-archive-name" .) | quote }}
                 {{- with .Values.jade }}
                 - name: url
                   value: {{ .url }}
@@ -272,7 +273,9 @@ spec:
                 - name: gcs-bucket
                   value: {{ .Values.staging.gcsBucket }}
                 - name: gcs-file-path
-                  value: {{ printf "%s/xml/%s" $gcsPrefix (include "clinvar.raw-archive-name" .) | quote }}
+                  value: {{ $gcsFilePath }}
+                - name: load-tag
+                  value: {{ $gcsFilePath }}
             {{- $newFileId := "{{tasks.ingest-archive.outputs.parameters.file-id}}" }}
 
           # Ingest a row for the new file.
