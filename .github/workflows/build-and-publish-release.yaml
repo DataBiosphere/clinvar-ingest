@@ -34,7 +34,7 @@ jobs:
         with:
           version: '1.0.0-beta.1'
         env:
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       - name: Publish
         run: sbt publish reindexHelmRepository
         env:
