@@ -81,122 +81,123 @@ object SCV {
   def parser(
     releaseDate: LocalDate,
     traitSetParser: SCVTraitSet.Parser
-  ): Parser = (context, rawAssertion) => {
-    // Extract submitter and submission data (easy).
-    val rawAccession = rawAssertion.read[Msg]("ClinVarAccession")
+  ): Parser =
+    (context, rawAssertion) => {
+      // Extract submitter and submission data (easy).
+      val rawAccession = rawAssertion.read[Msg]("ClinVarAccession")
 
-    val submitter = extractSubmitter(releaseDate, rawAccession)
-    val additionalSubmitters = rawAssertion
-      .tryExtract[List[Msg]]("AdditionalSubmitters", "SubmitterDescription")
-      .fold(List.empty[Submitter])(_.map(extractSubmitter(releaseDate, _)))
-    val submission = extractSubmission(submitter, additionalSubmitters, rawAssertion)
+      val submitter = extractSubmitter(releaseDate, rawAccession)
+      val additionalSubmitters = rawAssertion
+        .tryExtract[List[Msg]]("AdditionalSubmitters", "SubmitterDescription")
+        .fold(List.empty[Submitter])(_.map(extractSubmitter(releaseDate, _)))
+      val submission = extractSubmission(submitter, additionalSubmitters, rawAssertion)
 
-    // Extract the top-level set of traits described by the assertion.
-    val assertionId = rawAssertion.extract[String]("@ID")
-    val assertionAccession = rawAccession.extract[String]("@Accession")
-    val relevantTraitMappings = context.mappingsById.getOrElse(assertionId, List.empty)
-    val setContext =
-      SCVTraitSet.ParsingContext(context.interpretation.traits, relevantTraitMappings)
+      // Extract the top-level set of traits described by the assertion.
+      val assertionId = rawAssertion.extract[String]("@ID")
+      val assertionAccession = rawAccession.extract[String]("@Accession")
+      val relevantTraitMappings = context.mappingsById.getOrElse(assertionId, List.empty)
+      val setContext =
+        SCVTraitSet.ParsingContext(context.interpretation.traits, relevantTraitMappings)
 
-    val directTraitSet = rawAssertion
-      .tryExtract[Msg]("TraitSet")
-      .map(traitSetParser.parse(setContext, assertionAccession, _))
+      val directTraitSet = rawAssertion
+        .tryExtract[Msg]("TraitSet")
+        .map(traitSetParser.parse(setContext, assertionAccession, _))
 
-    // Extract info about any other traits observed in the submission.
-    val (observations, observedTraitSets) =
-      extractObservations(releaseDate, assertionAccession, rawAssertion) {
-        traitSetParser.parse(setContext, _, _)
-      }.unzip
+      // Extract info about any other traits observed in the submission.
+      val (observations, observedTraitSets) =
+        extractObservations(releaseDate, assertionAccession, rawAssertion) {
+          traitSetParser.parse(setContext, _, _)
+        }.unzip
 
-    // Flatten out nested trait-set info.
-    val (allTraitSets, allTraits) = {
-      val directSetAsList = directTraitSet.toList
-      val actualObservedSets = observedTraitSets.flatten
-      val sets = (directSetAsList ++ actualObservedSets).map(_.traitSet)
-      val traits = (directSetAsList ++ actualObservedSets).flatMap(_.traits)
-      (sets, traits)
-    }
-
-    // Extract the tree of variation records stored in the submission.
-    val variations = extractVariations(releaseDate, assertionAccession, rawAssertion)
-
-    // Extract remaining top-level info about the submitted assertion.
-    val assertion = {
-      val referenceTraitSetId = context.interpretation.traitSets match {
-        case Nil           => None
-        case single :: Nil => Some(single.id)
-        case many =>
-          directTraitSet.flatMap { traitSet =>
-            many
-              .find(_.traitIds == traitSet.traits.flatMap(_.traitId))
-              .map(_.id)
-          }
-      }
-      val relatedRcv = context.referenceAccessions.find { rcv =>
-        rcv.traitSetId.isDefined && rcv.traitSetId == referenceTraitSetId
+      // Flatten out nested trait-set info.
+      val (allTraitSets, allTraits) = {
+        val directSetAsList = directTraitSet.toList
+        val actualObservedSets = observedTraitSets.flatten
+        val sets = (directSetAsList ++ actualObservedSets).map(_.traitSet)
+        val traits = (directSetAsList ++ actualObservedSets).flatMap(_.traits)
+        (sets, traits)
       }
 
-      ClinicalAssertion(
-        id = assertionAccession,
-        releaseDate = releaseDate,
-        version = rawAccession.extract[Long]("@Version"),
-        internalId = assertionId,
-        variationArchiveId = context.vcvId,
-        variationId = context.variationId,
-        submitterId = submitter.id,
-        submissionId = submission.id,
-        rcvAccessionId = relatedRcv.map(_.id),
-        traitSetId = referenceTraitSetId,
-        clinicalAssertionTraitSetId = directTraitSet.map(_.traitSet.id),
-        clinicalAssertionObservationIds = observations.map(_.id),
-        title = rawAssertion.tryExtract[String]("ClinVarSubmissionID", "@title"),
-        localKey = rawAssertion.tryExtract[String]("ClinVarSubmissionID", "@localKey"),
-        assertionType = rawAssertion.tryExtract[String]("Assertion", "$"),
-        dateCreated = rawAssertion.tryExtract[LocalDate]("@DateCreated"),
-        dateLastUpdated = rawAssertion.tryExtract[LocalDate]("@DateLastUpdated"),
-        submittedAssembly =
-          rawAssertion.tryExtract[String]("ClinVarSubmissionID", "@submittedAssembly"),
-        recordStatus = rawAssertion.tryExtract[String]("RecordStatus", "$"),
-        reviewStatus = rawAssertion.tryExtract[String]("ReviewStatus", "$"),
-        interpretationDescription =
-          rawAssertion.tryExtract[String]("Interpretation", "Description", "$"),
-        interpretationDateLastEvaluated = rawAssertion
-          .tryExtract[String]("Interpretation", "@DateLastEvaluated")
-          .flatMap {
-            case SubmissionDatePattern(trimmed) => Some(LocalDate.parse(trimmed))
-            case _                              => None
-          },
-        interpretationComments = rawAssertion
-          .tryExtract[List[Msg]]("Interpretation", "Comment")
-          .getOrElse(List.empty)
-          .map { comment =>
-            InterpretationComment(
-              `type` = comment.tryExtract[String]("@Type"),
-              text = comment.extract[String]("$")
-            )
-          },
-        submissionNames = rawAssertion
-          .tryExtract[List[Msg]]("SubmissionNameList", "SubmissionName")
-          .getOrElse(List.empty)
-          .map(_.extract[String]("$")),
-        content = {
-          // Pop out the accession type to reduce noise in our unmodeled content column.
-          val _ = rawAssertion.tryExtract[Msg]("ClinVarAccession", "@Type")
-          Content.encode(rawAssertion)
+      // Extract the tree of variation records stored in the submission.
+      val variations = extractVariations(releaseDate, assertionAccession, rawAssertion)
+
+      // Extract remaining top-level info about the submitted assertion.
+      val assertion = {
+        val referenceTraitSetId = context.interpretation.traitSets match {
+          case Nil           => None
+          case single :: Nil => Some(single.id)
+          case many =>
+            directTraitSet.flatMap { traitSet =>
+              many
+                .find(_.traitIds == traitSet.traits.flatMap(_.traitId))
+                .map(_.id)
+            }
         }
+        val relatedRcv = context.referenceAccessions.find { rcv =>
+          rcv.traitSetId.isDefined && rcv.traitSetId == referenceTraitSetId
+        }
+
+        ClinicalAssertion(
+          id = assertionAccession,
+          releaseDate = releaseDate,
+          version = rawAccession.extract[Long]("@Version"),
+          internalId = assertionId,
+          variationArchiveId = context.vcvId,
+          variationId = context.variationId,
+          submitterId = submitter.id,
+          submissionId = submission.id,
+          rcvAccessionId = relatedRcv.map(_.id),
+          traitSetId = referenceTraitSetId,
+          clinicalAssertionTraitSetId = directTraitSet.map(_.traitSet.id),
+          clinicalAssertionObservationIds = observations.map(_.id),
+          title = rawAssertion.tryExtract[String]("ClinVarSubmissionID", "@title"),
+          localKey = rawAssertion.tryExtract[String]("ClinVarSubmissionID", "@localKey"),
+          assertionType = rawAssertion.tryExtract[String]("Assertion", "$"),
+          dateCreated = rawAssertion.tryExtract[LocalDate]("@DateCreated"),
+          dateLastUpdated = rawAssertion.tryExtract[LocalDate]("@DateLastUpdated"),
+          submittedAssembly =
+            rawAssertion.tryExtract[String]("ClinVarSubmissionID", "@submittedAssembly"),
+          recordStatus = rawAssertion.tryExtract[String]("RecordStatus", "$"),
+          reviewStatus = rawAssertion.tryExtract[String]("ReviewStatus", "$"),
+          interpretationDescription =
+            rawAssertion.tryExtract[String]("Interpretation", "Description", "$"),
+          interpretationDateLastEvaluated = rawAssertion
+            .tryExtract[String]("Interpretation", "@DateLastEvaluated")
+            .flatMap {
+              case SubmissionDatePattern(trimmed) => Some(LocalDate.parse(trimmed))
+              case _                              => None
+            },
+          interpretationComments = rawAssertion
+            .tryExtract[List[Msg]]("Interpretation", "Comment")
+            .getOrElse(List.empty)
+            .map { comment =>
+              InterpretationComment(
+                `type` = comment.tryExtract[String]("@Type"),
+                text = comment.extract[String]("$")
+              )
+            },
+          submissionNames = rawAssertion
+            .tryExtract[List[Msg]]("SubmissionNameList", "SubmissionName")
+            .getOrElse(List.empty)
+            .map(_.extract[String]("$")),
+          content = {
+            // Pop out the accession type to reduce noise in our unmodeled content column.
+            val _ = rawAssertion.tryExtract[Msg]("ClinVarAccession", "@Type")
+            Content.encode(rawAssertion)
+          }
+        )
+      }
+
+      SCV(
+        assertion = assertion,
+        submitters = submitter +: additionalSubmitters,
+        submission = submission,
+        variations = variations,
+        observations = observations,
+        traitSets = allTraitSets,
+        traits = allTraits
       )
     }
-
-    SCV(
-      assertion = assertion,
-      submitters = submitter +: additionalSubmitters,
-      submission = submission,
-      variations = variations,
-      observations = observations,
-      traitSets = allTraitSets,
-      traits = allTraits
-    )
-  }
 
   /** Extract submitter fields from a raw ClinicalAssertion payload. */
   private def extractSubmitter(releaseDate: LocalDate, rawAssertion: Msg): Submitter = {

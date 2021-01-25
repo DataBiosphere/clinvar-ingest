@@ -33,7 +33,7 @@ object TraitMetadata {
   /**
     * Interface for a utility which can extract common metadata
     * from unmodeled Trait payloads.
-    * */
+    */
   trait Parser extends Serializable {
 
     /**
@@ -47,57 +47,59 @@ object TraitMetadata {
   }
 
   /** Parser for "real" Trait payloads, to be used in production. */
-  def parser(releaseDate: LocalDate): Parser = (id, rawTrait) => {
-    // Process any names stored in the trait.
-    // Any nested xrefs will be "unzipped" from their names, to be
-    // combined with top-level refs in the next step.
-    val allNames = rawTrait.tryExtract[List[Msg]]("Name").getOrElse(List.empty)
-    val (preferredName, alternateNames, nameXrefs) =
-      allNames.foldLeft((Option.empty[String], List.empty[String], Set.empty[Xref])) {
-        case ((prefAcc, altAcc, xrefAcc), name) =>
-          val nameValue = name.extract[Msg]("ElementValue")
-          val nameType = nameValue.extract[String]("@Type")
-          val nameString = nameValue.extract[String]("$")
+  def parser(releaseDate: LocalDate): Parser =
+    (id, rawTrait) => {
+      // Process any names stored in the trait.
+      // Any nested xrefs will be "unzipped" from their names, to be
+      // combined with top-level refs in the next step.
+      val allNames = rawTrait.tryExtract[List[Msg]]("Name").getOrElse(List.empty)
+      val (preferredName, alternateNames, nameXrefs) =
+        allNames.foldLeft((Option.empty[String], List.empty[String], Set.empty[Xref])) {
+          case ((prefAcc, altAcc, xrefAcc), name) =>
+            val nameValue = name.extract[Msg]("ElementValue")
+            val nameType = nameValue.extract[String]("@Type")
+            val nameString = nameValue.extract[String]("$")
 
-          if (nameType == "Preferred") {
-            if (prefAcc.isDefined) {
-              throw new IllegalStateException(s"Trait $id has multiple preferred names")
+            if (nameType == "Preferred") {
+              if (prefAcc.isDefined) {
+                throw new IllegalStateException(s"Trait $id has multiple preferred names")
+              } else {
+                val preferredRefs = extractXrefs(name, Some("name"), None).toSet
+                (Some(nameString), altAcc, preferredRefs.union(xrefAcc))
+              }
             } else {
-              val preferredRefs = extractXrefs(name, Some("name"), None).toSet
-              (Some(nameString), altAcc, preferredRefs.union(xrefAcc))
+              val alternateRefs =
+                extractXrefs(name, Some("alternate_names"), Some(nameString)).toSet
+              (prefAcc, nameString :: altAcc, alternateRefs.union(xrefAcc))
             }
-          } else {
-            val alternateRefs = extractXrefs(name, Some("alternate_names"), Some(nameString)).toSet
-            (prefAcc, nameString :: altAcc, alternateRefs.union(xrefAcc))
-          }
-      }
-    // Process remaining xrefs in the payload, combining them with the
-    // name-based refs.
-    val topLevelRefs = extractXrefs(rawTrait, None, None)
-    val (medgenId, finalXrefs) =
-      topLevelRefs.foldLeft((Option.empty[String], nameXrefs)) {
-        case ((medgenAcc, xrefAcc), xref) =>
-          if (xref.db.contains(Constants.MedGenKey)) {
-            if (medgenAcc.isDefined) {
-              throw new IllegalStateException(s"Trait $id contains two MedGen references")
+        }
+      // Process remaining xrefs in the payload, combining them with the
+      // name-based refs.
+      val topLevelRefs = extractXrefs(rawTrait, None, None)
+      val (medgenId, finalXrefs) =
+        topLevelRefs.foldLeft((Option.empty[String], nameXrefs)) {
+          case ((medgenAcc, xrefAcc), xref) =>
+            if (xref.db.contains(Constants.MedGenKey)) {
+              if (medgenAcc.isDefined) {
+                throw new IllegalStateException(s"Trait $id contains two MedGen references")
+              } else {
+                (Some(xref.id), xrefAcc)
+              }
             } else {
-              (Some(xref.id), xrefAcc)
+              (medgenAcc, xrefAcc + xref)
             }
-          } else {
-            (medgenAcc, xrefAcc + xref)
-          }
-      }
+        }
 
-    TraitMetadata(
-      id = id,
-      releaseDate = releaseDate,
-      medgenId = medgenId,
-      `type` = rawTrait.tryExtract[String]("@Type"),
-      name = preferredName,
-      alternateNames = alternateNames.sorted,
-      xrefs = finalXrefs
-    )
-  }
+      TraitMetadata(
+        id = id,
+        releaseDate = releaseDate,
+        medgenId = medgenId,
+        `type` = rawTrait.tryExtract[String]("@Type"),
+        name = preferredName,
+        alternateNames = alternateNames.sorted,
+        xrefs = finalXrefs
+      )
+    }
 
   /**
     * Pull raw xrefs out of a containing payload, and process them.

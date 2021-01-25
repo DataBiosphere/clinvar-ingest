@@ -70,153 +70,154 @@ object VCV {
     variationParser: Variation.Parser,
     interpParser: Interpretation.Parser,
     scvParser: SCV.Parser
-  ): Parser = rawArchive => {
-    /*
-     * ClinVar publishes two types of "record"s:
-     *   1. InterpretedRecords are generated for each variation that is sent
-     *      to ClinVar as the top-level focus of a clinical assertion. They
-     *      are reviewed by experts, and therefore have ClinVar-specific
-     *      provenance info attached to them.
-     *   2. IncludedRecords are generated for variations that have never been
-     *      the focus of a clinical assertion, but have been mentioned as
-     *      descendants by other assertions (i.e. a SimpleAllele in a Haplotype).
-     *      They aren't reviewed by experts, and have no meaningful ClinVar-
-     *      specific provenance info.
-     *
-     * We want to collect the variation and gene info described by both types
-     * of records.
-     */
-    val variationRecord = rawArchive.obj
-      .get(InterpretedRecord)
-      .orElse(rawArchive.obj.get(IncludedRecord))
-      .getOrElse {
-        throw new IllegalStateException(s"Found an archive with no record: $rawArchive")
-      }
-
-    val parsedVariation = variationParser.parse(variationRecord)
-
-    // Since IncludedRecords don't contain meaningful provenance, we only
-    // bother to do further processing for InterpretedRecords.
-    val recordType = rawArchive.extract[String]("@RecordType")
-    if (recordType == "interpreted") {
-      // Pop out fields already covered by the variation tree.
-      val _ = List("@VariationID", "@VariationName", "@VariationType")
-        .foreach(rawArchive.tryExtract[Msg](_))
-
-      val vcvId = rawArchive.extract[String]("@Accession")
-
-      // Parse the variation's interpretation.
-      val interpretation =
-        interpParser.parse(variationRecord.extract[Msg]("Interpretations", "Interpretation"))
-
-      // Pull out any RCVs, cross-linking to the relevant trait sets.
-      val rcvs = variationRecord
-        .tryExtract[List[Msg]]("RCVList", "RCVAccession")
-        .getOrElse(Nil)
-        .map {
-          parseRawRcv(
-            releaseDate,
-            parsedVariation.variation.id,
-            vcvId,
-            interpretation,
-            _
-          )
+  ): Parser =
+    rawArchive => {
+      /*
+       * ClinVar publishes two types of "record"s:
+       *   1. InterpretedRecords are generated for each variation that is sent
+       *      to ClinVar as the top-level focus of a clinical assertion. They
+       *      are reviewed by experts, and therefore have ClinVar-specific
+       *      provenance info attached to them.
+       *   2. IncludedRecords are generated for variations that have never been
+       *      the focus of a clinical assertion, but have been mentioned as
+       *      descendants by other assertions (i.e. a SimpleAllele in a Haplotype).
+       *      They aren't reviewed by experts, and have no meaningful ClinVar-
+       *      specific provenance info.
+       *
+       * We want to collect the variation and gene info described by both types
+       * of records.
+       */
+      val variationRecord = rawArchive.obj
+        .get(InterpretedRecord)
+        .orElse(rawArchive.obj.get(IncludedRecord))
+        .getOrElse {
+          throw new IllegalStateException(s"Found an archive with no record: $rawArchive")
         }
 
-      // Pull out SCV<->VCV trait mappings.
-      val traitMappings = variationRecord
-        .tryExtract[List[Msg]]("TraitMappingList", "TraitMapping")
-        .getOrElse(Nil)
-        .map { rawMapping =>
-          TraitMapping(
-            clinicalAssertionId = rawMapping.extract[String]("@ClinicalAssertionID"),
-            traitType = rawMapping.extract[String]("@TraitType"),
-            mappingType = rawMapping.extract[String]("@MappingType"),
-            mappingRef = rawMapping.extract[String]("@MappingRef"),
-            mappingValue = rawMapping.extract[String]("@MappingValue"),
-            releaseDate = releaseDate,
-            medgenId = rawMapping.tryExtract[String]("MedGen", "@CUI").filter(_ != "None"),
-            medgenName = rawMapping.tryExtract[String]("MedGen", "@Name")
-          )
-        }
+      val parsedVariation = variationParser.parse(variationRecord)
 
-      // Narrow the search space needed in future cross-linking by grouping
-      // mappings by their SCV.
-      //
-      // NOTE: This grouping is done by numeric ID, not accession.
-      // We have to post-process the trait mappings after looping through
-      // the SCVs to fix up the references.
-      val mappingsByScvId = traitMappings.groupBy(_.clinicalAssertionId)
+      // Since IncludedRecords don't contain meaningful provenance, we only
+      // bother to do further processing for InterpretedRecords.
+      val recordType = rawArchive.extract[String]("@RecordType")
+      if (recordType == "interpreted") {
+        // Pop out fields already covered by the variation tree.
+        val _ = List("@VariationID", "@VariationName", "@VariationType")
+          .foreach(rawArchive.tryExtract[Msg](_))
 
-      // Pull out any SCVs, and related info.
-      val scvContext = SCV.ParsingContext(
-        parsedVariation.variation.id,
-        vcvId,
-        rcvs,
-        interpretation,
-        mappingsByScvId
-      )
-      val parsedScvs = variationRecord
-        .tryExtract[List[Msg]]("ClinicalAssertionList", "ClinicalAssertion")
-        .getOrElse(Nil)
-        .map(scvParser.parse(scvContext, _))
+        val vcvId = rawArchive.extract[String]("@Accession")
 
-      // Swap SCV accessions for their numeric IDs so the FK in the mapping table
-      // actually works.
-      val mappingsWithAccessionLinks = traitMappings.map { rawMapping =>
-        val matchingScv = parsedScvs
-          .find(_.assertion.internalId == rawMapping.clinicalAssertionId)
-          .getOrElse {
-            throw new IllegalStateException(
-              s"Can't link SCV ID ${rawMapping.clinicalAssertionId} to its accession"
+        // Parse the variation's interpretation.
+        val interpretation =
+          interpParser.parse(variationRecord.extract[Msg]("Interpretations", "Interpretation"))
+
+        // Pull out any RCVs, cross-linking to the relevant trait sets.
+        val rcvs = variationRecord
+          .tryExtract[List[Msg]]("RCVList", "RCVAccession")
+          .getOrElse(Nil)
+          .map {
+            parseRawRcv(
+              releaseDate,
+              parsedVariation.variation.id,
+              vcvId,
+              interpretation,
+              _
             )
           }
-        rawMapping.copy(clinicalAssertionId = matchingScv.assertion.id)
+
+        // Pull out SCV<->VCV trait mappings.
+        val traitMappings = variationRecord
+          .tryExtract[List[Msg]]("TraitMappingList", "TraitMapping")
+          .getOrElse(Nil)
+          .map { rawMapping =>
+            TraitMapping(
+              clinicalAssertionId = rawMapping.extract[String]("@ClinicalAssertionID"),
+              traitType = rawMapping.extract[String]("@TraitType"),
+              mappingType = rawMapping.extract[String]("@MappingType"),
+              mappingRef = rawMapping.extract[String]("@MappingRef"),
+              mappingValue = rawMapping.extract[String]("@MappingValue"),
+              releaseDate = releaseDate,
+              medgenId = rawMapping.tryExtract[String]("MedGen", "@CUI").filter(_ != "None"),
+              medgenName = rawMapping.tryExtract[String]("MedGen", "@Name")
+            )
+          }
+
+        // Narrow the search space needed in future cross-linking by grouping
+        // mappings by their SCV.
+        //
+        // NOTE: This grouping is done by numeric ID, not accession.
+        // We have to post-process the trait mappings after looping through
+        // the SCVs to fix up the references.
+        val mappingsByScvId = traitMappings.groupBy(_.clinicalAssertionId)
+
+        // Pull out any SCVs, and related info.
+        val scvContext = SCV.ParsingContext(
+          parsedVariation.variation.id,
+          vcvId,
+          rcvs,
+          interpretation,
+          mappingsByScvId
+        )
+        val parsedScvs = variationRecord
+          .tryExtract[List[Msg]]("ClinicalAssertionList", "ClinicalAssertion")
+          .getOrElse(Nil)
+          .map(scvParser.parse(scvContext, _))
+
+        // Swap SCV accessions for their numeric IDs so the FK in the mapping table
+        // actually works.
+        val mappingsWithAccessionLinks = traitMappings.map { rawMapping =>
+          val matchingScv = parsedScvs
+            .find(_.assertion.internalId == rawMapping.clinicalAssertionId)
+            .getOrElse {
+              throw new IllegalStateException(
+                s"Can't link SCV ID ${rawMapping.clinicalAssertionId} to its accession"
+              )
+            }
+          rawMapping.copy(clinicalAssertionId = matchingScv.assertion.id)
+        }
+
+        // Pull out top-level info about the VCV and combine it with summary
+        // interpretation data.
+        val vcv = VariationArchive(
+          id = vcvId,
+          releaseDate = releaseDate,
+          version = rawArchive.extract[Long]("@Version"),
+          variationId = parsedVariation.variation.id,
+          dateCreated = rawArchive.tryExtract[LocalDate]("@DateCreated"),
+          dateLastUpdated = rawArchive.tryExtract[LocalDate]("@DateLastUpdated"),
+          numSubmissions = rawArchive.tryExtract[Long]("@NumberOfSubmissions"),
+          numSubmitters = rawArchive.tryExtract[Long]("@NumberOfSubmitters"),
+          recordStatus = rawArchive.tryExtract[String]("RecordStatus", "$"),
+          reviewStatus = rawArchive.tryExtract[String]("InterpretedRecord", "ReviewStatus", "$"),
+          species = rawArchive.tryExtract[String]("Species", "$"),
+          interpDateLastEvaluated = interpretation.dateLastEvaluated,
+          interpType = interpretation.`type`,
+          interpDescription = interpretation.description,
+          interpExplanation = interpretation.explanation,
+          interpContent = interpretation.content,
+          content = Content.encode(rawArchive)
+        )
+
+        VCV(
+          variation = parsedVariation,
+          vcv = Some(vcv),
+          rcvs = rcvs,
+          scvs = parsedScvs,
+          traitSets = interpretation.traitSets,
+          traits = interpretation.traits,
+          traitMappings = mappingsWithAccessionLinks
+        )
+      } else {
+        VCV(
+          variation = parsedVariation,
+          vcv = None,
+          rcvs = Nil,
+          traitSets = Nil,
+          traits = Nil,
+          traitMappings = Nil,
+          scvs = Nil
+        )
       }
-
-      // Pull out top-level info about the VCV and combine it with summary
-      // interpretation data.
-      val vcv = VariationArchive(
-        id = vcvId,
-        releaseDate = releaseDate,
-        version = rawArchive.extract[Long]("@Version"),
-        variationId = parsedVariation.variation.id,
-        dateCreated = rawArchive.tryExtract[LocalDate]("@DateCreated"),
-        dateLastUpdated = rawArchive.tryExtract[LocalDate]("@DateLastUpdated"),
-        numSubmissions = rawArchive.tryExtract[Long]("@NumberOfSubmissions"),
-        numSubmitters = rawArchive.tryExtract[Long]("@NumberOfSubmitters"),
-        recordStatus = rawArchive.tryExtract[String]("RecordStatus", "$"),
-        reviewStatus = rawArchive.tryExtract[String]("InterpretedRecord", "ReviewStatus", "$"),
-        species = rawArchive.tryExtract[String]("Species", "$"),
-        interpDateLastEvaluated = interpretation.dateLastEvaluated,
-        interpType = interpretation.`type`,
-        interpDescription = interpretation.description,
-        interpExplanation = interpretation.explanation,
-        interpContent = interpretation.content,
-        content = Content.encode(rawArchive)
-      )
-
-      VCV(
-        variation = parsedVariation,
-        vcv = Some(vcv),
-        rcvs = rcvs,
-        scvs = parsedScvs,
-        traitSets = interpretation.traitSets,
-        traits = interpretation.traits,
-        traitMappings = mappingsWithAccessionLinks
-      )
-    } else {
-      VCV(
-        variation = parsedVariation,
-        vcv = None,
-        rcvs = Nil,
-        traitSets = Nil,
-        traits = Nil,
-        traitMappings = Nil,
-        scvs = Nil
-      )
     }
-  }
 
   /**
     * Convert a raw RCVAccession payload into our model.
