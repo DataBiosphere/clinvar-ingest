@@ -257,7 +257,7 @@ spec:
             value: UPDATE
         command: ["python", "-c", "import diff; diff.get_updated_rows()"]
 
-      - name: export-rows
+    - name: export-rows
       inputs:
         parameters:
           - name: table-name
