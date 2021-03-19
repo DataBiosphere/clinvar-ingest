@@ -48,7 +48,7 @@ def get_latest_xml_release_date(project: str, dataset: str) -> str:
     cleaned_date = str(release_date).replace("-", "_")
     return cleaned_date
 
-def check_snapshot_exists(host: str, dataset_id: str, filter: str) -> bool:
+def check_snapshot_exists(host: str, dataset_id: str, filter: str) -> None:
     jade_client = get_api_client(host=host)
     r = jade_client.enumerate_snapshots(
         limit=1,sort="created_date", direction="desc", dataset_ids=[dataset_id], filter=filter)
