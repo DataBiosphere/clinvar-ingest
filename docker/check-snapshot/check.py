@@ -11,12 +11,9 @@ logging.basicConfig(level=logging.INFO)
 
 ENV = os.getenv("ENV")
 google_project = os.getenv("REPO_DATA_PROJECT")
-data_repo_host = {
-    "dev": "https://jade.datarepo-dev.broadinstitute.org/",
-    "prod": "https://jade-terra.datarepo-prod.broadinstitute.org/"
-}[ENV]
+data_repo_host = os.getenv("REPO_HOST")
 dataset_name = os.getenv("REPO_DATASET_NAME")
-dataset_id = {"dev": "9952ebf2-65d9-44b7-b5a8-b500bc458909", "prod": "dfbd0c7e-088b-45ab-a161-7b79aa28d872"}[ENV]
+dataset_id = os.getenv("REPO_DATASET_ID")
 
 
 def default_google_access_token():
