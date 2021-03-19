@@ -36,7 +36,7 @@ def get_api_client(host: str) -> RepositoryApi:
 
 
 # get latest row from xml archive: SELECT release_date FROM BLAH ORDER BY release_date DESC LIMIT 1
-def get_latest_xml_release_date(project: str, dataset: str):
+def get_latest_xml_release_date(project: str, dataset: str) -> str:
     bq_client = bigquery.Client(project=project)
     query = f"""
         SELECT release_date
@@ -48,7 +48,7 @@ def get_latest_xml_release_date(project: str, dataset: str):
     cleaned_date = str(release_date).replace("-", "_")
     return cleaned_date
 
-def check_snapshot_exists(host: str, dataset_id: str, filter: str):
+def check_snapshot_exists(host: str, dataset_id: str, filter: str) -> bool:
     jade_client = get_api_client(host=host)
     r = jade_client.enumerate_snapshots(
         limit=1,sort="created_date", direction="desc", dataset_ids=[dataset_id], filter=filter)
