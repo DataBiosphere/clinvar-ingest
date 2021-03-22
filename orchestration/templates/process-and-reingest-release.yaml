@@ -74,7 +74,7 @@ spec:
 
           # If we have provenance information, cut a snapshot of the new data
           # for the release-date.
-
+          {{- if $versionIsPinned }}
           - name: publish-processing-results
             dependencies: [ingest-archive]
             when: {{ $processingNeeded | quote }}
@@ -91,7 +91,7 @@ spec:
           - name: check-latest-snapshot
             dependencies: [publish-processing-results]
             template: check-latest-snapshot
-
+          {{- end }}
       outputs:
         parameters:
           - name: dataset-name
