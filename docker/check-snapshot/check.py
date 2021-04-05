@@ -18,7 +18,7 @@ dataset_id = os.getenv("REPO_DATASET_ID")
 
 def default_google_access_token():
     # get token for google-based auth use, assumes application default credentials work for specified environment
-    credentials, _ = google.auth.default()
+    credentials, _ = google.auth.default(scopes=['openid', 'email', 'profile'])
     credentials.refresh(Request())
 
     return credentials.token

@@ -286,7 +286,7 @@ spec:
           secret:
             secretName: {{ .Values.jade.accessKey.secretName }}
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/monster-check-snapshot:0.1.0
+        image: us.gcr.io/broad-dsp-gcr-public/monster-check-snapshot:0.1.1
         volumeMounts:
           - name: sa-secret-volume
             mountPath: /secret
