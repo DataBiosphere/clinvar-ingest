@@ -301,7 +301,10 @@ spec:
             value: {{ .Values.jade.url }}
           - name: REPO_DATASET_ID
             value: {{ .Values.jade.datasetId }}
-        command: ["python", "-c", "import check; check.run()"]
+        command: [python]
+        source: |
+          import check
+          check.run()
 
     ##
     ## Publish the data stored in the TDR under a release-date by marking
