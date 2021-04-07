@@ -72,12 +72,19 @@ spec:
                   value: {{ $gcsPrefix | quote }}
             {{- $stagingDataset := "{{tasks.ingest-archive.outputs.parameters.dataset-name}}" }}
 
-          # If we have provenance information, cut a snapshot of the new data
+          # If we have provenance information and a snapshot doesn't exist, cut a snapshot of the new data
           # for the release-date.
           {{- if $versionIsPinned }}
-          - name: publish-processing-results
+          - name: check-latest-snapshot
             dependencies: [ingest-archive]
-            when: {{ $processingNeeded | quote }}
+            template: check-latest-snapshot
+          - name: publish-processing-results
+            dependencies: [check-latest-snapshot]
+            # only publish results when processing is needed and a snapshot is needed
+            when: >-
+              ( {{tasks.check-processing-history.outputs.result}} == 0 &&
+                {{tasks.check-latest-snapshot.outputs.result}} == 0
+              )
             template: publish-processing-results
             arguments:
               parameters:
@@ -87,10 +94,6 @@ spec:
                   value: {{ $gcsPrefix | quote }}
                 - name: bq-dataset
                   value: {{ $stagingDataset | quote }}
-
-          - name: check-latest-snapshot
-            dependencies: [publish-processing-results]
-            template: check-latest-snapshot
           {{- end }}
       outputs:
         parameters:
@@ -286,7 +289,7 @@ spec:
           secret:
             secretName: {{ .Values.jade.accessKey.secretName }}
       script:
-        image: us.gcr.io/broad-dsp-gcr-public/monster-check-snapshot:0.1.1
+        image: us.gcr.io/broad-dsp-gcr-public/monster-check-snapshot:0.1.2
         volumeMounts:
           - name: sa-secret-volume
             mountPath: /secret

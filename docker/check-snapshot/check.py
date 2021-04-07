@@ -52,10 +52,14 @@ def check_snapshot_exists(host: str, dataset_id: str, filter: str) -> None:
     jade_client = get_api_client(host=host)
     r = jade_client.enumerate_snapshots(
         limit=1,sort="created_date", direction="desc", dataset_ids=[dataset_id], filter=filter)
-    assert r.total == 1, "No snapshot found for latest release date in xml_archive table"
+    if r.total == 0:
+        logging.info("No snapshot found for latest release date in xml_archive table")
+    else:
+        logging.info(f"Found {r.total} snapshot(s) for latest release date in xml_archive table")
+    return r.total
 
 def run():
     latest_release_date = get_latest_xml_release_date(project=google_project, dataset=dataset_name)
     logging.info(f"Latest release date in XML archive is {latest_release_date}")
-    check_snapshot_exists(host=data_repo_host, dataset_id=dataset_id, filter=latest_release_date)
+    return check_snapshot_exists(host=data_repo_host, dataset_id=dataset_id, filter=latest_release_date)
 
