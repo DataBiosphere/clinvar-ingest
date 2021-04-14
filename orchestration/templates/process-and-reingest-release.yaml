@@ -450,8 +450,8 @@ spec:
             value: {{ $releaseDate | quote }}
           - name: PIPELINE_VERSION
             value: {{ $pipelineVersion }}
-          - name: READER_EMAIL
-            value: clingendevs@firecloud.org
+          - name: ENVIRONMENT
+            value: {{ .Values.jade.environment }}
         command: [python]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/request-release-date-snapshot.py") | indent 10 }}

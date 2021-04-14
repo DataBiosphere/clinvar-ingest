@@ -11,7 +11,7 @@ credentials, project = google.auth.default(scopes=['openid', 'email', 'profile']
 base_url = os.environ["API_URL"]
 dataset_name = os.environ["DATASET_NAME"]
 profile_id = os.environ["PROFILE_ID"]
-reader_email = os.environ["READER_EMAIL"]
+environment = os.environ["ENVIRONMENT"]
 
 asset_name = os.environ["ASSET_NAME"]
 release_date = os.environ["RELEASE_DATE"]
@@ -44,5 +44,7 @@ snapshot_contents = [{
   }
 }]
 
-job_id = submit_snapshot(name=snapshot_name, description=snapshot_description, contents=snapshot_contents, profileId=profile_id, readers=[reader_email])
+reader_emails = ["clingendevs@firecloud.org"] if environment == "prod" else []
+
+job_id = submit_snapshot(name=snapshot_name, description=snapshot_description, contents=snapshot_contents, profileId=profile_id, readers=reader_emails)
 print(job_id)
