@@ -18,7 +18,7 @@ dataset_id = os.getenv("REPO_DATASET_ID")
 
 def default_google_access_token():
     # get token for google-based auth use, assumes application default credentials work for specified environment
-    credentials, _ = google.auth.default()
+    credentials, _ = google.auth.default(scopes=['openid', 'email', 'profile'])
     credentials.refresh(Request())
 
     return credentials.token
@@ -48,14 +48,20 @@ def get_latest_xml_release_date(project: str, dataset: str) -> str:
     cleaned_date = str(release_date).replace("-", "_")
     return cleaned_date
 
-def check_snapshot_exists(host: str, dataset_id: str, filter: str) -> None:
+def check_snapshot_exists(host: str, dataset_id: str, filter: str) -> int:
     jade_client = get_api_client(host=host)
     r = jade_client.enumerate_snapshots(
         limit=1,sort="created_date", direction="desc", dataset_ids=[dataset_id], filter=filter)
-    assert r.total == 1, "No snapshot found for latest release date in xml_archive table"
+    if r.total == 0:
+        logging.info("No snapshot found for latest release date in xml_archive table")
+    else:
+        logging.info(f"Found {r.total} snapshot(s) for latest release date in xml_archive table")
+    return r.total
 
 def run():
     latest_release_date = get_latest_xml_release_date(project=google_project, dataset=dataset_name)
     logging.info(f"Latest release date in XML archive is {latest_release_date}")
-    check_snapshot_exists(host=data_repo_host, dataset_id=dataset_id, filter=latest_release_date)
+    output = check_snapshot_exists(host=data_repo_host, dataset_id=dataset_id, filter=latest_release_date)
+    # print the output to stdout because argo
+    print(output)
 
