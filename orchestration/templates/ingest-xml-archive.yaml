@@ -378,18 +378,18 @@ spec:
         env:
           - name: WORKFLOW_ID
             value: {{ "{{workflow.name}}" | quote }}
-                      - name: WORKFLOW_ENV
-                      value: {{ .Values.jade.environment }}
-                      - name: SLACK_URL
-                      valueFrom:
-                      secretKeyRef:
-                      name: {{ .Values.notification.slackUrl.secretName }}
-                      key: {{ .Values.notification.slackUrl.secretKey }}
-                      command: [curl]
-                      args:
-                      - -XPOST
-                      - -H
-                      - 'Content-type: application/json'
-                      - -d
-                      - '{"text": "Workflow $(WORKFLOW_ID) in env $(WORKFLOW_ENV) is ingesting a new release file."}'
-                      - $(SLACK_URL)
+          - name: WORKFLOW_ENV
+            value: {{ .Values.jade.environment }}
+          - name: SLACK_URL
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.notification.slackUrl.secretName }}
+                key: {{ .Values.notification.slackUrl.secretKey }}
+        command: [curl]
+        args:
+        - -XPOST
+        - -H
+        - 'Content-type: application/json'
+        - -d
+        - '{"text": "Workflow $(WORKFLOW_ID) in env $(WORKFLOW_ENV) is ingesting a new release file."}'
+        - $(SLACK_URL)
