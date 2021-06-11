@@ -248,6 +248,7 @@ spec:
           - name: ingest-archive
             dependencies: [check-for-existing-file, upload-archive]
             when: {{ $shouldIngestFile | quote }}
+            onExit: send-slack-notification
             templateRef:
               name: {{ .Values.argoTemplates.ingestFile.name }}
               template: main
@@ -367,3 +368,28 @@ spec:
             json='{"release_date":"{{ $releaseDate }}","archive_path":"{{ $archiveId }}"}'
             echo "$json" > archive.json
             gsutil cp archive.json {{ $uploadPath }}
+
+    ##
+    ## Send a Slack notification describing the final status of the workflow.
+    ##
+    - name: send-slack-notification
+      container:
+        image: curlimages/curl:7.70.0
+        env:
+          - name: WORKFLOW_ID
+            value: {{ "{{workflow.name}}" | quote }}
+                      - name: WORKFLOW_ENV
+                      value: {{ .Values.jade.environment }}
+                      - name: SLACK_URL
+                      valueFrom:
+                      secretKeyRef:
+                      name: {{ .Values.notification.slackUrl.secretName }}
+                      key: {{ .Values.notification.slackUrl.secretKey }}
+                      command: [curl]
+                      args:
+                      - -XPOST
+                      - -H
+                      - 'Content-type: application/json'
+                      - -d
+                      - '{"text": "Workflow $(WORKFLOW_ID) in env $(WORKFLOW_ENV) is ingesting a new release file."}'
+                      - $(SLACK_URL)
