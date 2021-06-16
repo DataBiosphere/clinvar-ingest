@@ -391,5 +391,5 @@ spec:
         - -H
         - 'Content-type: application/json'
         - -d
-        - '{"text": "Workflow $(WORKFLOW_ID) in env $(WORKFLOW_ENV) is ingesting a new release file."}'
+        - '{"text": "Workflow $(WORKFLOW_ID) in env *$(WORKFLOW_ENV)* is ingesting a new release file."}'
         - $(SLACK_URL)

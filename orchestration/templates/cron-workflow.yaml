@@ -66,5 +66,5 @@ spec:
             - -H
             - 'Content-type: application/json'
             - -d
-            - '{"text": "Workflow $(WORKFLOW_ID) in env $(WORKFLOW_ENV) entered state: $(WORKFLOW_STATE)"}'
+            - '{"text": "Workflow $(WORKFLOW_ID) in env *$(WORKFLOW_ENV)* entered state: $(WORKFLOW_STATE)"}'
             - $(SLACK_URL)
