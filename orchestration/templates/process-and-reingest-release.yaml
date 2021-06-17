@@ -483,5 +483,5 @@ spec:
         - -H
         - 'Content-type: application/json'
         - -d
-        - '{"text": "Workflow $(WORKFLOW_ID) in env *$(WORKFLOW_ENV)* is cutting a new snapshot."}'
+        - '{"text": "Workflow $(WORKFLOW_ID) in env *$(WORKFLOW_ENV)* has cut a new snapshot."}'
         - $(SLACK_URL)
