@@ -96,7 +96,7 @@ spec:
           - name: date-present
             {{- if $versionIsPinned }}
             dependencies: [is-preceding-date-present, check-processing-needed]
-            when: {{ "({{tasks.is-preceding-date-present.outputs.result}} > 0) && ({{tasks.check-processing-needed.outputs.result}} == 1)" }}
+            when: {{ "({{tasks.is-preceding-date-present.outputs.result}} > 0)" }}
             {{- else }}
             dependencies: [is-preceding-date-present]
             when: {{ $datePresent | quote }}
