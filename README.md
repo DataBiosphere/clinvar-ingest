@@ -33,6 +33,7 @@ information in the dataset.
 * `xml_archive` tracks references to raw XML payloads per release
 * `processing_history` tracks the pipeline version and run date of processing per release
 
+
 The ingest pipeline uses information in these tables to short-circuit when appropriate.
 * If a release date is already present in `xml_archive`, the corresponding raw XML is
   not re-ingested
