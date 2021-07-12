@@ -50,7 +50,7 @@ def get_latest_xml_release_date(project: str, dataset: str) -> str:
 
 
 def get_api_credentials():
-    creds, _ = google.auth.default(scopes=['openid', 'email', 'profile', 'https://www.googleapis.com/auth/cloud-platform'])  # type: ignore # (unannotated library)
+    creds, _ = google.auth.default(scopes=['openid', 'email', 'profile', 'https://www.googleapis.com/auth/cloud-platform'])
     creds.refresh(Request())
     return creds
 
