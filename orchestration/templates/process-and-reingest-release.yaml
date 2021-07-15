@@ -190,7 +190,7 @@ spec:
           {{- $newRowsPrefix := printf "%s/new-rows/%s" $gcsPrefix $tableName }}
           {{- $oldIdsPrefix := printf "%s/old-ids/%s" $gcsPrefix $tableName }}
           - name: diff-table
-            retryStrategy:
+            retryStrategyy:
               limit: "5"
               retryPolicy: "Always"
               backoff:
