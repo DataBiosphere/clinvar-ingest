@@ -190,6 +190,13 @@ spec:
           {{- $newRowsPrefix := printf "%s/new-rows/%s" $gcsPrefix $tableName }}
           {{- $oldIdsPrefix := printf "%s/old-ids/%s" $gcsPrefix $tableName }}
           - name: diff-table
+            retryStrategy:
+              limit: "5"
+              retryPolicy: "Always"
+              backoff:
+                duration: "1"  # seconds
+                factor: "2"
+                maxDuration: "1m"
             templateRef:
               name: {{ .Values.argoTemplates.diffBQTable.name }}
               template: main
@@ -282,6 +289,13 @@ spec:
     {{- if $versionIsPinned }}
     # check if the latest snapshot release date corresponds to the latest xml release date
     - name: check-latest-snapshot
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "Always"
+        backoff:
+          duration: "1"  # seconds
+          factor: "2"
+          maxDuration: "1m"
       volumes:
         - name: sa-secret-volume
           secret:
