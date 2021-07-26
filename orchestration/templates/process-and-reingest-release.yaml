@@ -76,6 +76,7 @@ spec:
           # for the release-date.
           {{- if $versionIsPinned }}
           - name: check-latest-snapshot
+            {{- include "argo.retry" . | indent 6 }}
             dependencies: [ingest-archive]
             template: check-latest-snapshot
           - name: publish-processing-results
@@ -83,7 +84,6 @@ spec:
             # only publish results when processing is needed and a snapshot is needed
             when: {{ "({{tasks.check-latest-snapshot.outputs.result}} == 0)" }}
             template: publish-processing-results
-            onExit: send-slack-notification
             arguments:
               parameters:
                 - name: release-date
@@ -310,6 +310,7 @@ spec:
     ## snapshot.
     ##
     - name: publish-processing-results
+      onExit: send-slack-notification
       inputs:
         parameters:
           - name: release-date
@@ -344,6 +345,7 @@ spec:
                   value: {{ $releaseDate | quote }}
 
           - name: submit-snapshot
+            {{ - include "argo.retry" . | indent 6 }}
             dependencies: [sync-processing-history]
             template: submit-snapshot
             arguments:
@@ -353,6 +355,7 @@ spec:
             {{- $jobId := "{{tasks.submit-snapshot.outputs.result}}" }}
 
           - name: poll-snapshot
+            {{- include "argo.retry" . | indent 6 }}
             dependencies: [submit-snapshot]
             template: poll-ingest-job
             arguments:
