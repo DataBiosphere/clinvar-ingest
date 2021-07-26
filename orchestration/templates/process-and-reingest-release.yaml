@@ -347,7 +347,7 @@ spec:
                   value: {{ $releaseDate | quote }}
 
           - name: submit-snapshot
-            {{ - include "argo.retry" . | indent 6 }}
+            {{- include "argo.retry" . | indent 6 }}
             dependencies: [sync-processing-history]
             template: submit-snapshot
             arguments:
