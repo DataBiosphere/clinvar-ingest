@@ -103,8 +103,6 @@ spec:
     ## Sync the JSON outputs of Dataflow processing into the TDR.
     ##
     - name: ingest-archive
-      ## TODO ARH testing, remove this notification
-      onExit: send-slack-notification
       inputs:
         parameters:
           - name: gcs-prefix
