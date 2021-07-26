@@ -76,7 +76,6 @@ spec:
           # for the release-date.
           {{- if $versionIsPinned }}
           - name: check-latest-snapshot
-            {{- include "argo.retry" . | indent 6 }}
             dependencies: [ingest-archive]
             template: check-latest-snapshot
           - name: publish-processing-results
@@ -288,6 +287,7 @@ spec:
         - name: sa-secret-volume
           secret:
             secretName: {{ .Values.jade.accessKey.secretName }}
+      {{- include "argo.retry" . | indent 6 }}
       script:
         image: us.gcr.io/broad-dsp-gcr-public/monster-check-snapshot:0.1.4
         volumeMounts:
@@ -347,7 +347,6 @@ spec:
                   value: {{ $releaseDate | quote }}
 
           - name: submit-snapshot
-            {{- include "argo.retry" . | indent 6 }}
             dependencies: [sync-processing-history]
             template: submit-snapshot
             arguments:
@@ -357,7 +356,6 @@ spec:
             {{- $jobId := "{{tasks.submit-snapshot.outputs.result}}" }}
 
           - name: poll-snapshot
-            {{- include "argo.retry" . | indent 6 }}
             dependencies: [submit-snapshot]
             template: poll-ingest-job
             arguments:
@@ -426,6 +424,7 @@ spec:
     ## a given ClinVar release date.
     ##
     - name: submit-snapshot
+      {{- include "argo.retry" . | indent 6 }}
       inputs:
         parameters:
           - name: release-date
