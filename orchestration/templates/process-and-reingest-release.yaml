@@ -83,7 +83,6 @@ spec:
             # only publish results when processing is needed and a snapshot is needed
             when: {{ "({{tasks.check-latest-snapshot.outputs.result}} == 0)" }}
             template: publish-processing-results
-            onExit: send-slack-notification
             arguments:
               parameters:
                 - name: release-date
@@ -286,6 +285,7 @@ spec:
         - name: sa-secret-volume
           secret:
             secretName: {{ .Values.jade.accessKey.secretName }}
+      {{- include "argo.retry" . | indent 6 }}
       script:
         image: us.gcr.io/broad-dsp-gcr-public/monster-check-snapshot:0.1.4
         volumeMounts:
@@ -310,6 +310,7 @@ spec:
     ## snapshot.
     ##
     - name: publish-processing-results
+      onExit: send-slack-notification
       inputs:
         parameters:
           - name: release-date
@@ -421,6 +422,7 @@ spec:
     ## a given ClinVar release date.
     ##
     - name: submit-snapshot
+      {{- include "argo.retry" . | indent 6 }}
       inputs:
         parameters:
           - name: release-date
