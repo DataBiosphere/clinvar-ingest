@@ -19,6 +19,9 @@ def check_job_status(job_id: str):
     response = authed_session.get(f"{base_url}/api/repository/v1/jobs/{job_id}")
     if response.ok:
         return response.json()["job_status"]
+    elif 499 < response.status_code < 599:
+        print(f"Received status code {response.status_code} from TDR")
+        return "internal_error"
     else:
         raise HTTPError("Bad response, got code of: {}".format(response.status_code))
 
