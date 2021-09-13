@@ -99,6 +99,7 @@
     "notification": {
       "type": "object",
       "properties": {
+        "channelId": { "type":  "string" },
         "onlyOnFailure": { "type": "boolean" },
         "slackUrl": {
           "type": "object",
