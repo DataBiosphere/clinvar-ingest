@@ -40,5 +40,5 @@ notification:
     secretName: aaaaa
     secretKey: bbbbb
 steps:
-  exportDiffs:
+  exportDiff:
     enabled: true
