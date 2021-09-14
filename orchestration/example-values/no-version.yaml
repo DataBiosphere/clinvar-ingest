@@ -30,7 +30,8 @@ dataflow:
   subnetName: network
   workerAccount: runner@zoog
 notification:
+  channelId: monstertest
   onlyOnFailure: false
-  slackUrl:
+  oauthToken:
     secretName: aaaaa
     secretKey: bbbbb

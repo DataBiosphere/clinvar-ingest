@@ -34,7 +34,8 @@ argoTemplates:
   diffBQTable:
     schemaImageVersion: adsaasdf
 notification:
+  channelId: monstertest
   onlyOnFailure: true
-  slackUrl:
+  oauthToken:
     secretName: aaaaa
     secretKey: bbbbb
