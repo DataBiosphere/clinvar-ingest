@@ -110,7 +110,7 @@
           "required": ["secretName", "secretKey"]
         }
       },
-      "required": ["onlyOnFailure", "oauthToken"]
+      "required": ["onlyOnFailure", "oauthToken", "channelId"]
     },
     "clingen": {
       "type": "object",
