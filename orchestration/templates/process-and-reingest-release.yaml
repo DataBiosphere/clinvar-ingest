@@ -463,27 +463,33 @@ spec:
     {{- include "argo.poll-ingest-job" . | indent 4 }}
     {{- end }}
 
-      ##
-      ## Send a Slack notification describing the final status of the workflow.
-      ##
+    ##
+    ## Send a Slack notification describing the final status of the workflow.
+    ##
     - name: send-slack-notification
       container:
         image: curlimages/curl:7.70.0
         env:
+          - name: CHANNEL_ID
+            value: {{ .Values.notification.channelId }}
           - name: WORKFLOW_ID
-            value: {{ "{{workflow.name}}" | quote }}
+            value: '{{ "{{workflow.name}}" }}'
+          - name: WORKFLOW_STATE
+            value: '{{ "{{workflow.status}}" }}'
           - name: WORKFLOW_ENV
             value: {{ .Values.jade.environment }}
-          - name: SLACK_URL
+          - name: OAUTH_TOKEN
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.notification.slackUrl.secretName }}
-                key: {{ .Values.notification.slackUrl.secretKey }}
+                name: {{ .Values.notification.oauthToken.secretName }}
+                key: {{ .Values.notification.oauthToken.secretKey }}
         command: [curl]
         args:
         - -XPOST
         - -H
         - 'Content-type: application/json'
+        - -H
+        - 'Authorization: Bearer $(OAUTH_TOKEN)'
         - -d
-        - '{"text": "Workflow $(WORKFLOW_ID) in env *$(WORKFLOW_ENV)* has cut a new snapshot."}'
-        - $(SLACK_URL)
+        - '{"text": "Workflow $(WORKFLOW_ID) in env *$(WORKFLOW_ENV)* has cut a new snapshot.", "channel": "$(CHANNEL_ID)"}'
+        - "https://slack.com/api/chat.postMessage"

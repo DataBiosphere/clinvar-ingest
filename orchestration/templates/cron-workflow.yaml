@@ -64,11 +64,11 @@ spec:
                   key: {{ .Values.notification.oauthToken.secretKey }}
           command: [curl]
           args:
-            - -XPOST
-            - -H
-            - 'Content-type: application/json'
-            - -H
-            - 'Authorization: Bearer $(OAUTH_TOKEN)'
-            - -d
-            - '{"text": "Workflow $(WORKFLOW_ID) in env *$(WORKFLOW_ENV)* entered state: *$(WORKFLOW_STATE)*"}'
-            - "https://slack.com/api/chat.postMessage"
+          - -XPOST
+          - -H
+          - 'Content-type: application/json'
+          - -H
+          - 'Authorization: Bearer $(OAUTH_TOKEN)'
+          - -d
+          - '{"text": "Workflow $(WORKFLOW_ID) in env *$(WORKFLOW_ENV)* entered state: *$(WORKFLOW_STATE)*", "channel": "$(CHANNEL_ID)"}'
+          - "https://slack.com/api/chat.postMessage"

@@ -99,8 +99,9 @@
     "notification": {
       "type": "object",
       "properties": {
+        "channelId": { "type":  "string" },
         "onlyOnFailure": { "type": "boolean" },
-        "slackUrl": {
+        "oauthToken": {
           "type": "object",
           "properties": {
             "secretName": { "type": "string" },
@@ -109,7 +110,7 @@
           "required": ["secretName", "secretKey"]
         }
       },
-      "required": ["onlyOnFailure", "slackUrl"]
+      "required": ["onlyOnFailure", "oauthToken"]
     },
     "clingen": {
       "type": "object",
