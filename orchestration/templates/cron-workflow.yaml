@@ -58,10 +58,10 @@ spec:
             - name: WORKFLOW_ENV
               value: {{ .Values.jade.environment }}
             - name: OAUTH_TOKEN
-                valueFrom:
-                  secretKeyRef:
-                    name: {{ .Values.notification.oauthToken.secretName }}
-                    key: {{ .Values.notification.oauthToken.secretKey }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.notification.oauthToken.secretName }}
+                  key: {{ .Values.notification.oauthToken.secretKey }}
           command: [curl]
           args:
             - -XPOST
