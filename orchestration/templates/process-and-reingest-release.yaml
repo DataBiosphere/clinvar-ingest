@@ -247,7 +247,7 @@ spec:
                   value: {{ .Values.staging.gcsBucket }}
                 {{- with .Values.jade }}
                 - name: url
-                  value: {{ .url }}
+                  value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: timeout
@@ -275,7 +275,7 @@ spec:
                   value: {{ $newRowsPrefix | quote }}
                 {{- with .Values.jade }}
                 - name: url
-                  value: {{ .url }}
+                  value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: timeout
@@ -307,7 +307,7 @@ spec:
           - name: REPO_DATASET_NAME
             value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
           - name: REPO_HOST
-            value: {{ .Values.jade.url }}
+            value: {{ $dataRepoUrl | quote }}
           - name: REPO_DATASET_ID
             value: {{ $datasetId | quote }}
         command: ["python", "-c", "import check; check.run()"]
@@ -370,7 +370,7 @@ spec:
                   value: {{ $jobId | quote }}
                 {{- with .Values.jade }}
                 - name: api-url
-                  value: {{ .url }}
+                  value: {{ $dataRepoUrl | quote }}
                 - name: timeout
                   value: {{ .pollTimeout }}
                 - name: sa-secret
@@ -447,7 +447,7 @@ spec:
             mountPath: /secret
         env:
           - name: API_URL
-            value: {{ .url }}
+            value: {{ $dataRepoUrl | quote }}
           - name: DATASET_NAME
             value: {{ .datasetName }}
           - name: PROFILE_ID
