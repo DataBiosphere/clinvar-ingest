@@ -12,6 +12,8 @@ spec:
     - name: main
       inputs:
         parameters:
+          - name: dataset-id
+          {{- $datasetId := "{{inputs.parameters.dataset-id}}" }}
           - name: release-date
           {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
           - name: gcs-prefix

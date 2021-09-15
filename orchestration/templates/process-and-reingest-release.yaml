@@ -55,6 +55,8 @@ spec:
               template: main
             arguments:
               parameters:
+                - name: dataset-id
+                  value: {{ $datasetId | quote }}
                 - name: release-date
                   value: {{ $releaseDate | quote }}
                 - name: gcs-prefix
