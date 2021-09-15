@@ -149,7 +149,7 @@
         }
       },
       "required": ["gcsBucket", "kafka"]
-    },
+    }
   },
   "required": ["parallelism", "staging", "jade", "altJade","serviceAccount",
                "volumes", "cron", "dataflow", "notification", "clingen"]
