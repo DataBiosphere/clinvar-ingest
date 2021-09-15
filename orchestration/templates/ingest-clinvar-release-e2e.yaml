@@ -32,7 +32,7 @@ spec:
                 - name: gcs-prefix
                   value: {{ $gcsPrefix | quote }}
             {{- $datasetName := "{{tasks.process-archive.outputs.parameters.dataset-name}}" }}
-          {{- $shouldExportDiff := "{{ .Values.steps.exportDiff.enabled }}" }}
+          {{- $shouldExportDiff := printf "%s" .Values.steps.exportDiff.enabled }}
 
           - name: export-diff
             when: {{ printf "%s == true" $shouldExportDiff | quote }}
