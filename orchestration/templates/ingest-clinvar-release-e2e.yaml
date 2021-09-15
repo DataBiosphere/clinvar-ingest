@@ -19,8 +19,8 @@ spec:
           {{- $dataRepoUrl := "{{inputs.parameters.data-repo-url}}" }}
           - name: dataset-id
           {{- $datasetId := "{{inputs.parameters.dataset-id}}" }}
-          - name: dataset-name
-          {{- $datasetName := "{{inputs.parameters.dataset-name}}" }}
+          - name: jade-dataset-name
+          {{- $jadeDatasetName := "{{inputs.parameters.dataset-name}}" }}
           - name: archive-path
           {{- $archivePath := "{{inputs.parameters.archive-path}}" }}
           - name: gcs-prefix
@@ -38,7 +38,7 @@ spec:
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: dataset-name
-                  value: {{ $datasetName | quote }}
+                  value: {{ $jadeDatasetName | quote }}
                 - name: archive-path
                   value: {{ $archivePath | quote }}
                 - name: gcs-prefix
@@ -57,7 +57,7 @@ spec:
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: dataset-name
-                  value: {{ $datasetName | quote }}
+                  value: {{ $jadeDatasetName | quote }}
                 - name: release-date
                   value: {{ $releaseDate | quote }}
                 - name: gcs-prefix
@@ -73,6 +73,8 @@ spec:
               template: main
             arguments:
               parameters:
+                - name: jade-dataset-name
+                  value: {{ $jadeDatasetName | quote }}
                 - name: release-date
                   value: {{ $releaseDate | quote }}
                 - name: dataset-name

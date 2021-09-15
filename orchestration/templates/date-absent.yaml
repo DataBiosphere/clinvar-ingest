@@ -13,6 +13,8 @@ spec:
     - name: main
       inputs:
         parameters:
+          - name: jade-dataset-name
+          {{- $jadeDatasetName := "{{inputs.parameters.jade-dataset-name}}" }}
           - name: table-name
           {{- $tableName := "{{inputs.parameters.table-name}}" }}
           - name: release-date
@@ -76,7 +78,7 @@ spec:
           - name: REPO_DATA_PROJECT
             value: {{ .Values.jade.dataProject }}
           - name: REPO_DATASET_NAME
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+            value: {{ printf "datarepo_%s" $jadeDatasetName | quote }}
           - name: RELEASE_DATE
             value: {{ $releaseDate | quote }}
           - name: VERSION_COL_NAME
