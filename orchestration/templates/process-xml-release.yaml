@@ -12,6 +12,8 @@ spec:
     - name: main
       inputs:
         parameters:
+          - name: data-repo-url
+          {{- $dataRepoUrl := "{{inputs.parameters.data-repo-url}}" }}
           - name: dataset-id
           {{- $datasetId := "{{inputs.parameters.dataset-id}}" }}
           - name: release-date
