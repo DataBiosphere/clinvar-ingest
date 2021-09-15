@@ -18,8 +18,12 @@ spec:
     - name: main
       inputs:
         parameters:
+          - name: data-repo-url
+          {{- $dataRepoUrl := "{{inputs.parameters.data-repo-url}}" }}
           - name: dataset-id
           {{- $datasetId := "{{inputs.parameters.dataset-id}}" }}
+          - name: jade-dataset-name
+          {{- $jadeDatasetName := "{{inputs.parameters.jade-dataset-name}}" }}
           - name: release-date
           {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
           - name: gcs-prefix
@@ -55,6 +59,8 @@ spec:
               template: main
             arguments:
               parameters:
+                - name: data-repo-url
+                  value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: release-date
@@ -215,7 +221,7 @@ spec:
                 - name: jade-bq-project
                   value: {{ .Values.jade.dataProject }}
                 - name: jade-bq-dataset
-                  value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+                  value: {{ printf "datarepo_%s" $jadeDatasetName | quote }}
                 - name: upsert
                   value: 'false'
                 - name: diff-full-history
@@ -243,7 +249,7 @@ spec:
                   value: {{ .Values.staging.gcsBucket }}
                 {{- with .Values.jade }}
                 - name: url
-                  value: {{ .url }}
+                  value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: timeout
@@ -271,7 +277,7 @@ spec:
                   value: {{ $newRowsPrefix | quote }}
                 {{- with .Values.jade }}
                 - name: url
-                  value: {{ .url }}
+                  value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: timeout
@@ -301,9 +307,9 @@ spec:
           - name: REPO_DATA_PROJECT
             value: {{ .Values.jade.dataProject }}
           - name: REPO_DATASET_NAME
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+            value: {{ printf "datarepo_%s" $jadeDatasetName | quote }}
           - name: REPO_HOST
-            value: {{ .Values.jade.url }}
+            value: {{ $dataRepoUrl | quote }}
           - name: REPO_DATASET_ID
             value: {{ $datasetId | quote }}
         command: ["python", "-c", "import check; check.run()"]
@@ -366,7 +372,7 @@ spec:
                   value: {{ $jobId | quote }}
                 {{- with .Values.jade }}
                 - name: api-url
-                  value: {{ .url }}
+                  value: {{ $dataRepoUrl | quote }}
                 - name: timeout
                   value: {{ .pollTimeout }}
                 - name: sa-secret
@@ -392,7 +398,7 @@ spec:
           - name: JADE_PROJECT
             value: {{ .Values.jade.dataProject }}
           - name: JADE_DATASET
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+            value: {{ printf "datarepo_%s" $jadeDatasetName | quote }}
           - name: RELEASE_DATE
             value: {{ $releaseDate | quote }}
           - name: VERSION
@@ -443,9 +449,9 @@ spec:
             mountPath: /secret
         env:
           - name: API_URL
-            value: {{ .url }}
+            value: {{ $dataRepoUrl | quote }}
           - name: DATASET_NAME
-            value: {{ .datasetName }}
+            value: {{ $jadeDatasetName | quote }}
           - name: PROFILE_ID
             value: {{ .profileId }}
           - name: GOOGLE_APPLICATION_CREDENTIALS

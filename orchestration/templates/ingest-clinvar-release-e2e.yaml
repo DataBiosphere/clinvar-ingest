@@ -19,6 +19,8 @@ spec:
           {{- $dataRepoUrl := "{{inputs.parameters.data-repo-url}}" }}
           - name: dataset-id
           {{- $datasetId := "{{inputs.parameters.dataset-id}}" }}
+          - name: dataset-name
+          {{- $datasetName := "{{inputs.parameters.dataset-name}}" }}
           - name: archive-path
           {{- $archivePath := "{{inputs.parameters.archive-path}}" }}
           - name: gcs-prefix
@@ -31,8 +33,12 @@ spec:
               template: main
             arguments:
               parameters:
+                - name: data-repo-url
+                  value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
+                - name: dataset-name
+                  value: {{ $datasetName | quote }}
                 - name: archive-path
                   value: {{ $archivePath | quote }}
                 - name: gcs-prefix
@@ -46,8 +52,12 @@ spec:
               template: main
             arguments:
               parameters:
+                - name: data-repo-url
+                  value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
+                - name: dataset-name
+                  value: {{ $datasetName | quote }}
                 - name: release-date
                   value: {{ $releaseDate | quote }}
                 - name: gcs-prefix

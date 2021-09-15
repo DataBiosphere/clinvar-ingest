@@ -32,6 +32,8 @@ spec:
                     value: URL
                   - name: dataset-id
                     value: FOO
+                  - name: dataset-name
+                    value: FOO
                   - name: archive-path
                     value: weekly_release/ClinVarVariationRelease_00-latest_weekly.xml.gz
                   - name: gcs-prefix
