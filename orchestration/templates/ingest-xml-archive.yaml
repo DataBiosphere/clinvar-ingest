@@ -341,7 +341,7 @@ spec:
                   value: {{ $jsonPrefix | quote }}
                 {{- with .Values.jade }}
                 - name: url
-                  value: {{ .url }}
+                  value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: timeout
