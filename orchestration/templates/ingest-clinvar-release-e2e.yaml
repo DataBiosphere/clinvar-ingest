@@ -21,27 +21,14 @@ spec:
           {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
       dag:
         tasks:
-          - name: ingest-archive
-            templateRef:
-              name: ingest-xml-archive
-              template: main
-            arguments:
-              parameters:
-                - name: archive-path
-                  value: {{ $archivePath | quote }}
-                - name: gcs-prefix
-                  value: {{ $gcsPrefix | quote }}
-            {{- $releaseDate := "{{tasks.ingest-archive.outputs.parameters.release-date}}" }}
-
           - name: process-archive
-            dependencies: [ingest-archive]
             templateRef:
               name: process-and-reingest-release
               template: main
             arguments:
               parameters:
                 - name: release-date
-                  value: {{ $releaseDate | quote }}
+                  value: "IGNOREME"
                 - name: gcs-prefix
                   value: {{ $gcsPrefix | quote }}
             {{- $datasetName := "{{tasks.process-archive.outputs.parameters.dataset-name}}" }}
@@ -56,7 +43,7 @@ spec:
             arguments:
               parameters:
                 - name: release-date
-                  value: {{ $releaseDate | quote }}
+                  value: "IGNOREME"
                 - name: dataset-name
                   value: {{ $datasetName | quote }}
                 - name: gcs-prefix
