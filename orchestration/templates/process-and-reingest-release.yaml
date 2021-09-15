@@ -253,18 +253,16 @@ spec:
                   value: {{ $oldIdsPrefix | quote }}
                 - name: gcs-bucket
                   value: {{ .Values.staging.gcsBucket }}
-                {{- with .Values.jade }}
                 - name: url
                   value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: timeout
-                  value: {{ .pollTimeout }}
+                  value: {{ .Values.jade.pollTimeout }}
                 - name: sa-secret
-                  value: {{ .accessKey.secretName }}
+                  value: {{ .Values.jade.accessKey.secretName }}
                 - name: sa-secret-key
-                  value: {{ .accessKey.secretKey }}
-                {{- end }}
+                  value: {{ .Values.jade.accessKey.secretKey }}
 
           # Append rows with new data.
           - name: ingest-table
