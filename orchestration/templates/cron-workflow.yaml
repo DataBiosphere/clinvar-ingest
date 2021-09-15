@@ -28,6 +28,8 @@ spec:
                 template: main
               arguments:
                 parameters:
+                  - name: data-repo-url
+                    value: URL
                   - name: dataset-id
                     value: FOO
                   - name: archive-path
