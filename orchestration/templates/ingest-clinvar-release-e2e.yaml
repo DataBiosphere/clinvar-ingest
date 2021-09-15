@@ -37,6 +37,8 @@ spec:
                   value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
+                - name: dataset-name
+                  value: {{ $datasetName | quote }}
                 - name: archive-path
                   value: {{ $archivePath | quote }}
                 - name: gcs-prefix
