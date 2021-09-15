@@ -31,6 +31,8 @@ spec:
               template: main
             arguments:
               parameters:
+                - name: data-repo-url
+                  value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: archive-path
