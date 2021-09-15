@@ -165,7 +165,7 @@ spec:
           - name: JADE_PROJECT
             value: {{ .Values.jade.dataProject }}
           - name: JADE_DATASET
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+            value: {{ printf "datarepo_%s" $datasetName | quote }}
           - name: RELEASE_DATE
             value: {{ $releaseDate | quote }}
           - name: PROPERTY
