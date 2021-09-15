@@ -45,6 +45,3 @@ notification:
   oauthToken:
     secretName: aaaaa
     secretKey: bbbbb
-steps:
-  exportDiff:
-    enabled: true

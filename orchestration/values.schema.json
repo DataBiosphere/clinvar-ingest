@@ -150,17 +150,6 @@
       },
       "required": ["gcsBucket", "kafka"]
     },
-    "steps": {
-      "type": "object",
-      "properties": {
-        "exportDiffs": {
-          "type": "object",
-          "properties": {
-            "enabled": { "type":  "boolean" }
-          }
-        }
-      }
-    }
   },
   "required": ["parallelism", "staging", "jade", "altJade","serviceAccount",
                "volumes", "cron", "dataflow", "notification", "clingen"]
