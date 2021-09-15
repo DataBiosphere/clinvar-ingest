@@ -341,7 +341,7 @@ spec:
                 - name: url
                   value: {{ .url }}
                 - name: dataset-id
-                  value: {{ .datasetId }}
+                  value: {{ $datasetId | quote }}
                 - name: timeout
                   value: {{ .pollTimeout }}
                 - name: sa-secret
