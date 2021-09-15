@@ -156,7 +156,8 @@ spec:
     ##
     ## Check if a row exists in the xml_archive table for a given release date.
     ##
-    {{- $fullDatasetName := printf "datarepo_%s" $datasetName | quote }}
+    {{- $fullDatasetName := printf "datarepo_%s" $datasetName }}
+
     - name: check-for-existing-release
       inputs:
         parameters:
