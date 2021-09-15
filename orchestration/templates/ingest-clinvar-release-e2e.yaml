@@ -35,7 +35,7 @@ spec:
           {{- $shouldExportDiff := printf "%s" .Values.steps.exportDiff.enabled }}
 
           - name: export-diff
-            when: {{ printf "%s == true" $shouldExportDiff | quote }}
+            when: {{ printf "%t == true" $shouldExportDiff | quote }}
             dependencies: [process-archive]
             templateRef:
               name: export-diff
