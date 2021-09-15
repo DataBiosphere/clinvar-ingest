@@ -15,6 +15,7 @@ spec:
     - name: main
       inputs:
         parameters:
+          - name: datasetId
           - name: archive-path
           {{- $archivePath := "{{inputs.parameters.archive-path}}" }}
           - name: gcs-prefix

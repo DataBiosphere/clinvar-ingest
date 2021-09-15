@@ -28,6 +28,8 @@ spec:
                 template: main
               arguments:
                 parameters:
+                  - name: datasetId
+                    value: {{ .Values.jade.datasetId }}
                   - name: archive-path
                     value: weekly_release/ClinVarVariationRelease_00-latest_weekly.xml.gz
                   - name: gcs-prefix
