@@ -13,6 +13,8 @@ spec:
     - name: main
       inputs:
         parameters:
+          - name: jade-dataset-name
+          {{- $jadeDatasetName := "{{inputs.parameters.jade-dataset-name}}" }}
           - name: jade-data-project
           {{- $jadeDataProject := "{{inputs.parameters.jade-data-project}}" }}
           - name: table-name
@@ -162,7 +164,7 @@ spec:
           - name: REPO_DATA_PROJECT
             value: {{ $jadeDataProject | quote }}
           - name: REPO_DATASET_NAME
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+            value: {{ printf "datarepo_%s" $jadeDatasetName | quote }}
           - name: RELEASE_DATE
             value: {{ $releaseDate | quote }}
           - name: PREV_DATE
@@ -205,7 +207,7 @@ spec:
           - name: REPO_DATA_PROJECT
             value: {{ $jadeDataProject | quote }}
           - name: REPO_DATASET_NAME
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+            value: {{ printf "datarepo_%s" $jadeDatasetName | quote }}
           - name: RELEASE_DATE
             value: {{ $releaseDate | quote }}
           - name: PREV_DATE
@@ -248,7 +250,7 @@ spec:
           - name: REPO_DATA_PROJECT
             value: {{ $jadeDataProject | quote }}
           - name: REPO_DATASET_NAME
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+            value: {{ printf "datarepo_%s" $jadeDatasetName | quote }}
           - name: RELEASE_DATE
             value: {{ $releaseDate | quote }}
           - name: PREV_DATE
@@ -310,7 +312,7 @@ spec:
           - name: JADE_PROJECT
             value: {{ $jadeDataProject | quote }}
           - name: JADE_DATASET
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+            value: {{ printf "datarepo_%s" $jadeDatasetName | quote }}
           - name: RELEASE_DATE
             value: {{ $releaseDate | quote }}
         source: |

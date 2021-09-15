@@ -130,6 +130,8 @@ spec:
               - variation_archive
             arguments:
               parameters:
+                - name: jade-dataset-name
+                  value: {{ $jadeDatasetName | quote }}
                 - name: jade-data-project
                   value: {{ $jadeDataProject | quote }}
                 - name: table-name
