@@ -13,6 +13,8 @@ spec:
     - name: main
       inputs:
         parameters:
+          - name: jade-data-project
+          {{- $jadeDataProject := "{{inputs.parameters.jade-data-project}}" }}
           - name: table-name
           {{- $tableName := "{{inputs.parameters.table-name}}" }}
           - name: gcs-prefix
@@ -158,7 +160,7 @@ spec:
           - name: DEST_DATASET_NAME
             value: {{ $destDatasetName | quote }}
           - name: REPO_DATA_PROJECT
-            value: {{ .Values.jade.dataProject }}
+            value: {{ $jadeDataProject | quote }}
           - name: REPO_DATASET_NAME
             value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
           - name: RELEASE_DATE
@@ -201,7 +203,7 @@ spec:
           - name: DEST_DATASET_NAME
             value: {{ $destDatasetName | quote }}
           - name: REPO_DATA_PROJECT
-            value: {{ .Values.jade.dataProject }}
+            value: {{ $jadeDataProject | quote }}
           - name: REPO_DATASET_NAME
             value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
           - name: RELEASE_DATE
@@ -244,7 +246,7 @@ spec:
           - name: DEST_DATASET_NAME
             value: {{ $destDatasetName | quote }}
           - name: REPO_DATA_PROJECT
-            value: {{ .Values.jade.dataProject }}
+            value: {{ $jadeDataProject | quote }}
           - name: REPO_DATASET_NAME
             value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
           - name: RELEASE_DATE
@@ -306,7 +308,7 @@ spec:
         command: [bash]
         env:
           - name: JADE_PROJECT
-            value: {{ .Values.jade.dataProject }}
+            value: {{ $jadeDataProject | quote }}
           - name: JADE_DATASET
             value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
           - name: RELEASE_DATE

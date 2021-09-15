@@ -130,6 +130,8 @@ spec:
               - variation_archive
             arguments:
               parameters:
+                - name: jade-data-project
+                  value: {{ $jadeDataProject | quote }}
                 - name: table-name
                   value: {{ "{{item}}" | quote }}
                 - name: gcs-prefix
