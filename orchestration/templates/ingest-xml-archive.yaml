@@ -200,7 +200,7 @@ spec:
                 - name: url
                   value: {{ .url }}
                 - name: dataset-id
-                  value: {{ .datasetId }}
+                  value: {{ $datasetId | quote }}
                 - name: profile-id
                   value: {{ .profileId }}
                 - name: sa-secret
