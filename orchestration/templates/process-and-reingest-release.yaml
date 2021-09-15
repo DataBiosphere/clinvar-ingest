@@ -305,7 +305,7 @@ spec:
           - name: REPO_HOST
             value: {{ .Values.jade.url }}
           - name: REPO_DATASET_ID
-            value: {{ .Values.jade.datasetId }}
+            value: {{ $datasetId | quote }}
         command: ["python", "-c", "import check; check.run()"]
 
     ##
