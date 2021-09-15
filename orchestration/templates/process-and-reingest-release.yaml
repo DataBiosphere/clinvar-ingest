@@ -307,7 +307,7 @@ spec:
           - name: GOOGLE_APPLICATION_CREDENTIALS
             value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
           - name: REPO_DATA_PROJECT
-            value: {{ .Values.jade.dataProject }}
+            value: {{ $jadeDataProject | quote }}
           - name: REPO_DATASET_NAME
             value: {{ printf "datarepo_%s" $jadeDatasetName | quote }}
           - name: REPO_HOST
@@ -398,7 +398,7 @@ spec:
           - name: PROJECT
             value: {{ .Values.staging.bigquery.project }}
           - name: JADE_PROJECT
-            value: {{ .Values.jade.dataProject }}
+            value: {{ $jadeDataProject | quote }}
           - name: JADE_DATASET
             value: {{ printf "datarepo_%s" $jadeDatasetName | quote }}
           - name: RELEASE_DATE
