@@ -24,6 +24,8 @@ spec:
           {{- $datasetId := "{{inputs.parameters.dataset-id}}" }}
           - name: jade-dataset-name
           {{- $jadeDatasetName := "{{inputs.parameters.jade-dataset-name}}" }}
+          - name: jade-data-project
+          {{- $jadeDataProject := "{{inputs.parameters.jade-data-project}}" }}
           - name: release-date
           {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
           - name: gcs-prefix

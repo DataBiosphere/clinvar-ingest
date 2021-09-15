@@ -60,6 +60,8 @@ spec:
                   value: {{ $datasetId | quote }}
                 - name: dataset-name
                   value: {{ $jadeDatasetName | quote }}
+                - name: jade-data-project
+                  value: {{ $jadeDataProject | quote }}
                 - name: release-date
                   value: {{ $releaseDate | quote }}
                 - name: gcs-prefix
