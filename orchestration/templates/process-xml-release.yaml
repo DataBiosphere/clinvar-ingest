@@ -210,7 +210,7 @@ spec:
           - name: API_URL
             value: {{ .Values.jade.url }}
           - name: DATASET_ID
-            value: {{ .Values.jade.datasetId }}
+            value: {{ $datasetId | quote }}
           - name: FILE_ID
             value: {{ $archiveId | quote }}
           - name: GOOGLE_APPLICATION_CREDENTIALS
