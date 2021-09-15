@@ -204,7 +204,6 @@ spec:
               parameters:
                 - name: virtual-path
                   value: {{ $targetPath | quote }}
-                {{- with .Values.jade }}
                 - name: url
                   value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
@@ -212,10 +211,9 @@ spec:
                 - name: profile-id
                   value: {{ $jadeProfileId | quote }}
                 - name: sa-secret
-                  value: {{ .accessKey.secretName }}
+                  value: {{ .Values.jade.accessKey.secretName }}
                 - name: sa-secret-key
-                  value: {{ .accessKey.secretKey }}
-                {{- end }}
+                  value: {{ .Values.jade.accessKey.secretKey }}
             {{- $existingFileId := "{{tasks.check-for-existing-file.outputs.result}}" }}
             {{- $shouldIngestFile := printf "'%s' == null" $existingFileId }}
 
@@ -265,7 +263,6 @@ spec:
             arguments:
               parameters:
                 {{- $gcsFilePath := printf "%s/xml/%s" $gcsPrefix (include "clinvar.raw-archive-name" .) | quote }}
-                {{- with .Values.jade }}
                 - name: url
                   value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
@@ -273,12 +270,11 @@ spec:
                 - name: profile-id
                   value: {{ $jadeProfileId | quote }}
                 - name: timeout
-                  value: {{ .pollTimeout }}
+                  value: {{ .Values.jade.pollTimeout }}
                 - name: sa-secret
-                  value: {{ .accessKey.secretName }}
+                  value: {{ .Values.jade.accessKey.secretName }}
                 - name: sa-secret-key
-                  value: {{ .accessKey.secretKey }}
-                {{- end }}
+                  value: {{ .Values.jade.accessKey.secretKey }}
                 - name: target-path
                   value: {{ $targetPath | quote }}
                 - name: gcs-bucket
@@ -345,18 +341,16 @@ spec:
                   value: {{ .Values.staging.gcsBucket }}
                 - name: gcs-prefix
                   value: {{ $jsonPrefix | quote }}
-                {{- with .Values.jade }}
                 - name: url
                   value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: timeout
-                  value: {{ .pollTimeout }}
+                  value: {{ .Values.jade.pollTimeout }}
                 - name: sa-secret
-                  value: {{ .accessKey.secretName }}
+                  value: {{ .Values.jade.accessKey.secretName }}
                 - name: sa-secret-key
-                  value: {{ .accessKey.secretKey }}
-                {{- end }}
+                  value: {{ .Values.jade.accessKey.secretKey }}
 
     ##
     ## Stage a JSON object in GCS containing data for a row in the xml_archive table.
