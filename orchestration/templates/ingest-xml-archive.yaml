@@ -19,6 +19,8 @@ spec:
     - name: main
       inputs:
         parameters:
+          - name: jade-profile-id
+          {{- $jadeProfileId := "{{inputs.parameters.jade-profile-id}}" }}
           - name: jade-data-project
           {{- $jadeDataProject := "{{inputs.parameters.jade-data-project}}" }}
           - name: data-repo-url
@@ -208,7 +210,7 @@ spec:
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: profile-id
-                  value: {{ .profileId }}
+                  value: {{ $jadeProfileId | quote }}
                 - name: sa-secret
                   value: {{ .accessKey.secretName }}
                 - name: sa-secret-key
@@ -269,7 +271,7 @@ spec:
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: profile-id
-                  value: {{ .profileId }}
+                  value: {{ $jadeProfileId | quote }}
                 - name: timeout
                   value: {{ .pollTimeout }}
                 - name: sa-secret

@@ -36,6 +36,8 @@ spec:
                     value: FOO
                   - name: jade-data-project
                     value: FOO
+                  - name: jade-profile-id
+                    value: PROFILEFOO
                   - name: archive-path
                     value: weekly_release/ClinVarVariationRelease_00-latest_weekly.xml.gz
                   - name: gcs-prefix
