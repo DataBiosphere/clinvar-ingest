@@ -20,7 +20,7 @@ spec:
       inputs:
         parameters:
           - name: dataset-id
-          {{ - $datasetId := "{{inputs.parameters.dataset-id}}" }}
+          {{- $datasetId := "{{inputs.parameters.dataset-id}}" }}
           - name: archive-path
           {{- $archivePath := "{{inputs.parameters.archive-path}}" }}
           - name: gcs-prefix
