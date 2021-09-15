@@ -438,10 +438,9 @@ spec:
           - name: release-date
             {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
       volumes:
-        {{- with .Values.jade }}
         - name: sa-secret-volume
           secret:
-            secretName: {{ .accessKey.secretName }}
+            secretName: {{ .Values.jade.accessKey.secretName }}
       script:
         image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.1
         volumeMounts:
@@ -455,10 +454,9 @@ spec:
           - name: PROFILE_ID
             value: {{ $jadeProfileId | quote }}
           - name: GOOGLE_APPLICATION_CREDENTIALS
-            value: {{ printf "/secret/%s" .accessKey.secretKey }}
+            value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
           - name: ASSET_NAME
-            value: {{ .snapshotAssetName }}
-        {{- end }}
+            value: {{ .Values.jade.snapshotAssetName }}
           - name: RELEASE_DATE
             value: {{ $releaseDate | quote }}
           - name: PIPELINE_VERSION
