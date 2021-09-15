@@ -34,7 +34,7 @@ spec:
                   - name: jade-data-project
                     value: {{ .Values.altJade.dataProject }}
                   - name: jade-profile-id
-                    value: {{ .Values.altJade.profileIddd }}
+                    value: {{ .Values.altJade.profileId }}
                   - name: archive-path
                     value: weekly_release/ClinVarVariationRelease_00-latest_weekly.xml.gz
                   - name: gcs-prefix
