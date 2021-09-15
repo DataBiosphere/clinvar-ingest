@@ -58,6 +58,8 @@ spec:
               template: main
             arguments:
               parameters:
+                - name: jade-profile-id
+                  value: {{ $jadeProfileId | quote }}
                 - name: data-repo-url
                   value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
