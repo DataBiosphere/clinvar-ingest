@@ -56,6 +56,8 @@ spec:
                   value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
+                - name: dataset-name
+                  value: {{ $datasetName | quote }}
                 - name: release-date
                   value: {{ $releaseDate | quote }}
                 - name: gcs-prefix
