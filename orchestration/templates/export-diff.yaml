@@ -15,6 +15,10 @@ spec:
     - name: main
       inputs:
         parameters:
+          - name: jade-data-project
+          {{- $jadeDataProject := "{{inputs.parameters.jade-data-project}}" }}
+          - name: jade-dataset-name
+          {{- $jadeDatasetName := "{{inputs.parameters.jade-dataset-name}}" }}
           - name: release-date
           {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
           - name: dataset-name
@@ -91,6 +95,10 @@ spec:
                   value: {{ $gcsPrefix | quote }}
                 - name: dataset-name
                   value: {{ $datasetName | quote }}
+                - name: jade-dataset-name
+                  value: {{ $jadeDatasetName | quote }}
+                - name: jade-data-project
+                  value: {{ $jadeDataProject | quote }}
 
           ## Processes to run when the preceding date is present
           - name: date-present
@@ -122,6 +130,10 @@ spec:
               - variation_archive
             arguments:
               parameters:
+                - name: jade-dataset-name
+                  value: {{ $jadeDatasetName | quote }}
+                - name: jade-data-project
+                  value: {{ $jadeDataProject | quote }}
                 - name: table-name
                   value: {{ "{{item}}" | quote }}
                 - name: gcs-prefix
@@ -158,9 +170,9 @@ spec:
         command: [bash]
         env:
           - name: JADE_PROJECT
-            value: {{ .Values.jade.dataProject }}
+            value: {{ $jadeDataProject | quote }}
           - name: JADE_DATASET
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+            value: {{ printf "datarepo_%s" $jadeDatasetName | quote }}
           - name: RELEASE_DATE
             value: {{ $releaseDate | quote }}
         source: |
@@ -194,8 +206,8 @@ spec:
           - name: PROJECT
             value: {{ .Values.staging.bigquery.project }}
           - name: JADE_PROJECT
-            value: {{ .Values.jade.dataProject }}
+            value: {{ $jadeDataProject | quote }}
           - name: JADE_DATASET
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+            value: {{ printf "datarepo_%s" $jadeDatasetName | quote }}
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/check-if-processed-today.sh") | indent 10 }}

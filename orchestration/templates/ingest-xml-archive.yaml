@@ -19,6 +19,10 @@ spec:
     - name: main
       inputs:
         parameters:
+          - name: jade-profile-id
+          {{- $jadeProfileId := "{{inputs.parameters.jade-profile-id}}" }}
+          - name: jade-data-project
+          {{- $jadeDataProject := "{{inputs.parameters.jade-data-project}}" }}
           - name: data-repo-url
           {{- $dataRepoUrl := "{{inputs.parameters.data-repo-url}}" }}
           - name: dataset-id
@@ -163,7 +167,7 @@ spec:
           - name: PROJECT
             value: {{ .Values.staging.bigquery.project }}
           - name: JADE_PROJECT
-            value: {{ .Values.jade.dataProject }}
+            value: {{ $jadeDataProject | quote }}
           - name: JADE_DATASET
             value: {{ printf "datarepo_%s" $datasetName | quote }}
           - name: RELEASE_DATE
@@ -200,18 +204,16 @@ spec:
               parameters:
                 - name: virtual-path
                   value: {{ $targetPath | quote }}
-                {{- with .Values.jade }}
                 - name: url
                   value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: profile-id
-                  value: {{ .profileId }}
+                  value: {{ $jadeProfileId | quote }}
                 - name: sa-secret
-                  value: {{ .accessKey.secretName }}
+                  value: {{ .Values.jade.accessKey.secretName }}
                 - name: sa-secret-key
-                  value: {{ .accessKey.secretKey }}
-                {{- end }}
+                  value: {{ .Values.jade.accessKey.secretKey }}
             {{- $existingFileId := "{{tasks.check-for-existing-file.outputs.result}}" }}
             {{- $shouldIngestFile := printf "'%s' == null" $existingFileId }}
 
@@ -261,20 +263,18 @@ spec:
             arguments:
               parameters:
                 {{- $gcsFilePath := printf "%s/xml/%s" $gcsPrefix (include "clinvar.raw-archive-name" .) | quote }}
-                {{- with .Values.jade }}
                 - name: url
                   value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: profile-id
-                  value: {{ .profileId }}
+                  value: {{ $jadeProfileId | quote }}
                 - name: timeout
-                  value: {{ .pollTimeout }}
+                  value: {{ .Values.jade.pollTimeout }}
                 - name: sa-secret
-                  value: {{ .accessKey.secretName }}
+                  value: {{ .Values.jade.accessKey.secretName }}
                 - name: sa-secret-key
-                  value: {{ .accessKey.secretKey }}
-                {{- end }}
+                  value: {{ .Values.jade.accessKey.secretKey }}
                 - name: target-path
                   value: {{ $targetPath | quote }}
                 - name: gcs-bucket
@@ -341,18 +341,16 @@ spec:
                   value: {{ .Values.staging.gcsBucket }}
                 - name: gcs-prefix
                   value: {{ $jsonPrefix | quote }}
-                {{- with .Values.jade }}
                 - name: url
                   value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: timeout
-                  value: {{ .pollTimeout }}
+                  value: {{ .Values.jade.pollTimeout }}
                 - name: sa-secret
-                  value: {{ .accessKey.secretName }}
+                  value: {{ .Values.jade.accessKey.secretName }}
                 - name: sa-secret-key
-                  value: {{ .accessKey.secretKey }}
-                {{- end }}
+                  value: {{ .Values.jade.accessKey.secretKey }}
 
     ##
     ## Stage a JSON object in GCS containing data for a row in the xml_archive table.

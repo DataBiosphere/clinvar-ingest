@@ -15,12 +15,16 @@ spec:
     - name: main
       inputs:
         parameters:
+          - name: jade-profile-id
+          {{- $jadeProfileId := "{{inputs.parameters.jade-profile-id}}" }}
           - name: data-repo-url
           {{- $dataRepoUrl := "{{inputs.parameters.data-repo-url}}" }}
           - name: dataset-id
           {{- $datasetId := "{{inputs.parameters.dataset-id}}" }}
-          - name: dataset-name
-          {{- $datasetName := "{{inputs.parameters.dataset-name}}" }}
+          - name: jade-dataset-name
+          {{- $jadeDatasetName := "{{inputs.parameters.jade-dataset-name}}" }}
+          - name: jade-data-project
+          {{- $jadeDataProject := "{{inputs.parameters.jade-data-project}}" }}
           - name: archive-path
           {{- $archivePath := "{{inputs.parameters.archive-path}}" }}
           - name: gcs-prefix
@@ -33,12 +37,14 @@ spec:
               template: main
             arguments:
               parameters:
+                - name: jade-data-project
+                  value: {{ $jadeDataProject | quote }}
                 - name: data-repo-url
                   value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: dataset-name
-                  value: {{ $datasetName | quote }}
+                  value: {{ $jadeDatasetName | quote }}
                 - name: archive-path
                   value: {{ $archivePath | quote }}
                 - name: gcs-prefix
@@ -52,12 +58,16 @@ spec:
               template: main
             arguments:
               parameters:
+                - name: jade-profile-id
+                  value: {{ $jadeProfileId | quote }}
                 - name: data-repo-url
                   value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: dataset-name
-                  value: {{ $datasetName | quote }}
+                  value: {{ $jadeDatasetName | quote }}
+                - name: jade-data-project
+                  value: {{ $jadeDataProject | quote }}
                 - name: release-date
                   value: {{ $releaseDate | quote }}
                 - name: gcs-prefix
@@ -73,6 +83,12 @@ spec:
               template: main
             arguments:
               parameters:
+                - name: jade-profile-id
+                  value: {{ $jadeProfileId | quote }}
+                - name: jade-data-project
+                  value: {{ $jadeDataProject | quote }}
+                - name: jade-dataset-name
+                  value: {{ $jadeDatasetName | quote }}
                 - name: release-date
                   value: {{ $releaseDate | quote }}
                 - name: dataset-name

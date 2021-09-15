@@ -18,12 +18,16 @@ spec:
     - name: main
       inputs:
         parameters:
+          - name: jade-profile-id
+          {{- $jadeProfileId := "{{inputs.parameters.jade-profile-id}}" }}
           - name: data-repo-url
           {{- $dataRepoUrl := "{{inputs.parameters.data-repo-url}}" }}
           - name: dataset-id
           {{- $datasetId := "{{inputs.parameters.dataset-id}}" }}
           - name: jade-dataset-name
           {{- $jadeDatasetName := "{{inputs.parameters.jade-dataset-name}}" }}
+          - name: jade-data-project
+          {{- $jadeDataProject := "{{inputs.parameters.jade-data-project}}" }}
           - name: release-date
           {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
           - name: gcs-prefix
@@ -59,6 +63,8 @@ spec:
               template: main
             arguments:
               parameters:
+                - name: jade-data-project
+                  value: {{ $jadeDataProject | quote }}
                 - name: data-repo-url
                   value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
@@ -219,7 +225,7 @@ spec:
                 - name: staging-bq-dataset
                   value: {{ $datasetName | quote }}
                 - name: jade-bq-project
-                  value: {{ .Values.jade.dataProject }}
+                  value: {{ $jadeDataProject | quote }}
                 - name: jade-bq-dataset
                   value: {{ printf "datarepo_%s" $jadeDatasetName | quote }}
                 - name: upsert
@@ -247,18 +253,16 @@ spec:
                   value: {{ $oldIdsPrefix | quote }}
                 - name: gcs-bucket
                   value: {{ .Values.staging.gcsBucket }}
-                {{- with .Values.jade }}
                 - name: url
                   value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: timeout
-                  value: {{ .pollTimeout }}
+                  value: {{ .Values.jade.pollTimeout }}
                 - name: sa-secret
-                  value: {{ .accessKey.secretName }}
+                  value: {{ .Values.jade.accessKey.secretName }}
                 - name: sa-secret-key
-                  value: {{ .accessKey.secretKey }}
-                {{- end }}
+                  value: {{ .Values.jade.accessKey.secretKey }}
 
           # Append rows with new data.
           - name: ingest-table
@@ -275,18 +279,16 @@ spec:
                   value: {{ .Values.staging.gcsBucket }}
                 - name: gcs-prefix
                   value: {{ $newRowsPrefix | quote }}
-                {{- with .Values.jade }}
                 - name: url
                   value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: timeout
-                  value: {{ .pollTimeout }}
+                  value: {{ .Values.jade.pollTimeout }}
                 - name: sa-secret
-                  value: {{ .accessKey.secretName }}
+                  value: {{ .Values.jade.accessKey.secretName }}
                 - name: sa-secret-key
-                  value: {{ .accessKey.secretKey }}
-                {{- end }}
+                  value: {{ .Values.jade.accessKey.secretKey }}
 
     {{- if $versionIsPinned }}
     # check if the latest snapshot release date corresponds to the latest xml release date
@@ -305,7 +307,7 @@ spec:
           - name: GOOGLE_APPLICATION_CREDENTIALS
             value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
           - name: REPO_DATA_PROJECT
-            value: {{ .Values.jade.dataProject }}
+            value: {{ $jadeDataProject | quote }}
           - name: REPO_DATASET_NAME
             value: {{ printf "datarepo_%s" $jadeDatasetName | quote }}
           - name: REPO_HOST
@@ -370,16 +372,14 @@ spec:
               parameters:
                 - name: job-id
                   value: {{ $jobId | quote }}
-                {{- with .Values.jade }}
                 - name: api-url
                   value: {{ $dataRepoUrl | quote }}
                 - name: timeout
-                  value: {{ .pollTimeout }}
+                  value: {{ .Values.jade.pollTimeout }}
                 - name: sa-secret
-                  value: {{ .accessKey.secretName }}
+                  value: {{ .Values.jade.accessKey.secretName }}
                 - name: sa-secret-key
-                  value: {{ .accessKey.secretKey }}
-                {{- end }}
+                  value: {{ .Values.jade.accessKey.secretKey }}
 
     ##
     ## Count the number of rows in the processing_history table with a given release-date/version pair.
@@ -396,7 +396,7 @@ spec:
           - name: PROJECT
             value: {{ .Values.staging.bigquery.project }}
           - name: JADE_PROJECT
-            value: {{ .Values.jade.dataProject }}
+            value: {{ $jadeDataProject | quote }}
           - name: JADE_DATASET
             value: {{ printf "datarepo_%s" $jadeDatasetName | quote }}
           - name: RELEASE_DATE
@@ -438,10 +438,9 @@ spec:
           - name: release-date
             {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
       volumes:
-        {{- with .Values.jade }}
         - name: sa-secret-volume
           secret:
-            secretName: {{ .accessKey.secretName }}
+            secretName: {{ .Values.jade.accessKey.secretName }}
       script:
         image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.1
         volumeMounts:
@@ -453,12 +452,11 @@ spec:
           - name: DATASET_NAME
             value: {{ $jadeDatasetName | quote }}
           - name: PROFILE_ID
-            value: {{ .profileId }}
+            value: {{ $jadeProfileId | quote }}
           - name: GOOGLE_APPLICATION_CREDENTIALS
-            value: {{ printf "/secret/%s" .accessKey.secretKey }}
+            value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
           - name: ASSET_NAME
-            value: {{ .snapshotAssetName }}
-        {{- end }}
+            value: {{ .Values.jade.snapshotAssetName }}
           - name: RELEASE_DATE
             value: {{ $releaseDate | quote }}
           - name: PIPELINE_VERSION

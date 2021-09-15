@@ -12,6 +12,8 @@ spec:
     - name: main
       inputs:
         parameters:
+          - name: jade-data-project
+          {{- $jadeDataProject := "{{inputs.parameters.jade-data-project}}" }}
           - name: data-repo-url
           {{- $dataRepoUrl := "{{inputs.parameters.data-repo-url}}" }}
           - name: dataset-id
@@ -182,7 +184,7 @@ spec:
           - name: PROJECT
             value: {{ .Values.staging.bigquery.project }}
           - name: JADE_PROJECT
-            value: {{ .Values.jade.dataProject }}
+            value: {{ $jadeDataProject | quote }}
           - name: JADE_DATASET
             value: {{ printf "datarepo_%s" $datasetName | quote }}
           - name: PROPERTY
