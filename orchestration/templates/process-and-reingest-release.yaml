@@ -22,6 +22,8 @@ spec:
           {{- $dataRepoUrl := "{{inputs.parameters.data-repo-url}}" }}
           - name: dataset-id
           {{- $datasetId := "{{inputs.parameters.dataset-id}}" }}
+          - name: jade-dataset-name
+          {{- $jadeDatasetName := "{{inputs.parameters.jade-dataset-name}}" }}
           - name: release-date
           {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
           - name: gcs-prefix
@@ -219,7 +221,7 @@ spec:
                 - name: jade-bq-project
                   value: {{ .Values.jade.dataProject }}
                 - name: jade-bq-dataset
-                  value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+                  value: {{ printf "datarepo_%s" $jadeDatasetName | quote }}
                 - name: upsert
                   value: 'false'
                 - name: diff-full-history
@@ -305,7 +307,7 @@ spec:
           - name: REPO_DATA_PROJECT
             value: {{ .Values.jade.dataProject }}
           - name: REPO_DATASET_NAME
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+            value: {{ printf "datarepo_%s" $jadeDatasetName | quote }}
           - name: REPO_HOST
             value: {{ $dataRepoUrl | quote }}
           - name: REPO_DATASET_ID
@@ -396,7 +398,7 @@ spec:
           - name: JADE_PROJECT
             value: {{ .Values.jade.dataProject }}
           - name: JADE_DATASET
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+            value: {{ printf "datarepo_%s" $jadeDatasetName | quote }}
           - name: RELEASE_DATE
             value: {{ $releaseDate | quote }}
           - name: VERSION
@@ -449,7 +451,7 @@ spec:
           - name: API_URL
             value: {{ $dataRepoUrl | quote }}
           - name: DATASET_NAME
-            value: {{ .datasetName }}
+            value: {{ $jadeDatasetName | quote }}
           - name: PROFILE_ID
             value: {{ .profileId }}
           - name: GOOGLE_APPLICATION_CREDENTIALS
