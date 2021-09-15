@@ -28,7 +28,7 @@ spec:
                 template: main
               arguments:
                 parameters:
-                  - name: datasetId
+                  - name: dataset-id
                     value: {{ .Values.jade.datasetId }}
                   - name: archive-path
                     value: weekly_release/ClinVarVariationRelease_00-latest_weekly.xml.gz

@@ -19,6 +19,8 @@ spec:
     - name: main
       inputs:
         parameters:
+          - name: dataset-id
+          {{ - $datasetId := "{{inputs.parameters.dataset-id" }}
           - name: archive-path
           {{- $archivePath := "{{inputs.parameters.archive-path}}" }}
           - name: gcs-prefix
@@ -198,7 +200,7 @@ spec:
                 - name: url
                   value: {{ .url }}
                 - name: dataset-id
-                  value: {{ .datasetId }}
+                  value: {{ $datasetId }}
                 - name: profile-id
                   value: {{ .profileId }}
                 - name: sa-secret
@@ -259,7 +261,7 @@ spec:
                 - name: url
                   value: {{ .url }}
                 - name: dataset-id
-                  value: {{ .datasetId }}
+                  value: {{ $datasetId }}
                 - name: profile-id
                   value: {{ .profileId }}
                 - name: timeout
@@ -339,7 +341,7 @@ spec:
                 - name: url
                   value: {{ .url }}
                 - name: dataset-id
-                  value: {{ .datasetId }}
+                  value: {{ $datasetId }}
                 - name: timeout
                   value: {{ .pollTimeout }}
                 - name: sa-secret

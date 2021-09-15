@@ -16,6 +16,7 @@ spec:
       inputs:
         parameters:
           - name: datasetId
+          {{- $datasetId := "{{inputs.parameters.dataset-id}}" }}
           - name: archive-path
           {{- $archivePath := "{{inputs.parameters.archive-path}}" }}
           - name: gcs-prefix
@@ -28,6 +29,8 @@ spec:
               template: main
             arguments:
               parameters:
+                - name: dataset-id
+                  value: {{ $datasetId | quote }}
                 - name: archive-path
                   value: {{ $archivePath | quote }}
                 - name: gcs-prefix
