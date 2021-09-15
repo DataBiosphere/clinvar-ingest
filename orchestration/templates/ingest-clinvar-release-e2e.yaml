@@ -77,6 +77,8 @@ spec:
               template: main
             arguments:
               parameters:
+                - name: jade-data-project
+                  value: {{ $jadeDataProject | quote }}
                 - name: jade-dataset-name
                   value: {{ $jadeDatasetName | quote }}
                 - name: release-date
