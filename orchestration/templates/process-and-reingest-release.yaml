@@ -16,6 +16,10 @@ spec:
     ## then pushes the result into the TDR.
     ##
     - name: main
+      container:
+        image: docker/whalesay
+        command: [ cowsay ]
+        args: [ "HELLO" ]
       inputs:
         parameters:
           - name: release-date
