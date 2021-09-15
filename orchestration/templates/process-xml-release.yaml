@@ -210,7 +210,7 @@ spec:
             mountPath: /secret
         env:
           - name: API_URL
-            value: {{ .Values.jade.url }}
+            value: {{ $dataRepoUrl | quote }}
           - name: DATASET_ID
             value: {{ $datasetId | quote }}
           - name: FILE_ID
