@@ -35,6 +35,8 @@ spec:
               template: main
             arguments:
               parameters:
+                - name: jade-data-project
+                  value: {{ $jadeDataProject | quote }}
                 - name: data-repo-url
                   value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
