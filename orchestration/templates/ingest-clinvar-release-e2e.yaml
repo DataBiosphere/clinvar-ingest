@@ -19,6 +19,8 @@ spec:
           {{- $dataRepoUrl := "{{inputs.parameters.data-repo-url}}" }}
           - name: dataset-id
           {{- $datasetId := "{{inputs.parameters.dataset-id}}" }}
+          - name: dataset-name
+          {{- $datasetName := "{{inputs.parameters.dataset-name}}" }}
           - name: archive-path
           {{- $archivePath := "{{inputs.parameters.archive-path}}" }}
           - name: gcs-prefix
