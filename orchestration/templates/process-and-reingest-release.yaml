@@ -221,7 +221,7 @@ spec:
                 - name: staging-bq-dataset
                   value: {{ $datasetName | quote }}
                 - name: jade-bq-project
-                  value: {{ .Values.jade.dataProject }}
+                  value: {{ $jadeDataProject | quote }}
                 - name: jade-bq-dataset
                   value: {{ printf "datarepo_%s" $jadeDatasetName | quote }}
                 - name: upsert
