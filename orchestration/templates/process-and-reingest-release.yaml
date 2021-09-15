@@ -372,16 +372,14 @@ spec:
               parameters:
                 - name: job-id
                   value: {{ $jobId | quote }}
-                {{- with .Values.jade }}
                 - name: api-url
                   value: {{ $dataRepoUrl | quote }}
                 - name: timeout
-                  value: {{ .pollTimeout }}
+                  value: {{ .Values.jade.pollTimeout }}
                 - name: sa-secret
-                  value: {{ .accessKey.secretName }}
+                  value: {{ .Values.jade.accessKey.secretName }}
                 - name: sa-secret-key
-                  value: {{ .accessKey.secretKey }}
-                {{- end }}
+                  value: {{ .Values.jade.accessKey.secretKey }}
 
     ##
     ## Count the number of rows in the processing_history table with a given release-date/version pair.
