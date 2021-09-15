@@ -167,9 +167,9 @@ spec:
           - name: PROJECT
             value: {{ .Values.staging.bigquery.project }}
           - name: JADE_PROJECT
-            value: {{ $jadeDataProject | quote }}
+            value: {{ $jadeDataProject }}
           - name: JADE_DATASET
-            value: {{ printf "datarepo_%s" $datasetName | quote }}
+            value: {{ printf "datarepo_%s" $datasetName }}
           - name: RELEASE_DATE
             value: {{ $releaseDate | quote }}
           - name: PROPERTY
