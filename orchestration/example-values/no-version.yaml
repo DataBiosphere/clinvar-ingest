@@ -5,6 +5,15 @@ staging:
     datasetPrefix: monster_staging_data
     description: ClinVar!!!
     expiration: '604800'
+altJade:
+  url: http://other.repo
+  datasetId: a
+  datasetName: clinvar
+  profileId: b
+  dataProject: dataaaaa
+  accessKey:
+    secretName: dont-tell
+    secretKey: its-a-secret
 jade:
   url: http://jade.repo
   datasetId: a
@@ -30,6 +39,7 @@ dataflow:
   subnetName: network
   workerAccount: runner@zoog
 notification:
+  altChannelId: othertest
   channelId: monstertest
   onlyOnFailure: false
   oauthToken:

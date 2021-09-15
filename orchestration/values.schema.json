@@ -21,6 +21,28 @@
       },
       "required": ["gcsBucket", "bigquery"]
     },
+    "altJade": {
+      "type": "object",
+      "properties": {
+        "url": { "type": "string" },
+        "datasetId": { "type": "string" },
+        "datasetName": { "type": "string" },
+        "profileId": { "type": "string" },
+        "pollTimeout": { "type": "integer" },
+        "dataProject": { "type": "string" },
+        "accessKey": {
+          "type": "object",
+          "properties": {
+            "secretName": { "type": "string" },
+            "secretKey": { "type": "string" }
+          },
+          "required": ["secretName", "secretKey"]
+        },
+        "snapshotAssetName": { "type": "string" }
+      },
+      "required": ["url", "datasetId", "datasetName", "profileId", "pollTimeout",
+        "dataProject", "accessKey", "snapshotAssetName"]
+    },
     "jade": {
       "type": "object",
       "properties": {
@@ -99,6 +121,7 @@
     "notification": {
       "type": "object",
       "properties": {
+        "altChannelId": { "type":  "string" },
         "channelId": { "type":  "string" },
         "onlyOnFailure": { "type": "boolean" },
         "oauthToken": {
@@ -139,6 +162,6 @@
       }
     }
   },
-  "required": ["parallelism", "staging", "jade", "serviceAccount",
+  "required": ["parallelism", "staging", "jade", "altJade","serviceAccount",
                "volumes", "cron", "dataflow", "notification", "clingen"]
 }

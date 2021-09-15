@@ -15,6 +15,10 @@ dataflow:
     minWorkers: 4
     maxWorkers: 8
   useFlexRS: false
+altJade:
+  # 24 hours -> 86400 seconds
+  pollTimeout: 86400
+  snapshotAssetName: clinvar_release
 jade:
   # 24 hours -> 86400 seconds
   pollTimeout: 86400

@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: CronWorkflow
 metadata:
-  name: clinvar-ingest
+  name: dual-writer-clinvar-ingest
 spec:
   suspend: {{ not .Values.cron.enable }}
   schedule: {{ .Values.cron.schedule | quote }}
@@ -29,15 +29,15 @@ spec:
               arguments:
                 parameters:
                   - name: data-repo-url
-                    value: {{ .Values.jade.url }}
+                    value: {{ .Values.altJade.url }}
                   - name: dataset-id
-                    value: {{ .Values.jade.datasetId }}
+                    value: {{ .Values.altJade.datasetId }}
                   - name: jade-dataset-name
-                    value: {{ .Values.jade.datasetName }}
+                    value: {{ .Values.altJade.datasetName }}
                   - name: jade-data-project
-                    value: {{ .Values.jade.dataProject }}
+                    value: {{ .Values.altJade.dataProject }}
                   - name: jade-profile-id
-                    value: {{ .Values.jade.profileIddd }}
+                    value: {{ .Values.altJade.profileIddd }}
                   - name: archive-path
                     value: weekly_release/ClinVarVariationRelease_00-latest_weekly.xml.gz
                   - name: gcs-prefix
@@ -60,7 +60,7 @@ spec:
           image: curlimages/curl:7.70.0
           env:
             - name: CHANNEL_ID
-              value: {{ .Values.notification.channelId }}
+              value: {{ .Values.notification.altChannelId }}
             - name: WORKFLOW_ID
               value: '{{ "{{workflow.name}}" }}'
             - name: WORKFLOW_STATE
