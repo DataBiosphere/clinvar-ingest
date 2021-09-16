@@ -21,6 +21,7 @@ spec:
           value: {{ .Values.altJade.url }}
         - name: jade-profile-id
           value: {{ .Values.altJade.profileId }}
+
     serviceAccountName: {{ .Values.serviceAccount.k8sName }}
     podGC:
       strategy: OnWorkflowSuccess

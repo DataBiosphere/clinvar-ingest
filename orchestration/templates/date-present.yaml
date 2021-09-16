@@ -6,6 +6,8 @@ spec:
   entrypoint: main
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
   templates:
+    {{- $jadeDatasetName := "{{workflow.parameters.jade-dataset-name}}" }}
+
     ##
     ## Entrypoint for if there is a previous date against which to diff.
     ##
@@ -158,9 +160,9 @@ spec:
           - name: DEST_DATASET_NAME
             value: {{ $destDatasetName | quote }}
           - name: REPO_DATA_PROJECT
-            value: {{ .Values.jade.dataProject }}
+            value: '{{ "{{workflow.parameters.jade-data-project}}" }}'
           - name: REPO_DATASET_NAME
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+            value: {{ printf "datarepo_%s" $jadeDatasetName }}
           - name: RELEASE_DATE
             value: {{ $releaseDate | quote }}
           - name: PREV_DATE
@@ -201,9 +203,9 @@ spec:
           - name: DEST_DATASET_NAME
             value: {{ $destDatasetName | quote }}
           - name: REPO_DATA_PROJECT
-            value: {{ .Values.jade.dataProject }}
+            value: '{{ "{{workflow.parameters.jade-data-project}}" }}'
           - name: REPO_DATASET_NAME
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+            value: {{ printf "datarepo_%s" $jadeDatasetName }}
           - name: RELEASE_DATE
             value: {{ $releaseDate | quote }}
           - name: PREV_DATE
@@ -244,9 +246,9 @@ spec:
           - name: DEST_DATASET_NAME
             value: {{ $destDatasetName | quote }}
           - name: REPO_DATA_PROJECT
-            value: {{ .Values.jade.dataProject }}
+            value: '{{ "{{workflow.parameters.jade-data-project}}" }}'
           - name: REPO_DATASET_NAME
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+            value: {{ printf "datarepo_%s" $jadeDatasetName }}
           - name: RELEASE_DATE
             value: {{ $releaseDate | quote }}
           - name: PREV_DATE
@@ -306,9 +308,9 @@ spec:
         command: [bash]
         env:
           - name: JADE_PROJECT
-            value: {{ .Values.jade.dataProject }}
+            value: '{{ "{{workflow.parameters.jade-data-project}}" }}'
           - name: JADE_DATASET
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+            value: {{ printf "datarepo_%s" $jadeDatasetName }}
           - name: RELEASE_DATE
             value: {{ $releaseDate | quote }}
         source: |
