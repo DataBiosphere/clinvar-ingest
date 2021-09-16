@@ -48,7 +48,6 @@ spec:
             {{- $datasetName := "{{tasks.process-archive.outputs.parameters.dataset-name}}" }}
 
           - name: export-diff
-            when: true
             dependencies: [process-archive]
             templateRef:
               name: export-diff
