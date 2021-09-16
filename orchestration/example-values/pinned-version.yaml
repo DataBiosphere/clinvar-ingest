@@ -43,6 +43,7 @@ argoTemplates:
   diffBQTable:
     schemaImageVersion: adsaasdf
 notification:
+  altChannelId: othermonstertest
   channelId: monstertest
   onlyOnFailure: true
   oauthToken:

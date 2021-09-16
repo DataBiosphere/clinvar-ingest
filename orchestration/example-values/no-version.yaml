@@ -39,6 +39,7 @@ dataflow:
   subnetName: network
   workerAccount: runner@zoog
 notification:
+  altChannelId: othermonstertest
   channelId: monstertest
   onlyOnFailure: false
   oauthToken:
