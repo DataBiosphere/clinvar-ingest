@@ -25,7 +25,7 @@ spec:
     serviceAccountName: {{ .Values.serviceAccount.k8sName }}
     podGC:
       strategy: OnWorkflowSuccess
-    onExit: { { if .Values.notification.onlyOnFailure } }send-slack-notification-if-failed{{ else }}send-slack-notification{{ end }}
+    onExit: {{ if .Values.notification.onlyOnFailure }}send-slack-notification-if-failed{{ else }}send-slack-notification{{ end }}
     templates:
       ##
       ## Main entry-point to the regularly-run ClinVar ingest workflow.
