@@ -241,7 +241,7 @@ spec:
                 - name: url
                   value: {{ .url }}
                 - name: dataset-id
-                  value: {{ .datasetId }}
+                  value: '{{ "{{workflow.parameters.jade-dataset-id}}" }}'
                 - name: timeout
                   value: {{ .pollTimeout }}
                 - name: sa-secret
@@ -269,7 +269,7 @@ spec:
                 - name: url
                   value: {{ .url }}
                 - name: dataset-id
-                  value: {{ .datasetId }}
+                  value: '{{ "{{workflow.parameters.jade-dataset-id}}" }}'
                 - name: timeout
                   value: {{ .pollTimeout }}
                 - name: sa-secret
@@ -301,7 +301,7 @@ spec:
           - name: REPO_HOST
             value: {{ .Values.jade.url }}
           - name: REPO_DATASET_ID
-            value: {{ .Values.jade.datasetId }}
+            value: '{{ "{{workflow.parameters.jade-dataset-id}}" }}'
         command: ["python", "-c", "import check; check.run()"]
 
     ##
