@@ -9,6 +9,10 @@ spec:
   concurrencyPolicy: Forbid
   workflowSpec:
     entrypoint: main
+    arguments:
+      parameters:
+        - name: jade-dataset-id
+          value: FAKE_DATASET_ID
     serviceAccountName: {{ .Values.serviceAccount.k8sName }}
     podGC:
       strategy: OnWorkflowSuccess
