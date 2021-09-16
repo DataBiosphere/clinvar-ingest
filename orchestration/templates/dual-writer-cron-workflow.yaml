@@ -28,10 +28,7 @@ spec:
     onExit: {{ if .Values.notification.onlyOnFailure }}send-slack-notification-if-failed{{ else }}send-slack-notification{{ end }}
     templates:
       ##
-      ## Main entry-point to the regularly-run ClinVar ingest workflow.
-      ##
-      ## Delegates to a WorkflowTemplate for all of the business logic,
-      ## to support easily running manual ingests.
+      ## Copy of the base cron-workflow.yaml, substituting in altJade connection info
       ##
       - name: main
         steps:
