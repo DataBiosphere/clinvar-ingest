@@ -33,6 +33,7 @@ spec:
                   value: {{ $gcsPrefix | quote }}
             {{- $releaseDate := "{{tasks.ingest-archive.outputs.parameters.release-date}}" }}
 
+
           - name: process-archive
             dependencies: [ingest-archive]
             templateRef:
