@@ -9,6 +9,10 @@ spec:
   concurrencyPolicy: Forbid
   workflowSpec:
     entrypoint: main
+    arguments:
+      parameters:
+        - name: jade-dataset-id
+          value: foobar
     serviceAccountName: {{ .Values.serviceAccount.k8sName }}
     podGC:
       strategy: OnWorkflowSuccess
