@@ -8,6 +8,8 @@ spec:
   templates:
     {{- $pipelineVersion := default "latest" .Values.version }}
     {{- $versionIsPinned := ne $pipelineVersion "latest" }}
+    {{- $jadeDatasetName := "{{workflow.parameters.jade-dataset-name}}" }}
+
     ##
     ## Entrypoint for notifying clinvar of changes. Does so using Kafka.
     ##
@@ -158,9 +160,9 @@ spec:
         command: [bash]
         env:
           - name: JADE_PROJECT
-            value: {{ .Values.jade.dataProject }}
+            value: '{{ "{{workflow.parameters.jade-data-project}}" }}'
           - name: JADE_DATASET
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+            value: {{ printf "datarepo_%s" $jadeDatasetName }}
           - name: RELEASE_DATE
             value: {{ $releaseDate | quote }}
         source: |
@@ -194,8 +196,8 @@ spec:
           - name: PROJECT
             value: {{ .Values.staging.bigquery.project }}
           - name: JADE_PROJECT
-            value: {{ .Values.jade.dataProject }}
+            value:  '{{ "{{workflow.parameters.jade-data-project}}" }}'
           - name: JADE_DATASET
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+            value: {{ printf "datarepo_%s" $jadeDatasetName }}
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/check-if-processed-today.sh") | indent 10 }}

@@ -256,13 +256,13 @@ spec:
             arguments:
               parameters:
                 {{- $gcsFilePath := printf "%s/xml/%s" $gcsPrefix (include "clinvar.raw-archive-name" .) | quote }}
-                {{- with .Values.jade }}
                 - name: url
                   value: '{{ "{{workflow.parameters.jade-url}}" }}'
                 - name: dataset-id
                   value: '{{ "{{workflow.parameters.jade-dataset-id}}" }}'
                 - name: profile-id
                   value: '{{ "{{workflow.parameters.jade-profile-id}}" }}'
+                {{- with .Values.jade }}
                 - name: timeout
                   value: {{ .pollTimeout }}
                 - name: sa-secret
@@ -336,12 +336,12 @@ spec:
                   value: {{ .Values.staging.gcsBucket }}
                 - name: gcs-prefix
                   value: {{ $jsonPrefix | quote }}
-                {{- with .Values.jade }}
                 - name: url
                   value: '{{ "{{workflow.parameters.jade-url}}" }}'
                 - name: dataset-id
                   value: '{{ "{{workflow.parameters.jade-dataset-id}}" }}'
                 - name: timeout
+                {{- with .Values.jade }}
                   value: {{ .pollTimeout }}
                 - name: sa-secret
                   value: {{ .accessKey.secretName }}

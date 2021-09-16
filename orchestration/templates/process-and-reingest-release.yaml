@@ -8,6 +8,7 @@ spec:
   templates:
     {{- $pipelineVersion := default "latest" .Values.version }}
     {{- $versionIsPinned := ne $pipelineVersion "latest" }}
+    {{- $jadeDatasetName := "{{workflow.parameters.jade-dataset-name}}" }}
 
     ##
     ## Entrypoint for processing a ClinVar archive.
@@ -209,9 +210,9 @@ spec:
                 - name: staging-bq-dataset
                   value: {{ $datasetName | quote }}
                 - name: jade-bq-project
-                  value: {{ .Values.jade.dataProject }}
+                  value: '{{ "{{workflow.parameters.jade-data-project}}" }}'
                 - name: jade-bq-dataset
-                  value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+                  value: {{ printf "datarepo_%s" $jadeDatasetName }}
                 - name: upsert
                   value: 'false'
                 - name: diff-full-history
@@ -239,7 +240,7 @@ spec:
                   value: {{ .Values.staging.gcsBucket }}
                 {{- with .Values.jade }}
                 - name: url
-                  value: {{ .url }}
+                  value: '{{ "{{workflow.parameters.jade-dataset-url}}" }}'
                 - name: dataset-id
                   value: '{{ "{{workflow.parameters.jade-dataset-id}}" }}'
                 - name: timeout
@@ -267,7 +268,7 @@ spec:
                   value: {{ $newRowsPrefix | quote }}
                 {{- with .Values.jade }}
                 - name: url
-                  value: {{ .url }}
+                  value: '{{ "{{workflow.parameters.jade-url}}" }}'
                 - name: dataset-id
                   value: '{{ "{{workflow.parameters.jade-dataset-id}}" }}'
                 - name: timeout
@@ -295,11 +296,11 @@ spec:
           - name: GOOGLE_APPLICATION_CREDENTIALS
             value: {{ printf "/secret/%s" .Values.jade.accessKey.secretKey }}
           - name: REPO_DATA_PROJECT
-            value: {{ .Values.jade.dataProject }}
+            value: '{{ "{{workflow.parameters.jade-data-project}}" }}'
           - name: REPO_DATASET_NAME
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+            value: {{ printf "datarepo_%s" $jadeDatasetName }}
           - name: REPO_HOST
-            value: {{ .Values.jade.url }}
+            value: '{{ "{{workflow.parameters.jade-url}}" }}'
           - name: REPO_DATASET_ID
             value: '{{ "{{workflow.parameters.jade-dataset-id}}" }}'
         command: ["python", "-c", "import check; check.run()"]
@@ -360,9 +361,9 @@ spec:
               parameters:
                 - name: job-id
                   value: {{ $jobId | quote }}
-                {{- with .Values.jade }}
                 - name: api-url
-                  value: {{ .url }}
+                  value: '{{ "{{workflow.parameters.jade-url}}" }}'
+                {{- with .Values.jade }}
                 - name: timeout
                   value: {{ .pollTimeout }}
                 - name: sa-secret
@@ -386,9 +387,9 @@ spec:
           - name: PROJECT
             value: {{ .Values.staging.bigquery.project }}
           - name: JADE_PROJECT
-            value: {{ .Values.jade.dataProject }}
+            value: '{{ "{{workflow.parameters.jade-data-project}}" }}'
           - name: JADE_DATASET
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+            value: {{ printf "datarepo_%s" $jadeDatasetName }}
           - name: RELEASE_DATE
             value: {{ $releaseDate | quote }}
           - name: VERSION
@@ -439,11 +440,11 @@ spec:
             mountPath: /secret
         env:
           - name: API_URL
-            value: {{ .url }}
+            value: '{{ "{{workflow.parameters.jade-url}}" }}'
           - name: DATASET_NAME
-            value: {{ .datasetName }}
+            value: '{{ "{{workflow.parameters.jade-dataset-name}}" }}'
           - name: PROFILE_ID
-            value: {{ .profileId }}
+            value: '{{ "{{workflow.parameters.jade-profile-id}}" }}'
           - name: GOOGLE_APPLICATION_CREDENTIALS
             value: {{ printf "/secret/%s" .accessKey.secretKey }}
           - name: ASSET_NAME

@@ -12,15 +12,15 @@ spec:
     arguments:
       parameters:
         - name: jade-dataset-id
-          value: FAKE_DATASET_ID
+          value: {{ .Values.altJade.datasetId }}
         - name: jade-dataset-name
-          value: FAKE_DATASET_NAME
+          value: {{ .Values.altJade.datasetName }}
         - name: jade-data-project
-          value: FAKE_DATA_PROJECT_NAME
+          value: {{ .Values.altJade.dataProject }}
         - name: jade-url
-          value: FAKE_URL
+          value: {{ .Values.altJade.url }}
         - name: jade-profile-id
-          value: FAKE_PROFILE_ID
+          value: {{ .Values.altJade.profileId }}
     serviceAccountName: {{ .Values.serviceAccount.k8sName }}
     podGC:
       strategy: OnWorkflowSuccess

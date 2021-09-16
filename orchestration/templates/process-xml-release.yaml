@@ -6,6 +6,8 @@ spec:
   entrypoint: main
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
   templates:
+    {{- $jadeDatasetName := "{{workflow.parameters.jade-dataset-name}}" }}
+
     ##
     ## Convert a ClinVar archive from XML to JSON, then process it with Dataflow.
     ##
@@ -176,9 +178,9 @@ spec:
           - name: PROJECT
             value: {{ .Values.staging.bigquery.project }}
           - name: JADE_PROJECT
-            value: {{ .Values.jade.dataProject }}
+            value: '{{ "{{workflow.parameters.jade-data-project}}" }}'
           - name: JADE_DATASET
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+            value: {{ printf "datarepo_%s" $jadeDatasetName }}
           - name: PROPERTY
             value: archive_path
         command: [bash]
@@ -206,9 +208,9 @@ spec:
             mountPath: /secret
         env:
           - name: API_URL
-            value: {{ .Values.jade.url }}
+            value: '{{ "{{workflow.parameters.jade-url}}" }}'
           - name: DATASET_ID
-            value: {{ .Values.jade.datasetId }}
+            value: '{{ "{{workflow.parameters.jade-dataset-id}}" }}'
           - name: FILE_ID
             value: {{ $archiveId | quote }}
           - name: GOOGLE_APPLICATION_CREDENTIALS

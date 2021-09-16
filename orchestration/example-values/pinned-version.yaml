@@ -15,6 +15,15 @@ jade:
   accessKey:
     secretName: dont-tell
     secretKey: its-a-secret
+altJade:
+  url: http://jade.repo
+  datasetId: a
+  datasetName: clinvar
+  profileId: b
+  dataProject: dataaaaa
+  accessKey:
+    secretName: dont-tell
+    secretKey: its-a-secret
 clingen:
   gcsBucket: buc
   kafka:
