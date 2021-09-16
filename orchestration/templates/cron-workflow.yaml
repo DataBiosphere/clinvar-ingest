@@ -9,6 +9,19 @@ spec:
   concurrencyPolicy: Forbid
   workflowSpec:
     entrypoint: main
+    arguments:
+      parameters:
+        - name: jade-dataset-id
+          value: { { .Values.jade.datasetId } }
+        - name: jade-dataset-name
+          value: { { .Values.jade.datasetName } }
+        - name: jade-data-project
+          value: { { .Values.jade.dataProject } }
+        - name: jade-url
+          value: { { .Values.jade.url } }
+        - name: jade-profile-id
+          value: { { .Values.jade.profileId } }
+
     serviceAccountName: {{ .Values.serviceAccount.k8sName }}
     podGC:
       strategy: OnWorkflowSuccess
