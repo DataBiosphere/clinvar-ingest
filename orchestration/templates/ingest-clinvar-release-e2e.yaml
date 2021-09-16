@@ -47,6 +47,7 @@ spec:
                   value: {{ $gcsPrefix | quote }}
             {{- $datasetName := "{{tasks.process-archive.outputs.parameters.dataset-name}}" }}
 
+
           - name: export-diff
             dependencies: [process-archive]
             templateRef:
