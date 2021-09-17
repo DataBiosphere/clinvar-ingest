@@ -240,7 +240,7 @@ spec:
                   value: {{ .Values.staging.gcsBucket }}
                 {{- with .Values.jade }}
                 - name: url
-                  value: '{{ "{{workflow.parameters.jade-dataset-url}}" }}'
+                  value: '{{ "{{workflow.parameters.jade-url}}" }}'
                 - name: dataset-id
                   value: '{{ "{{workflow.parameters.jade-dataset-id}}" }}'
                 - name: timeout
