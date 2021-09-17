@@ -42,6 +42,8 @@ spec:
                     value: weekly_release/ClinVarVariationRelease_00-latest_weekly.xml.gz
                   - name: gcs-prefix
                     value: {{ include "argo.timestamp" . | quote }}
+                  - name: should-export-diff
+                    value: 'false'
 
       ##
       ## Send a Slack notifcation if the workflow has failed.

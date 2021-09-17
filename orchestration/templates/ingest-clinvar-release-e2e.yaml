@@ -19,6 +19,8 @@ spec:
           {{- $archivePath := "{{inputs.parameters.archive-path}}" }}
           - name: gcs-prefix
           {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+          - name: should-export-diff
+          {{- $shouldExportDiff := "{{inputs.parameters.should-export-diff}}" }}
       dag:
         tasks:
           - name: ingest-archive
@@ -47,6 +49,7 @@ spec:
             {{- $datasetName := "{{tasks.process-archive.outputs.parameters.dataset-name}}" }}
 
           - name: export-diff
+            when: {{ $shouldExportDiff | quote }}
             dependencies: [process-archive]
             templateRef:
               name: export-diff
