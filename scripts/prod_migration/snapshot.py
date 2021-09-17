@@ -63,19 +63,24 @@ def run(snapshot_name: str):
     bq_client = bigquery.Client()
     storage_client = storage.Client()
 
+
     data_repo_client = get_api_client()
 
     snapshot_id = get_snapshot_id(snapshot_name, data_repo_client)
     snapshot = get_snapshot(snapshot_id, data_repo_client)
+    asset_name = 'clinvar_release'
+    mode = 'byAsset'
 
-    for table_name in CLINVAR_TABLES:
-        get_ids_for_table(
-            snapshot,
-            table_name,
-            f"gs://broad-dsp-monster-clinvar-snapshot-migration/dump",
-            bq_client,
-            storage_client
-        )
+
+    import pdb; pdb.set_trace()
+    # for table_name in CLINVAR_TABLES:
+    #     get_ids_for_table(
+    #         snapshot,
+    #         table_name,
+    #         f"gs://broad-dsp-monster-clinvar-snapshot-migration/dump",
+    #         bq_client,
+    #         storage_client
+    #     )
 
 
 if __name__ == '__main__':
