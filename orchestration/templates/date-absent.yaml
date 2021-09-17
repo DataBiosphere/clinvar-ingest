@@ -10,6 +10,8 @@ spec:
     ## Entrypoint for if there is not a previous date against which to diff.
     ##
     ##
+    {{- $jadeDatasetName := "{{workflow.parameters.jade-dataset-name}}" }}
+
     - name: main
       inputs:
         parameters:
@@ -74,9 +76,9 @@ spec:
           - name: DEST_DATASET_NAME
             value: {{ $destDatasetName | quote }}
           - name: REPO_DATA_PROJECT
-            value: {{ .Values.jade.dataProject }}
+            value: '{{ "{{workflow.parameters.jade-data-project}}" }}'
           - name: REPO_DATASET_NAME
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+            value: {{ printf "datarepo_%s" $jadeDatasetName }}
           - name: RELEASE_DATE
             value: {{ $releaseDate | quote }}
           - name: VERSION_COL_NAME

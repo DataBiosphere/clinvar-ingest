@@ -146,6 +146,7 @@ spec:
     ##
     ## Check if a row exists in the xml_archive table for a given release date.
     ##
+   {{- $jadeDatasetName := "{{workflow.parameters.jade-dataset-name}}" }}
     - name: check-for-existing-release
       inputs:
         parameters:
@@ -157,9 +158,9 @@ spec:
           - name: PROJECT
             value: {{ .Values.staging.bigquery.project }}
           - name: JADE_PROJECT
-            value: {{ .Values.jade.dataProject }}
+            value: '{{ "{{workflow.parameters.jade-data-project}}" }}'
           - name: JADE_DATASET
-            value: {{ printf "datarepo_%s" .Values.jade.datasetName }}
+            value: {{ printf "datarepo_%s" $jadeDatasetName }}
           - name: RELEASE_DATE
             value: {{ $releaseDate | quote }}
           - name: PROPERTY
@@ -196,11 +197,11 @@ spec:
                   value: {{ $targetPath | quote }}
                 {{- with .Values.jade }}
                 - name: url
-                  value: {{ .url }}
+                  value: '{{ "{{workflow.parameters.jade-url}}" }}'
                 - name: dataset-id
-                  value: {{ .datasetId }}
+                  value: '{{ "{{workflow.parameters.jade-dataset-id}}" }}'
                 - name: profile-id
-                  value: {{ .profileId }}
+                  value: '{{ "{{workflow.parameters.jade-profile-id}}" }}'
                 - name: sa-secret
                   value: {{ .accessKey.secretName }}
                 - name: sa-secret-key
@@ -255,13 +256,13 @@ spec:
             arguments:
               parameters:
                 {{- $gcsFilePath := printf "%s/xml/%s" $gcsPrefix (include "clinvar.raw-archive-name" .) | quote }}
-                {{- with .Values.jade }}
                 - name: url
-                  value: {{ .url }}
+                  value: '{{ "{{workflow.parameters.jade-url}}" }}'
                 - name: dataset-id
-                  value: {{ .datasetId }}
+                  value: '{{ "{{workflow.parameters.jade-dataset-id}}" }}'
                 - name: profile-id
-                  value: {{ .profileId }}
+                  value: '{{ "{{workflow.parameters.jade-profile-id}}" }}'
+                {{- with .Values.jade }}
                 - name: timeout
                   value: {{ .pollTimeout }}
                 - name: sa-secret
@@ -335,12 +336,12 @@ spec:
                   value: {{ .Values.staging.gcsBucket }}
                 - name: gcs-prefix
                   value: {{ $jsonPrefix | quote }}
-                {{- with .Values.jade }}
                 - name: url
-                  value: {{ .url }}
+                  value: '{{ "{{workflow.parameters.jade-url}}" }}'
                 - name: dataset-id
-                  value: {{ .datasetId }}
+                  value: '{{ "{{workflow.parameters.jade-dataset-id}}" }}'
                 - name: timeout
+                {{- with .Values.jade }}
                   value: {{ .pollTimeout }}
                 - name: sa-secret
                   value: {{ .accessKey.secretName }}

@@ -14,6 +14,15 @@ jade:
   accessKey:
     secretName: dont-tell
     secretKey: its-a-secret
+altJade:
+  url: http://jade.repo
+  datasetId: a
+  datasetName: clinvar
+  profileId: b
+  dataProject: dataaaaa
+  accessKey:
+    secretName: dont-tell
+    secretKey: its-a-secret
 clingen:
   gcsBucket: buc
   kafka:
@@ -30,11 +39,9 @@ dataflow:
   subnetName: network
   workerAccount: runner@zoog
 notification:
+  altChannelId: othermonstertest
   channelId: monstertest
   onlyOnFailure: false
   oauthToken:
     secretName: aaaaa
     secretKey: bbbbb
-steps:
-  exportDiff:
-    enabled: true
