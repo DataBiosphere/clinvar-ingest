@@ -1,3 +1,10 @@
+##
+## Copy of the base cron-workflow.yaml, substituting in altJade connection info.
+## This is a temporary flow to dual write clinvar data to a separate dataset in "real" prod
+## to facilitate the overall migration to that environment.
+## Once we have vetted that dataset and all stakeholders are ok to switch, we should remove this
+## flow and switch the primary Jade values to point at the new dataset.
+##
 apiVersion: argoproj.io/v1alpha1
 kind: CronWorkflow
 metadata:
@@ -27,9 +34,6 @@ spec:
       strategy: OnWorkflowSuccess
     onExit: {{ if .Values.notification.onlyOnFailure }}send-slack-notification-if-failed{{ else }}send-slack-notification{{ end }}
     templates:
-      ##
-      ## Copy of the base cron-workflow.yaml, substituting in altJade connection info
-      ##
       - name: main
         steps:
           - - name: run-main-template
