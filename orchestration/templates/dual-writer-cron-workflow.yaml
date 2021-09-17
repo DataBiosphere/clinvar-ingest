@@ -82,5 +82,5 @@ spec:
           - -H
           - 'Authorization: Bearer $(OAUTH_TOKEN)'
           - -d
-          - '{"text": "Workflow $(WORKFLOW_ID) in env *$(WORKFLOW_ENV)* entered state: *$(WORKFLOW_STATE)*", "channel": "$(CHANNEL_ID)"}'
+          - '{"text": "(dual writer) Workflow $(WORKFLOW_ID) in env *$(WORKFLOW_ENV)* entered state: *$(WORKFLOW_STATE)*", "channel": "$(CHANNEL_ID)"}'
           - "https://slack.com/api/chat.postMessage"
