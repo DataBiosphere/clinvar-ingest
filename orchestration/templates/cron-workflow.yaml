@@ -21,6 +21,8 @@ spec:
           value: {{ .Values.jade.url }}
         - name: jade-profile-id
           value: {{ .Values.jade.profileId }}
+        - name: channel-id
+          value: {{ .Values.notification.channelId }}
 
     serviceAccountName: {{ .Values.serviceAccount.k8sName }}
     podGC:

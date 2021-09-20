@@ -378,7 +378,7 @@ spec:
         image: curlimages/curl:7.70.0
         env:
           - name: CHANNEL_ID
-            value: {{ .Values.notification.channelId }}
+            value: '{{ "{{workflow.channelId}}" }}'
           - name: WORKFLOW_ID
             value: '{{ "{{workflow.name}}" }}'
           - name: WORKFLOW_STATE
