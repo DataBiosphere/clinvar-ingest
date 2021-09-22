@@ -53,7 +53,7 @@ spec:
                 - name: storage-class
                   value: {{ .Values.volumes.storageClass }}
             {{- $downloadPvc := "{{tasks.generate-download-volume.outputs.parameters.pvc-name}}" }}
-            {{- $archiveGcsPath := printf "gs://%s/%s/xml" .Values.staging.gcsBucket $gcsPrefix }}
+            {{- $archiveGcsPath := printf "gs://%s/%s/xml/%s" .Values.staging.gcsBucket $gcsPrefix (include "clinvar.raw-archive-name" .) }}
 
           # Download the raw XML from the dataset's bucket.
           - name: download-archive
