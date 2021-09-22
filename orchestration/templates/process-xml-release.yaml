@@ -47,7 +47,7 @@ spec:
                 - name: local-path
                   value: {{ include "clinvar.raw-archive-name" . }}
                 - name: gcs-path
-                  value:  {{ $archiveGcsPath }} # {{ .Values.staging.gcsBucket }}  # {{ $archivePath | quote }}
+                  value:  {{ $archiveGcsPath }}
 
           # Generate a PVC to hold extracted JSON-list files.
           - name: generate-extraction-volume
