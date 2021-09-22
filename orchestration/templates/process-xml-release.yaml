@@ -20,24 +20,24 @@ spec:
           {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
       dag:
         tasks:
-          # Get the file ID of the raw XML.
-          - name: get-archive-id
-            template: get-archive-id
-            arguments:
-              parameters:
-                - name: release-date
-                  value: {{ $releaseDate | quote }}
-            {{- $archiveId := "{{tasks.get-archive-id.outputs.result}}" }}
-
-          # Use the archive's ID to get its gs:// path.
-          - name: get-archive-uri
-            dependencies: [get-archive-id]
-            template: lookup-archive-path
-            arguments:
-              parameters:
-                - name: archive-id
-                  value: {{ $archiveId | quote }}
-            {{- $archivePath := "{{tasks.get-archive-uri.outputs.result}}" }}
+#          # Get the file ID of the raw XML.
+#          - name: get-archive-id
+#            template: get-archive-id
+#            arguments:
+#              parameters:
+#                - name: release-date
+#                  value: {{ $releaseDate | quote }}
+#            {{- $archiveId := "{{tasks.get-archive-id.outputs.result}}" }}
+#
+#          # Use the archive's ID to get its gs:// path.
+#          - name: get-archive-uri
+#            dependencies: [get-archive-id]
+#            template: lookup-archive-path
+#            arguments:
+#              parameters:
+#                - name: archive-id
+#                  value: {{ $archiveId | quote }}
+#            {{- $archivePath := "{{tasks.get-archive-uri.outputs.result}}" }}
 
           # Generate a PVC to hold the raw XML.
           - name: generate-download-volume
@@ -53,10 +53,11 @@ spec:
                 - name: storage-class
                   value: {{ .Values.volumes.storageClass }}
             {{- $downloadPvc := "{{tasks.generate-download-volume.outputs.parameters.pvc-name}}" }}
+            {{- $archiveGcsPath := "{{ .Values.staging.gcsBucket }}/{{ $gcsPrefix }}/xml" }}
 
           # Download the raw XML from the dataset's bucket.
           - name: download-archive
-            dependencies: [get-archive-uri, generate-download-volume]
+            dependencies: [generate-download-volume]
             template: download-gcs-file
             arguments:
               parameters:
@@ -65,7 +66,7 @@ spec:
                 - name: local-path
                   value: {{ include "clinvar.raw-archive-name" . }}
                 - name: gcs-path
-                  value: {{ $archivePath | quote }}
+                  value:  {{ $archiveGcsPath | quote }} # {{ .Values.staging.gcsBucket }}  # {{ $archivePath | quote }}
 
           # Generate a PVC to hold extracted JSON-list files.
           - name: generate-extraction-volume
