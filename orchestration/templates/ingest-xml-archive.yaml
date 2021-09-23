@@ -61,9 +61,30 @@ spec:
                 - name: cpu
                   value: 1000m
 
+          - name: copy-archive-to-gcs-staging-area
+            dependencies: [download-archive]
+            templateRef:
+              name: {{ .Values.argoTemplates.copyToGCS.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: {{ $downloadPvc | quote }}
+                - name: local-path
+                  value: {{ include "clinvar.raw-archive-name" . }}
+                - name: gcs-bucket
+                  value: {{ .Values.staging.gcsBucket }}
+                - name: gcs-path
+                  value: {{ printf "%s/xml/" $gcsPrefix | quote }}
+                - name: memory
+                  value: 1Gi
+                - name: cpu
+                  value: 1000m
+
+
           # Extract the archive's release date so we can check if it's already been ingested.
           - name: extract-release-date
-            dependencies: [download-archive]
+            dependencies: [copy-archive-to-gcs-staging-area]
             template: extract-release-date
             arguments:
               parameters:
@@ -224,30 +245,8 @@ spec:
                 - name: gcs-prefix
                   value: {{ $gcsPrefix | quote }}
 
-          # If we haven't already ingested a file, upload the archive and ingest it.
-          - name: upload-archive
-            dependencies: [check-for-existing-file]
-            when: {{ $shouldIngestFile | quote }}
-            templateRef:
-              name: {{ .Values.argoTemplates.copyToGCS.name }}
-              template: main
-            arguments:
-              parameters:
-                - name: pvc-name
-                  value: {{ $pvcName | quote }}
-                - name: local-path
-                  value: {{ include "clinvar.raw-archive-name" . }}
-                - name: gcs-bucket
-                  value: {{ .Values.staging.gcsBucket }}
-                - name: gcs-path
-                  value: {{ printf "%s/xml/" $gcsPrefix | quote }}
-                - name: memory
-                  value: 1Gi
-                - name: cpu
-                  value: 1000m
-
           - name: ingest-archive
-            dependencies: [check-for-existing-file, upload-archive]
+            dependencies: [check-for-existing-file]
             when: {{ $shouldIngestFile | quote }}
             onExit: send-slack-notification
             templateRef:
