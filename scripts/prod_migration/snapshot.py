@@ -1,87 +1,61 @@
-from datetime import datetime
-import itertools
-from data_repo_client import RepositoryApi, SnapshotModel
-from google.cloud import bigquery
-from google.cloud import storage
-from prod_migration.common import CLINVAR_TABLES, get_api_client
+import re
+
+from dagster_utils.contrib.data_repo.jobs import poll_job
+from dagster_utils.resources.data_repo.jade_data_repo import build_client
+from data_repo_client import SnapshotRequestModel, SnapshotRequestAssetModel, SnapshotRequestContentsModel
+
+from common import DATA_REPO_URLS, query_yes_no
+
+NEW_PROFILE_ID = "53cf7db4-1ac5-4a83-b204-95d2fea68ff1"
+NEW_DATASET_NAME = "broad_dsp_clinvar"
+READER_EMAILS = ["clingendevs@firecloud.org", "monster@firecloud.org"]
 
 
-def get_snapshot_id(snapshot_name: str, data_repo_client: RepositoryApi) -> str:
-    response = data_repo_client.enumerate_snapshots(filter=snapshot_name)
-    if response.filtered_total != 1:
-        raise ValueError("Error")
+def run():
+    old_data_repo_client = build_client(DATA_REPO_URLS['prod'])
+    new_data_repo_client = build_client(DATA_REPO_URLS['real_prod'])
 
-    return response.items[0].id
+    all_old_snapshots = old_data_repo_client.enumerate_snapshots(filter="clinvar_", limit=1000)
+    all_new_snapshots = new_data_repo_client.enumerate_snapshots(filter="clinvar_", limit=1000)
 
+    real_old_snapshot_names = {snapshot.name for snapshot in all_old_snapshots.items}
+    real_new_snapshot_names = {snapshot.name for snapshot in all_new_snapshots.items}
 
-def get_snapshot(snapshot_id: str, data_repo_client: RepositoryApi) -> SnapshotModel:
-    response = data_repo_client.retrieve_snapshot(id=snapshot_id)
-    return response
+    for snapshot_name in sorted(real_old_snapshot_names, reverse=True):
+        result = re.search(r"clinvar_(\d{4}_\d{2}_\d{2})_v(.*)", snapshot_name)
 
+        release_date = result.group(1)
+        cleaned_release_date = release_date.replace('_', '-')
+        pipeline_version = result.group(2)
+        cleaned_pipeline_version = pipeline_version.replace('_', '.')
 
-def get_ids_for_table(snapshot: SnapshotModel, table_name: str, extraction_path: str, bq_client: bigquery.Client, storage_client: storage.Client):
-    project_id = snapshot.data_project
-    dataset_name = snapshot.name
+        snapshot_name = f"clinvar_{release_date}_v{pipeline_version}"
+        snapshot_description = \
+            f"Mirror of NCBI's ClinVar archive as of {cleaned_release_date} (ingest pipeline version: {cleaned_pipeline_version})"
 
-    print("Clearing out existing data...")
-    bucket = storage.Bucket(storage_client, "broad-dsp-monster-clinvar-snapshot-migration")
-    all_blobs = bucket.list_blobs(prefix=f"dump/{table_name}")
-    for blob in all_blobs:
-        blob.delete()
+        if snapshot_name not in real_new_snapshot_names:
+            print(f"❌ Should create snapshot {snapshot_name}")
+            if not query_yes_no(f"Create snapshot for {snapshot_name} ?"):
+                return
+            snapshot_request = SnapshotRequestModel(
+                name=snapshot_name,
+                profile_id=NEW_PROFILE_ID,
+                description=snapshot_description,
+                contents=[SnapshotRequestContentsModel(
+                    dataset_name=NEW_DATASET_NAME,
+                    mode="byAsset",
+                    asset_spec=SnapshotRequestAssetModel(asset_name="clinvar_release",
+                                                         root_values=[cleaned_release_date]))],
+                readers=READER_EMAILS
+            )
+            response = new_data_repo_client.create_snapshot(snapshot=snapshot_request)
+            print("polling on JOB ID = " + response.id)
+            poll_job(response.id, 3600, 2, new_data_repo_client)
+            break
+        else:
+            print(f"✅ snapshot {snapshot_name} already created")
 
-    print(f"Dumping row ids for {table_name}...")
-    query = f"""
-     EXPORT DATA OPTIONS(
-        uri='{extraction_path}/{table_name}/raw/{table_name}-*.json',
-        format='CSV',
-        overwrite=true
-    ) AS
-    SELECT DISTINCT * FROM (SELECT datarepo_row_id FROM `{project_id}.{dataset_name}.{table_name}`)
-    """
-
-    bq_client.query(query, project=project_id).result()
-    blobs = [blob for blob in bucket.list_blobs(prefix=f"dump/{table_name}/raw")]
-
-    chunked = list(itertools.zip_longest(*[iter(blobs)] * 32))
-
-    for i, chunk in enumerate(chunked):
-        filtered = [item for item in chunk if item]
-        destination_blob = bucket.blob(f"dump/{table_name}/chunked/merged-{i}.json")
-        destination_blob.compose(sources=filtered)
-
-    chunk_blobs = [blob for blob in bucket.list_blobs(prefix=f"dump/{table_name}/chunked")]
-    destination_merged = bucket.blob(f"dump/{table_name}/merged/merged.json")
-    destination_merged.compose(sources=chunk_blobs)
-
-    #destination_blob.compose(sources=blobs)
-    print(f"done")
-
-
-def run(snapshot_name: str):
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-
-    bq_client = bigquery.Client()
-    storage_client = storage.Client()
-
-
-    data_repo_client = get_api_client()
-
-    snapshot_id = get_snapshot_id(snapshot_name, data_repo_client)
-    snapshot = get_snapshot(snapshot_id, data_repo_client)
-    asset_name = 'clinvar_release'
-    mode = 'byAsset'
-
-
-    import pdb; pdb.set_trace()
-    # for table_name in CLINVAR_TABLES:
-    #     get_ids_for_table(
-    #         snapshot,
-    #         table_name,
-    #         f"gs://broad-dsp-monster-clinvar-snapshot-migration/dump",
-    #         bq_client,
-    #         storage_client
-    #     )
 
 
 if __name__ == '__main__':
-    run("clinvar_2021_07_10_v1_3_9")
+    run()

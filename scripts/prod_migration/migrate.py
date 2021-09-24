@@ -5,11 +5,11 @@ from typing import NamedTuple
 from dagster_utils.contrib.data_repo.jobs import poll_job
 from google.cloud.bigquery import Client
 
-from scripts.prod_migration.common import CLINVAR_TABLES, get_api_client
+from common import CLINVAR_TABLES, get_api_client, DATA_REPO_URLS
 
 
 def retrieve_snapshot_data_project(id_name: (str, str)) -> None:
-    data_repo_client = get_api_client()
+    data_repo_client = get_api_client(DATA_REPO_URLS['prod'])
 
     response = data_repo_client.retrieve_snapshot(id=id_name[0])
     print(f"{id_name[1]}\t{id_name[0]}\t{response.data_project}")
@@ -47,7 +47,7 @@ def dump_table(table_name_with_timestamp: TableNameWithTimestamp):
             format='JSON',
             overwrite=true
         ) AS
-        SELECT * EXCEPT ({except_clause}) FROM `{bq_project_id}.{dataset_name}.{table_name}`
+        SELECT * EXCEPT ({except_clause}) FROM `{bq_project_id}.{dataset_name}.{table_name}` WHERE release_date = '2021-09-12'
     """
 
     print(f"Dumping table {table_name} to {extraction_path}/{table_name}...")
@@ -75,7 +75,7 @@ class TableLoadRequest(NamedTuple):
 
 def load_table(table_load_request: TableLoadRequest):
     try:
-        data_repo_client = get_api_client()
+        data_repo_client = get_api_client(DATA_REPO_URLS["real_prod"])
         payload = {
             "format": "json",
             "ignore_unknown_values": "false",
@@ -103,11 +103,15 @@ def load_clinvar_tables(timestamp):
 
     with Pool(10) as p:
         p.map(load_table, table_names_with_paths)
+    #
+    # for table in table_names_with_paths:
+    #     load_table(table)
 
 
 def run():
-    timestamp = dump_clinvar_tables()
-    load_clinvar_tables(timestamp)
+  #  timestamp = dump_clinvar_tables()
+    timestamp  =20210923122228
+   # load_clinvar_tables(timestamp)
 
 
 if __name__ == '__main__':
