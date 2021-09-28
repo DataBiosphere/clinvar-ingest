@@ -102,6 +102,7 @@ spec:
 
           # Upload extracted JSON-list data to GCS.
           - name: upload-extracted-archive
+            {{ - include "argo.retry" . | indent 6 }}
             dependencies: [extract-xml]
             templateRef:
               name: {{ .Values.argoTemplates.gsutilRsync.name }}
