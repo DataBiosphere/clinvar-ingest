@@ -109,9 +109,11 @@ def load_clinvar_tables(timestamp):
 
 
 def run():
-  #  timestamp = dump_clinvar_tables()
-    timestamp  =20210923122228
-   # load_clinvar_tables(timestamp)
+    #  timestamp = dump_clinvar_tables()
+    timestamp = 20210923122228
+
+
+# load_clinvar_tables(timestamp)
 
 
 if __name__ == '__main__':

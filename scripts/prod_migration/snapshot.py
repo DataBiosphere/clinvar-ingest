@@ -1,3 +1,6 @@
+"""
+Creates snapshots in "real" prod for existing snapshots in "fake" prod
+"""
 import re
 
 from dagster_utils.contrib.data_repo.jobs import poll_job
@@ -35,8 +38,6 @@ def run():
 
         if snapshot_name not in real_new_snapshot_names:
             print(f"❌ Should create snapshot {snapshot_name}")
-            if not query_yes_no(f"Create snapshot for {snapshot_name} ?"):
-                return
             snapshot_request = SnapshotRequestModel(
                 name=snapshot_name,
                 profile_id=NEW_PROFILE_ID,
@@ -51,7 +52,6 @@ def run():
             response = new_data_repo_client.create_snapshot(snapshot=snapshot_request)
             print("polling on JOB ID = " + response.id)
             poll_job(response.id, 3600, 2, new_data_repo_client)
-            break
         else:
             print(f"✅ snapshot {snapshot_name} already created")
 
