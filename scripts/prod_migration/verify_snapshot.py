@@ -31,10 +31,10 @@ class Snapshot:
 def retrieve_snapshot(snapshot_name: str, client: RepositoryApi) -> Snapshot:
     snapshots = client.enumerate_snapshots(filter=snapshot_name)
     if len(snapshots.items) > 1:
-        raise Exception(f"More than one instance of snapshot named {snapshot_name} found")
+        raise Exception(f"More than one instance of snapshot found [name={snapshot_name}]")
 
     if len(snapshots.items) == 0:
-        raise Exception(f"No snapshot named {snapshot_name} found")
+        raise Exception(f"No snapshot found [name={snapshot_name}")
 
     bq_location = None
     for storage_item in snapshots.items[0].storage:
@@ -42,7 +42,7 @@ def retrieve_snapshot(snapshot_name: str, client: RepositoryApi) -> Snapshot:
             bq_location = storage_item.region
 
     if bq_location is None:
-        raise Exception(f"No region found for snapshot {snapshot_name}")
+        raise Exception(f"No region found for snapshot [name={snapshot_name}]")
 
     snapshot = client.retrieve_snapshot(id=snapshots.items[0].id)
     return Snapshot(snapshots.items[0].id, snapshot_name, snapshot.data_project, bq_location)
@@ -84,14 +84,15 @@ def diff_snapshots(
         LIMIT 1;
         """
 
-        print(f"Diffing table {table_name}...")
+        print(f"Running diff [table={table_name}]")
         result = client.query(query, location=old_snapshot.snapshot_region, project=old_snapshot.snapshot_bq_project).result()
         rows = [row for row in result]
         cnt = rows[0]['cnt']
         if cnt > 0:
-            print(f"❌Found mismatched {cnt} rows in table {table_name}")
+            print(f"❌Found mismatched rows in table [count={cnt}, table={table_name}]")
+            print(query)
 
-        print(f"✅ No diff for {table_name}.")
+        print(f"✅ No diff [table={table_name}]")
 
 
 def run():

@@ -23,6 +23,7 @@ def run():
 
     real_old_snapshot_names = {snapshot.name for snapshot in all_old_snapshots.items}
     real_new_snapshot_names = {snapshot.name for snapshot in all_new_snapshots.items}
+    real_new_snapshot_ids = {snapshot.name: snapshot.id for snapshot in all_new_snapshots.items}
 
     for snapshot_name in sorted(real_old_snapshot_names, reverse=True):
         result = re.search(r"clinvar_(\d{4}_\d{2}_\d{2})_v(.*)", snapshot_name)
@@ -53,7 +54,7 @@ def run():
             print("polling on JOB ID = " + response.id)
             poll_job(response.id, 3600, 2, new_data_repo_client)
         else:
-            print(f"✅ snapshot {snapshot_name} already created")
+            print(f"✅ snapshot created [name={snapshot_name},\tid={real_new_snapshot_ids[snapshot_name]}")
 
 
 if __name__ == '__main__':
