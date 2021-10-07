@@ -16,19 +16,20 @@ class ArchiveBranchesSpec extends PipelineSpec with PipelineCoders {
   it should "parse raw archives" in {
     val date = LocalDate.of(2020, 6, 23)
 
-    def parse(id: String) = VCV(
-      variation = Variation(
-        variation = JadeVariation.init(id, date, "type"),
-        genes = Nil,
-        associations = Nil
-      ),
-      vcv = None,
-      rcvs = Nil,
-      traitSets = Nil,
-      traits = Nil,
-      traitMappings = Nil,
-      scvs = Nil
-    )
+    def parse(id: String) =
+      VCV(
+        variation = Variation(
+          variation = JadeVariation.init(id, date, "type"),
+          genes = Nil,
+          associations = Nil
+        ),
+        vcv = None,
+        rcvs = Nil,
+        traitSets = Nil,
+        traits = Nil,
+        traitMappings = Nil,
+        scvs = Nil
+      )
 
     val fakeParser: VCV.Parser = rawArchive => {
       val id = rawArchive.read[String]("id")
@@ -49,23 +50,24 @@ class ArchiveBranchesSpec extends PipelineSpec with PipelineCoders {
   it should "dedup genes by date" in {
     val date = LocalDate.of(2020, 6, 23)
 
-    def parse(id: String) = VCV(
-      variation = Variation(
-        variation = JadeVariation.init(id, date, "type"),
-        genes = List(Gene.init(s"${id.toInt % 2}", date).copy(symbol = Some(id))),
-        associations = Nil
-      ),
-      vcv = Some(
-        VariationArchive
-          .init(id, date, 1L, id)
-          .copy(dateLastUpdated = Some(LocalDate.parse(f"2020-${id.toInt + 1}%02d-01")))
-      ),
-      rcvs = Nil,
-      traitSets = Nil,
-      traits = Nil,
-      traitMappings = Nil,
-      scvs = Nil
-    )
+    def parse(id: String) =
+      VCV(
+        variation = Variation(
+          variation = JadeVariation.init(id, date, "type"),
+          genes = List(Gene.init(s"${id.toInt % 2}", date).copy(symbol = Some(id))),
+          associations = Nil
+        ),
+        vcv = Some(
+          VariationArchive
+            .init(id, date, 1L, id)
+            .copy(dateLastUpdated = Some(LocalDate.parse(f"2020-${id.toInt + 1}%02d-01")))
+        ),
+        rcvs = Nil,
+        traitSets = Nil,
+        traits = Nil,
+        traitMappings = Nil,
+        scvs = Nil
+      )
 
     val fakeParser: VCV.Parser = rawArchive => {
       val id = rawArchive.read[String]("id")
@@ -89,23 +91,24 @@ class ArchiveBranchesSpec extends PipelineSpec with PipelineCoders {
   it should "dedup traits by date" in {
     val date = LocalDate.of(2020, 6, 23)
 
-    def parse(id: String) = VCV(
-      variation = Variation(
-        variation = JadeVariation.init(id, date, "type"),
-        genes = Nil,
-        associations = Nil
-      ),
-      vcv = Some(
-        VariationArchive
-          .init(id, date, 1L, id)
-          .copy(dateLastUpdated = Some(LocalDate.parse(f"2020-${id.toInt + 1}%02d-01")))
-      ),
-      rcvs = Nil,
-      traitSets = Nil,
-      traits = List(Trait.init(s"${id.toInt % 2}", date).copy(medgenId = Some(id))),
-      traitMappings = Nil,
-      scvs = Nil
-    )
+    def parse(id: String) =
+      VCV(
+        variation = Variation(
+          variation = JadeVariation.init(id, date, "type"),
+          genes = Nil,
+          associations = Nil
+        ),
+        vcv = Some(
+          VariationArchive
+            .init(id, date, 1L, id)
+            .copy(dateLastUpdated = Some(LocalDate.parse(f"2020-${id.toInt + 1}%02d-01")))
+        ),
+        rcvs = Nil,
+        traitSets = Nil,
+        traits = List(Trait.init(s"${id.toInt % 2}", date).copy(medgenId = Some(id))),
+        traitMappings = Nil,
+        scvs = Nil
+      )
 
     val fakeParser: VCV.Parser = rawArchive => {
       val id = rawArchive.read[String]("id")
@@ -129,23 +132,24 @@ class ArchiveBranchesSpec extends PipelineSpec with PipelineCoders {
   it should "dedup trait-sets by date" in {
     val date = LocalDate.of(2020, 6, 23)
 
-    def parse(id: String) = VCV(
-      variation = Variation(
-        variation = JadeVariation.init(id, date, "type"),
-        genes = Nil,
-        associations = Nil
-      ),
-      vcv = Some(
-        VariationArchive
-          .init(id, date, 1L, id)
-          .copy(dateLastUpdated = Some(LocalDate.parse(f"2020-${id.toInt + 1}%02d-01")))
-      ),
-      rcvs = Nil,
-      traitSets = List(TraitSet.init(s"${id.toInt % 2}", date).copy(`type` = Some(id))),
-      traits = Nil,
-      traitMappings = Nil,
-      scvs = Nil
-    )
+    def parse(id: String) =
+      VCV(
+        variation = Variation(
+          variation = JadeVariation.init(id, date, "type"),
+          genes = Nil,
+          associations = Nil
+        ),
+        vcv = Some(
+          VariationArchive
+            .init(id, date, 1L, id)
+            .copy(dateLastUpdated = Some(LocalDate.parse(f"2020-${id.toInt + 1}%02d-01")))
+        ),
+        rcvs = Nil,
+        traitSets = List(TraitSet.init(s"${id.toInt % 2}", date).copy(`type` = Some(id))),
+        traits = Nil,
+        traitMappings = Nil,
+        scvs = Nil
+      )
 
     val fakeParser: VCV.Parser = rawArchive => {
       val id = rawArchive.read[String]("id")
@@ -169,32 +173,33 @@ class ArchiveBranchesSpec extends PipelineSpec with PipelineCoders {
   it should "dedup submissions by date" in {
     val date = LocalDate.of(2020, 6, 23)
 
-    def parse(id: String) = VCV(
-      variation = Variation(
-        variation = JadeVariation.init(id, date, "type"),
-        genes = Nil,
-        associations = Nil
-      ),
-      vcv = None,
-      rcvs = Nil,
-      traitSets = Nil,
-      traits = Nil,
-      traitMappings = Nil,
-      scvs = List(
-        SCV(
-          assertion = ClinicalAssertion
-            .init(id, date, 1L, id, id, id, id, id)
-            .copy(dateLastUpdated = Some(LocalDate.parse(f"2020-${id.toInt + 1}%02d-01"))),
-          submitters = Nil,
-          submission = Submission
-            .init(s"${id.toInt % 2}", date, id, LocalDate.parse(f"2020-${id.toInt + 1}%02d-01")),
-          variations = Nil,
-          traitSets = Nil,
-          traits = Nil,
-          observations = Nil
+    def parse(id: String) =
+      VCV(
+        variation = Variation(
+          variation = JadeVariation.init(id, date, "type"),
+          genes = Nil,
+          associations = Nil
+        ),
+        vcv = None,
+        rcvs = Nil,
+        traitSets = Nil,
+        traits = Nil,
+        traitMappings = Nil,
+        scvs = List(
+          SCV(
+            assertion = ClinicalAssertion
+              .init(id, date, 1L, id, id, id, id, id)
+              .copy(dateLastUpdated = Some(LocalDate.parse(f"2020-${id.toInt + 1}%02d-01"))),
+            submitters = Nil,
+            submission = Submission
+              .init(s"${id.toInt % 2}", date, id, LocalDate.parse(f"2020-${id.toInt + 1}%02d-01")),
+            variations = Nil,
+            traitSets = Nil,
+            traits = Nil,
+            observations = Nil
+          )
         )
       )
-    )
 
     val fakeParser: VCV.Parser = rawArchive => {
       val id = rawArchive.read[String]("id")
@@ -225,41 +230,42 @@ class ArchiveBranchesSpec extends PipelineSpec with PipelineCoders {
   it should "aggregate names and abbreviations for submitters" in {
     val date = LocalDate.of(2020, 6, 23)
 
-    def parse(id: String) = VCV(
-      variation = Variation(
-        variation = JadeVariation.init(id, date, "type"),
-        genes = Nil,
-        associations = Nil
-      ),
-      vcv = None,
-      rcvs = Nil,
-      traitSets = Nil,
-      traits = Nil,
-      traitMappings = Nil,
-      scvs = List(
-        SCV(
-          assertion = ClinicalAssertion
-            .init(id, date, 1L, id, id, id, id, id)
-            .copy(dateLastUpdated = Some(LocalDate.parse(f"2020-${id.toInt + 1}%02d-01"))),
-          submitters = List(
-            Submitter
-              .init(s"${id.toInt % 2}", date)
-              .copy(
-                currentName = Some(id),
-                allNames = List(id),
-                currentAbbrev = Some(id),
-                allAbbrevs = List(id)
-              )
-          ),
-          submission = Submission
-            .init(s"${id.toInt % 2}", date, id, LocalDate.parse(f"2020-${id.toInt + 1}%02d-01")),
-          variations = Nil,
-          traitSets = Nil,
-          traits = Nil,
-          observations = Nil
+    def parse(id: String) =
+      VCV(
+        variation = Variation(
+          variation = JadeVariation.init(id, date, "type"),
+          genes = Nil,
+          associations = Nil
+        ),
+        vcv = None,
+        rcvs = Nil,
+        traitSets = Nil,
+        traits = Nil,
+        traitMappings = Nil,
+        scvs = List(
+          SCV(
+            assertion = ClinicalAssertion
+              .init(id, date, 1L, id, id, id, id, id)
+              .copy(dateLastUpdated = Some(LocalDate.parse(f"2020-${id.toInt + 1}%02d-01"))),
+            submitters = List(
+              Submitter
+                .init(s"${id.toInt % 2}", date)
+                .copy(
+                  currentName = Some(id),
+                  allNames = List(id),
+                  currentAbbrev = Some(id),
+                  allAbbrevs = List(id)
+                )
+            ),
+            submission = Submission
+              .init(s"${id.toInt % 2}", date, id, LocalDate.parse(f"2020-${id.toInt + 1}%02d-01")),
+            variations = Nil,
+            traitSets = Nil,
+            traits = Nil,
+            observations = Nil
+          )
         )
       )
-    )
 
     val fakeParser: VCV.Parser = rawArchive => {
       val id = rawArchive.read[String]("id")
