@@ -44,7 +44,7 @@ snapshot_contents = [{
   }
 }]
 
-reader_emails = ["clingendevs@firecloud.org"] if environment == "prod" else []
+reader_emails = ["clingendevs@firecloud.org", "monster@firecloud.org"] if environment == "prod" else []
 
 job_id = submit_snapshot(name=snapshot_name, description=snapshot_description, contents=snapshot_contents, profileId=profile_id, readers=reader_emails)
 print(job_id)
