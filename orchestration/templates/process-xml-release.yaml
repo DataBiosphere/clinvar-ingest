@@ -207,6 +207,7 @@ spec:
     ## NOTE: This is generic, we should move it to monster-helm.
     ##
     - name: download-gcs-file
+      {{- include "argo.retry" . | indent 6 }}
       inputs:
         parameters:
           - name: pvc-name
