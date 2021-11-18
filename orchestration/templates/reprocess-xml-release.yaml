@@ -1,0 +1,93 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: reprocess-xml-release
+spec:
+  entrypoint: main
+  serviceAccountName: {{ .Values.serviceAccount.k8sName }}
+  templates:
+    {{- $jadeDatasetName := "{{workflow.parameters.jade-dataset-name}}" }}
+
+    ##
+    ## Convert a ClinVar archive from XML to JSON, then process it with Dataflow.
+    ##
+    - name: main
+      inputs:
+        parameters:
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+      dag:
+        tasks:
+          # Use Dataflow to process the uploaded JSON-list
+          - name: process-archive
+            dependencies: [upload-extracted-archive]
+            template: run-dataflow
+            arguments:
+              parameters:
+                - name: gcs-prefix
+                  value: {{ $gcsPrefix | quote }}
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+
+    ##
+    ## Get the file ID for the XML archive associated with the given release-date
+    ## in the xml_archive TDR table.
+    ##
+    - name: get-archive-id
+      inputs:
+        parameters:
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+      script:
+        image: google/cloud-sdk:slim
+        env:
+          - name: RELEASE_DATE
+            value: {{ $releaseDate | quote }}
+          - name: PROJECT
+            value: {{ .Values.staging.bigquery.project }}
+          - name: JADE_PROJECT
+            value: '{{ "{{workflow.parameters.jade-data-project}}" }}'
+          - name: JADE_DATASET
+            value: {{ printf "datarepo_%s" $jadeDatasetName }}
+          - name: PROPERTY
+            value: archive_path
+        command: [bash]
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/get-archive-property.sh") | indent 10 }}
+
+    ##
+    ## Template used to launch a Dataflow processing job on raw ClinVar data,
+    ## transforming it to our target schema.
+    ##
+    - name: run-dataflow
+      inputs:
+        parameters:
+          - name: gcs-prefix
+          {{- $prefix := "{{inputs.parameters.gcs-prefix}}" }}
+          - name: release-date
+          {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
+      container:
+        image: us.gcr.io/broad-dsp-gcr-public/clinvar-transformation-pipeline:{{ default "latest" .Values.version }}
+        command: []
+        args:
+          - --runner=dataflow
+          {{- $bucket := .Values.staging.gcsBucket }}
+          - --inputPrefix=gs://{{ $bucket }}/{{ $prefix }}/raw
+          - --outputPrefix=gs://{{ $bucket }}/{{ $prefix }}/processed
+          - --releaseDate={{ $releaseDate }}
+          {{- with .Values.dataflow }}
+          - --project={{ .project }}
+          - --region={{ .region }}
+          - --tempLocation=gs://{{ .tmpBucketName }}/dataflow
+          - --subnetwork=regions/{{ .region }}/subnetworks/{{ .subnetName }}
+          - --serviceAccount={{ .workerAccount }}
+          - --workerMachineType={{ .workerMachineType }}
+          {{- with .autoscaling }}
+          - --autoscalingAlgorithm=THROUGHPUT_BASED
+          - --numWorkers={{ .minWorkers }}
+          - --maxNumWorkers={{ .maxWorkers }}
+          {{- end }}
+          - --experiments=shuffle_mode=service
+          {{- end }}
