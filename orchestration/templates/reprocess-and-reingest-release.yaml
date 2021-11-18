@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: process-and-reingest-release
+  name: reprocess-and-reingest-release
 spec:
   entrypoint: main
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
