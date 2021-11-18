@@ -6,7 +6,7 @@ spec:
   entrypoint: main
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
   templates:
-    {{- $pipelineVersion := default "latest" .Values.version }}
+    {{- $pipelineVersion := default "1.5.7" .Values.version }}
     {{- $versionIsPinned := ne $pipelineVersion "latest" }}
     {{- $jadeDatasetName := "{{workflow.parameters.jade-dataset-name}}" }}
 
