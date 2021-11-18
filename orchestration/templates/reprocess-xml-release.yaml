@@ -22,7 +22,6 @@ spec:
         tasks:
           # Use Dataflow to process the uploaded JSON-list
           - name: process-archive
-            dependencies: [upload-extracted-archive]
             template: run-dataflow
             arguments:
               parameters:
