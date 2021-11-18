@@ -2,7 +2,6 @@ set -euo pipefail
 
 declare -ra BQ_QUERY=(
   bq
-  --apilog=stdout
   --location=US
   --project_id=${PROJECT}
   --synchronous_mode=true
