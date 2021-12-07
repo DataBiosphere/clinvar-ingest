@@ -133,7 +133,7 @@ object ArchiveBranches extends PipelineCoders {
       scvTraits = sideCtx(scvTraitOut),
       traitSets = latestTraitSets,
       traits = latestTraits,
-      traitMappings = sideCtx(traitMappingOut).distinct
+      traitMappings = sideCtx(traitMappingOut)
     )
   }
 
