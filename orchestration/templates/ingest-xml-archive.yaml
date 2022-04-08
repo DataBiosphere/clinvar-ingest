@@ -40,6 +40,14 @@ spec:
                   value: {{ .Values.volumes.storageClass }}
             {{- $downloadPvc := "{{tasks.generate-download-volume.outputs.parameters.pvc-name}}" }}
 
+          - name: download-from-gcs
+            dependencies: [generate-download-volume]
+            script:
+              image: google/cloud-sdk:slim
+            command: [bash]
+            source: |
+              gsutil cp gs://broad-dsp-monster-clingen-dev-tmp-storage/20220403/ClinVarRelease.xml.gz /state/test.gz
+
           # Download the raw XML onto the new PVC.
           - name: download-archive
             dependencies: [generate-download-volume]
