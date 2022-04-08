@@ -41,8 +41,8 @@ spec:
             {{- $downloadPvc := "{{tasks.generate-download-volume.outputs.parameters.pvc-name}}" }}
 
           - name: download-from-gcs
-            template: download-archive-from-gcs
             dependencies: [generate-download-volume]
+            template: download-archive-from-gcs
             arguments:
               parameters:
                 - name: pvc-name
@@ -418,13 +418,11 @@ spec:
         - name: state
           persistentVolumeClaim:
             claimName: {{ $pvcName | quote }}
-            readOnly: true
       script:
         image: google/cloud-sdk:slim
         command: [bash]
         volumeMounts:
           - name: state
             mountPath: /state
-            readOnly: true
         source: |
           gsutil cp gs://broad-dsp-monster-clingen-dev-tmp-storage/20220403/ClinVarRelease.xml.gz /state/test.gz
