@@ -16,7 +16,7 @@ spec:
       inputs:
         parameters:
           - name: source-gcs-path
-          {{- $sourceGcsPath := "{{inputs.parameters.source-gcs-path}}" }}"
+          {{- $sourceGcsPath := "{{inputs.parameters.source-gcs-path}}" }}
           - name: archive-path
           {{- $archivePath := "{{inputs.parameters.archive-path}}" }}
           - name: gcs-prefix
