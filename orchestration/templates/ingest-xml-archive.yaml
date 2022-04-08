@@ -413,7 +413,7 @@ spec:
       inputs:
         parameters:
           - name: pvc-name
-          {{- $pvcName := "{{inputs.parameters.pvc-name }}" }}
+          {{- $pvcName := "{{inputs.parameters.pvc-name}}" }}
       volumes:
         - name: state
           persistentVolumeClaim:
