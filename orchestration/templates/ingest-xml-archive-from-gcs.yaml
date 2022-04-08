@@ -41,10 +41,6 @@ spec:
                 - name: storage-class
                   value: {{ .Values.volumes.storageClass }}
 
-
-
-            {{- $downloadPvc := "{{tasks.generate-download-volume-gcs.outputs.parameters.pvc-name}}" }}
-
           # Download the raw XML onto the new PVC.
           - name: download-archive
             dependencies: [generate-download-volume-gcs]
