@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name:
+  name: download-existing-gcs-file
 spec:
   templates:
     - name: main
@@ -16,7 +16,6 @@ spec:
         - name: state
           persistentVolumeClaim:
             claimName: '{{ "{{inputs.parameters.pvc-name}}" }}'
-      {{- include "argo.retry" . | indent 6 }}
       container:
         image: google/cloud-sdk:slim
         command: [gsutil, cp]

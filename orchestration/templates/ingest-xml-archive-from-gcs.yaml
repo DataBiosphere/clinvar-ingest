@@ -46,7 +46,7 @@ spec:
           - name: download-archive
             dependencies: [generate-download-volume]
             templateRef:
-              name: download-gcs-file
+              name: download-existing-gcs-file
               template: main
             arguments:
               parameters:
