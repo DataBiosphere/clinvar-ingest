@@ -8,7 +8,7 @@ spec:
       inputs:
         parameters:
           - name: source-gcs-path
-          {{- $sourceGcsPath := "{{inputs.parameters.source-gcs-path }}" }}
+          {{- $sourceGcsPath := "{{inputs.parameters.source-gcs-path}}" }}
 
           - name: local-path
           - name: pvc-name

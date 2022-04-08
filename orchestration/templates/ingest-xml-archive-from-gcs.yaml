@@ -30,7 +30,7 @@ spec:
           # Generate a PVC to hold the raw XML.
           - name: generate-download-volume-gcs
             templateRef:
-              name: {{ .Values.argoTemplates.generatePVC.name }}
+              name: generate-pvc2
               template: main
             arguments:
               parameters:
@@ -40,6 +40,9 @@ spec:
                   value: {{ .Values.volumes.downloadSize | quote }}
                 - name: storage-class
                   value: {{ .Values.volumes.storageClass }}
+
+
+
             {{- $downloadPvc := "{{tasks.generate-download-volume-gcs.outputs.parameters.pvc-name}}" }}
 
           # Download the raw XML onto the new PVC.
