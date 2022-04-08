@@ -44,8 +44,9 @@ spec:
             template: download-archive-from-gcs
             dependencies: [generate-download-volume]
             arguments:
-              - name: pvc-name
-                value: {{ $downloadPvc | quote }}  
+              parameters:
+                - name: pvc-name
+                  value: {{ $downloadPvc | quote }}  
        
           # Download the raw XML onto the new PVC.
           - name: download-archive
@@ -421,5 +422,9 @@ spec:
       script:
         image: google/cloud-sdk:slim
         command: [bash]
+        volumeMounts:
+          - name: state
+            mountPath: /state
+            readOnly: true
         source: |
           gsutil cp gs://broad-dsp-monster-clingen-dev-tmp-storage/20220403/ClinVarRelease.xml.gz /state/test.gz
