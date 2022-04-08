@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: CronWorkflow
 metadata:
-  name: clinvar-ingest
+  name: clinvar-ingest-existing-gcs
 spec:
   suspend: {{ not .Values.cron.enable }}
   schedule: {{ .Values.cron.schedule | quote }}
