@@ -41,19 +41,12 @@ spec:
             {{- $downloadPvc := "{{tasks.generate-download-volume.outputs.parameters.pvc-name}}" }}
 
           - name: download-from-gcs
+            template: download-archive-from-gcs
             dependencies: [generate-download-volume]
-            inputs:
-              volumes:
-              - name: state
-                persistentVolumeClaim:
-                  claimName: {{ $downloadPvc | quote }}
-                  readOnly: true
-            script:
-              image: google/cloud-sdk:slim
-            command: [bash]
-            source: |
-              gsutil cp gs://broad-dsp-monster-clingen-dev-tmp-storage/20220403/ClinVarRelease.xml.gz /state/test.gz
-
+            arguments:
+              - name: pvc-name
+                value: {{ $downloadPvc | quote }}  
+       
           # Download the raw XML onto the new PVC.
           - name: download-archive
             dependencies: [generate-download-volume]
@@ -413,3 +406,20 @@ spec:
         - -d
         - '{"text": "Workflow $(WORKFLOW_ID) in env *$(WORKFLOW_ENV)* is ingesting a new release file.", "channel": "$(CHANNEL_ID)"}'
         - "https://slack.com/api/chat.postMessage"
+
+
+    - name: download-archive-from-gcs
+      inputs:
+        parameters:
+          - name: pvc-name
+          {{- $pvcName := "{{inputs.parameters.pvc-name }}" }}
+      volumes:
+        - name: state
+          persistentVolumeClaim:
+            claimName: {{ $pvcName | quote }}
+            readOnly: true
+      script:
+        image: google/cloud-sdk:slim
+        command: [bash]
+        source: |
+          gsutil cp gs://broad-dsp-monster-clingen-dev-tmp-storage/20220403/ClinVarRelease.xml.gz /state/test.gz
