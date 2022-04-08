@@ -28,7 +28,7 @@ spec:
       dag:
         tasks:
           # Generate a PVC to hold the raw XML.
-          - name: generate-download-volume
+          - name: generate-download-volume-gcs
             templateRef:
               name: {{ .Values.argoTemplates.generatePVC.name }}
               template: main
@@ -40,11 +40,11 @@ spec:
                   value: {{ .Values.volumes.downloadSize | quote }}
                 - name: storage-class
                   value: {{ .Values.volumes.storageClass }}
-            {{- $downloadPvc := "{{tasks.generate-download-volume.outputs.parameters.pvc-name}}" }}
+            {{- $downloadPvc := "{{tasks.generate-download-volume-gcs.outputs.parameters.pvc-name}}" }}
 
           # Download the raw XML onto the new PVC.
           - name: download-archive
-            dependencies: [generate-download-volume]
+            dependencies: [generate-download-volume-gcs]
             templateRef:
               name: download-existing-gcs-file
               template: main
