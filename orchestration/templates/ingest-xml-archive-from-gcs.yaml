@@ -58,7 +58,7 @@ spec:
                 - name: local-path
                   value: {{ include "clinvar.raw-archive-name" . }}
                 - name: pvc-name
-                  value: {{ $downloadPvc | quote }}
+                  value: volumename
                 - name: memory
                   value: 512Mi
                 - name: cpu
