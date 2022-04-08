@@ -17,7 +17,7 @@ spec:
           apiVersion: v1
           kind: PersistentVolumeClaim
           metadata:
-            name: volume-name
+            name: volumename
           spec:
             accessModes:
               - ReadWriteOnce
