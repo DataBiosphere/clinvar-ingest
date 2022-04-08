@@ -9,7 +9,7 @@ spec:
     ##
     ## Entrypoint for "phase 1" of ClinVar ingest.
     ##
-    ## Downloads gzipped XML from an exising GCS path
+    ## Downloads gzipped XML from NCBI's FTP site, inflates it,
     ## and uploads it into the TDR if not already present.
     ##
     ## The release date reported by the archive is used to determine
@@ -20,7 +20,7 @@ spec:
       inputs:
         parameters:
           - name: source-gcs-path
-          {{- $sourceGcsPath := "{{inputs.parameters.source-gcs-path}}" }}
+          {{- $sourceGcsPath := "{{inputs.parameters.source-gcs-path}" }}"
           - name: archive-path
           {{- $archivePath := "{{inputs.parameters.archive-path}}" }}
           - name: gcs-prefix
@@ -42,7 +42,7 @@ spec:
                   value: {{ .Values.volumes.storageClass }}
             {{- $downloadPvc := "{{tasks.generate-download-volume.outputs.parameters.pvc-name}}" }}
 
-          # Download the archive from GCS to the new PVC.
+          # Download the raw XML onto the new PVC.
           - name: download-archive
             dependencies: [generate-download-volume]
             templateRef:
@@ -167,28 +167,28 @@ spec:
     ##
     ## Check if a row exists in the xml_archive table for a given release date.
     ##
-    {{- $jadeDatasetName := "{{workflow.parameters.jade-dataset-name}}" }}
+   {{- $jadeDatasetName := "{{workflow.parameters.jade-dataset-name}}" }}
     - name: check-for-existing-release
       inputs:
         parameters:
           - name: release-date
           {{- $releaseDate := "{{inputs.parameters.release-date}}" }}
-    script:
-      image: google/cloud-sdk:slim
-      env:
-        - name: PROJECT
-          value: {{ .Values.staging.bigquery.project }}
-        - name: JADE_PROJECT
-          value: '{{ "{{workflow.parameters.jade-data-project}}" }}'
-        - name: JADE_DATASET
-          value: {{ printf "datarepo_%s" $jadeDatasetName }}
-        - name: RELEASE_DATE
-          value: {{ $releaseDate | quote }}
-        - name: PROPERTY
-          value: 'COUNT(1)'
-      command: [bash]
-      source: |
-      {{- include "argo.render-lines" (.Files.Lines "scripts/get-archive-property.sh") | indent 10 }}
+      script:
+        image: google/cloud-sdk:slim
+        env:
+          - name: PROJECT
+            value: {{ .Values.staging.bigquery.project }}
+          - name: JADE_PROJECT
+            value: '{{ "{{workflow.parameters.jade-data-project}}" }}'
+          - name: JADE_DATASET
+            value: {{ printf "datarepo_%s" $jadeDatasetName }}
+          - name: RELEASE_DATE
+            value: {{ $releaseDate | quote }}
+          - name: PROPERTY
+            value: 'COUNT(1)'
+        command: [bash]
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/get-archive-property.sh") | indent 10 }}
 
     ##
     ## Sub-dag to ingest a raw release into the Repo and register it in the xml_archive table.
@@ -341,7 +341,7 @@ spec:
                   value: '{{ "{{workflow.parameters.jade-dataset-id}}" }}'
                 - name: timeout
                 {{- with .Values.jade }}
-                value: {{ .pollTimeout }}
+                  value: {{ .pollTimeout }}
                 - name: sa-secret
                   value: {{ .accessKey.secretName }}
                 - name: sa-secret-key
@@ -365,9 +365,9 @@ spec:
         command: [bash]
         {{- $uploadPath := printf "gs://%s/%s/" .Values.staging.gcsBucket $gcsPrefix }}
         source: |
-          json='{"release_date":"{{ $releaseDate }}","archive_path":"{{ $archiveId }}"}'
-          echo "$json" > archive.json
-          gsutil cp archive.json {{ $uploadPath }}
+            json='{"release_date":"{{ $releaseDate }}","archive_path":"{{ $archiveId }}"}'
+            echo "$json" > archive.json
+            gsutil cp archive.json {{ $uploadPath }}
 
     ##
     ## Send a Slack notification describing the final status of the workflow.
@@ -391,11 +391,11 @@ spec:
                 key: {{ .Values.notification.oauthToken.secretKey }}
         command: [curl]
         args:
-          - -XPOST
-          - -H
-          - 'Content-type: application/json'
-          - -H
-          - 'Authorization: Bearer $(OAUTH_TOKEN)'
-          - -d
-          - '{"text": "Workflow $(WORKFLOW_ID) in env *$(WORKFLOW_ENV)* is ingesting a new release file.", "channel": "$(CHANNEL_ID)"}'
-          - "https://slack.com/api/chat.postMessage"
+        - -XPOST
+        - -H
+        - 'Content-type: application/json'
+        - -H
+        - 'Authorization: Bearer $(OAUTH_TOKEN)'
+        - -d
+        - '{"text": "Workflow $(WORKFLOW_ID) in env *$(WORKFLOW_ENV)* is ingesting a new release file.", "channel": "$(CHANNEL_ID)"}'
+        - "https://slack.com/api/chat.postMessage"
