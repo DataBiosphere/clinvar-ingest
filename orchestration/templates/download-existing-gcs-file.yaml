@@ -8,6 +8,8 @@ spec:
       inputs:
         parameters:
           - name: source-gcs-path
+          {{- $sourceGcsPath := "{{inputs.parameters.source-gcs-path }}" }}
+
           - name: local-path
           - name: pvc-name
           - name: memory
@@ -20,7 +22,7 @@ spec:
         image: google/cloud-sdk:slim
         command: [gsutil, cp]
         args:
-          - {{ inputs.parameters.source-gcs-path }}
+          - {{ $sourceGcsPath | quote }}
           - {{ "/state/{{inputs.parameters.local-path}}" }}
         volumeMounts:
           - name: state
