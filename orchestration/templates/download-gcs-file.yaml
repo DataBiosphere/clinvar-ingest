@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name:
+spec:
+  templates:
+    - name: main
+      inputs:
+        parameters:
+          - name: source-gcs-path
+          - name: local-path
+          - name: pvc-name
+          - name: memory
+          - name: cpu
+      volumes:
+        - name: state
+          persistentVolumeClaim:
+            claimName: '{{ "{{inputs.parameters.pvc-name}}" }}'
+      {{- include "argo.retry" . | indent 6 }}
+      container:
+        image: google/cloud-sdk:slim
+        command: [gsutil, cp]
+        args:
+          - {{ inputs.parameters.source-gcs-path }}
+          - {{ "/state/{{inputs.parameters.local-path}}" }}
+        volumeMounts:
+          - name: state
+            mountPath: /state
+      {{- $mem := "{{inputs.parameters.memory}}" }}
+      {{- $cpu := "{{inputs.parameters.cpu}}" }}
+      podSpecPatch: |
+        containers:
+          - name: main
+            resources:
+              requests:
+                memory: {{ $mem }}
+                cpu: {{ $cpu }}
+              limits:
+                memory: {{ $mem }}
+                cpu: {{ $cpu }}
