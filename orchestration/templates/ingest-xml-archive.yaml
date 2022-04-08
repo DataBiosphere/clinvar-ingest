@@ -46,31 +46,10 @@ spec:
             arguments:
               parameters:
                 - name: pvc-name
-                  value: {{ $downloadPvc | quote }}  
-       
-          # Download the raw XML onto the new PVC.
-          - name: download-archive
-            dependencies: [download-from-gcs]
-            templateRef:
-              name: {{ .Values.argoTemplates.downloadFTPFile.name }}
-              template: main
-            arguments:
-              parameters:
-                - name: ftp-site
-                  value: 'ftp.ncbi.nlm.nih.gov'
-                - name: ftp-path
-                  value: pub/clinvar/xml/clinvar_variation/{{ $archivePath }}
-                - name: local-path
-                  value: {{ include "clinvar.raw-archive-name" . }}
-                - name: pvc-name
                   value: {{ $downloadPvc | quote }}
-                - name: memory
-                  value: 512Mi
-                - name: cpu
-                  value: 1000m
 
           - name: copy-archive-to-gcs-staging-area
-            dependencies: [download-archive]
+            dependencies: [download-from-gcs]
             templateRef:
               name: {{ .Values.argoTemplates.copyToGCS.name }}
               template: main
@@ -425,4 +404,4 @@ spec:
           - name: state
             mountPath: /state
         source: |
-          gsutil cp gs://broad-dsp-monster-clingen-dev-tmp-storage/20220403/ClinVarRelease.xml.gz /state/test.gz
+          gsutil cp gs://broad-dsp-monster-clingen-dev-tmp-storage/20220403/ClinVarRelease.xml.gz /state/ClinVarVariationRelease_00-latest_weekly.xml.gz
