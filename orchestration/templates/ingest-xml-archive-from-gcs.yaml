@@ -72,7 +72,7 @@ spec:
             arguments:
               parameters:
                 - name: pvc-name
-                  value: {{ $downloadPvc | quote }}
+                  value: volumename
                 - name: local-path
                   value: {{ include "clinvar.raw-archive-name" . }}
                 - name: gcs-bucket
@@ -93,7 +93,7 @@ spec:
             arguments:
               parameters:
                 - name: pvc-name
-                  value: {{ $downloadPvc | quote }}
+                  value: volumename
                 - name: archive-path
                   value: {{ include "clinvar.raw-archive-name" . }}
             {{ $releaseDate := "{{tasks.extract-release-date.outputs.result}}" }}
@@ -120,7 +120,7 @@ spec:
                 - name: gcs-prefix
                   value: {{ $gcsPrefix | quote }}
                 - name: pvc-name
-                  value: {{ $downloadPvc | quote }}
+                  value: volumename
 
           # Clean up the PVC once we're done with it.
           - name: cleanup-download
@@ -131,7 +131,7 @@ spec:
             arguments:
               parameters:
                 - name: pvc-name
-                  value: {{ $downloadPvc | quote }}
+                  value: volumename
 
       outputs:
         parameters:
