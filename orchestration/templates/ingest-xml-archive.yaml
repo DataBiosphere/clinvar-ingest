@@ -404,4 +404,4 @@ spec:
           - name: state
             mountPath: /state
         source: |
-          gsutil cp gs://broad-dsp-monster-clingen-dev-tmp-storage/20220403/ClinVarRelease.xml.gz /state/ClinVarVariationRelease_00-latest_weekly.xml.gz
+          gsutil cp gs://broad-dsp-monster-clingen-dev-tmp-storage/20220403/ClinVarRelease.xml.gz /state/ClinVarRelease.xml.gz
