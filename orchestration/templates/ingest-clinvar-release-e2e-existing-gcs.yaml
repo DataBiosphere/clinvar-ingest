@@ -27,7 +27,7 @@ spec:
         tasks:
           - name: ingest-archive
             templateRef:
-              name: ingest-xml-archive
+              name: ingest-xml-archive-from-gcs
               template: main
             arguments:
               parameters:
