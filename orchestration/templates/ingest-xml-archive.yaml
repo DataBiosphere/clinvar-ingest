@@ -42,6 +42,12 @@ spec:
 
           - name: download-from-gcs
             dependencies: [generate-download-volume]
+            inputs:
+              volumes:
+              - name: state
+                persistentVolumeClaim:
+                  claimName: {{ $downloadPvc | quote }}
+                  readOnly: true
             script:
               image: google/cloud-sdk:slim
             command: [bash]
