@@ -50,7 +50,7 @@ spec:
                   - name: should-export-diff
                     value: 'true'
                   - name: input-source-gcs-path
-                    value: 'gs://broad-dsp-monster-clingen-dev-tmp-storage/20220403/ClinVarRelease.xml.gz''
+                    value: 'gs://broad-dsp-monster-clingen-dev-tmp-storage/20220403/ClinVarRelease.xml.gz'
 
       ##
       ## Send a Slack notifcation if the workflow has failed.
