@@ -22,7 +22,7 @@ spec:
           - name: should-export-diff
           {{- $shouldExportDiff := "{{inputs.parameters.should-export-diff}}" }}
           - name: input-source-gcs-path
-          {{- $inputSourceGcsPath := "{{inputs.parameters.source-gcs-path}}" }}
+          {{- $inputSourceGcsPath := "{{inputs.parameters.input-source-gcs-path}}" }}
       dag:
         tasks:
           - name: ingest-archive
