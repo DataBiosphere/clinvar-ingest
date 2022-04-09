@@ -23,6 +23,8 @@ spec:
           {{- $archivePath := "{{inputs.parameters.archive-path}}" }}
           - name: gcs-prefix
           {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+          - name: input-source-gcs-path
+          {{- $inputSourceGcsPath := "{{inputs.parameters.input-source-gcs-path}}" }}"
       dag:
         tasks:
           # Generate a PVC to hold the raw XML.
@@ -47,6 +49,8 @@ spec:
               parameters:
                 - name: pvc-name
                   value: {{ $downloadPvc | quote }}
+                - name: source-gcs-path
+                  value: {{ $inputSourceGcsPath | quote }}
 
           - name: copy-archive-to-gcs-staging-area
             dependencies: [download-from-gcs]
@@ -393,6 +397,8 @@ spec:
         parameters:
           - name: pvc-name
           {{- $pvcName := "{{inputs.parameters.pvc-name}}" }}
+          - name: source-gcs-path
+          {{- $sourceGcsPath := "{{inputs.parameters.source-gcs-path}}" }}"
       volumes:
         - name: state
           persistentVolumeClaim:
@@ -404,4 +410,4 @@ spec:
           - name: state
             mountPath: /state
         source: |
-          gsutil cp gs://broad-dsp-monster-clingen-dev-tmp-storage/20220330/ClinVarVariationRelease_2022-0330.xml.gz /state/ClinVarRelease.xml.gz
+          gsutil cp {{ $sourceGcsPath }}  /state/ClinVarRelease.xml.gz

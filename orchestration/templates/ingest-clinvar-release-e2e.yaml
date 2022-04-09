@@ -21,6 +21,8 @@ spec:
           {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
           - name: should-export-diff
           {{- $shouldExportDiff := "{{inputs.parameters.should-export-diff}}" }}
+          - name: input-source-gcs-path
+          {{- $inputSourceGcsPath := "{{inputs.parameters.source-gcs-path}}" }}
       dag:
         tasks:
           - name: ingest-archive
@@ -33,6 +35,8 @@ spec:
                   value: {{ $archivePath | quote }}
                 - name: gcs-prefix
                   value: {{ $gcsPrefix | quote }}
+                - name: input-source-gcs-path
+                  value: {{ $inputSourceGcsPath | quote }}
             {{- $releaseDate := "{{tasks.ingest-archive.outputs.parameters.release-date}}" }}
 
           - name: process-archive
