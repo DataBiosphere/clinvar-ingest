@@ -2,6 +2,25 @@ apiVersion: v1
 entries:
   clinvar-ingest:
   - apiVersion: v2
+    appVersion: 1.6.40
+    created: "2022-04-09T18:14:46.457164059Z"
+    dependencies:
+    - alias: xmlToJsonList
+      name: xml-to-json-list-template
+      repository: https://broadinstitute.github.io/monster-xml-to-json-list
+      version: 3.3.4
+    - alias: argoTemplates
+      name: argo-templates
+      repository: https://broadinstitute.github.io/monster-helm
+      version: 1.2.7
+    description: Top-level orchestration workflow for ClinVar
+    digest: c141325e99d528770bcc9d7506511bd7807c60881591c96da2b0f9a665755b87
+    name: clinvar-ingest
+    type: application
+    urls:
+    - https://github.com/DataBiosphere/clinvar-ingest/releases/download/clinvar-ingest-1.6.40/clinvar-ingest-1.6.40.tgz
+    version: 1.6.40
+  - apiVersion: v2
     appVersion: 1.6.39
     created: "2022-04-09T18:05:48.153164531Z"
     dependencies:
