@@ -24,7 +24,7 @@ spec:
           - name: gcs-prefix
           {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
           - name: input-source-gcs-path
-          {{- $inputSourceGcsPath := "{{inputs.parameters.input-source-gcs-path}}" }}"
+          {{- $inputSourceGcsPath := "{{inputs.parameters.input-source-gcs-path}}" }}
       dag:
         tasks:
           # Generate a PVC to hold the raw XML.
