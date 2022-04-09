@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: CronWorkflow
 metadata:
-  name: clinvar-ingest
+  name: clinvar-ingest-from-gcs-path
 spec:
   suspend: {{ not .Values.cron.enable }}
   schedule: {{ .Values.cron.schedule | quote }}
@@ -39,7 +39,7 @@ spec:
         steps:
           - - name: run-main-template
               templateRef:
-                name: ingest-clinvar-release-e2e
+                name: ingest-clinvar-release-e2e-gcs
                 template: main
               arguments:
                 parameters:
@@ -49,6 +49,8 @@ spec:
                     value: {{ include "argo.timestamp" . | quote }}
                   - name: should-export-diff
                     value: 'true'
+                  - name: input-source-gcs-path
+                    value: 'gs://broad-dsp-monster-clingen-dev-tmp-storage/20220403/ClinVarRelease.xml.gz'
 
       ##
       ## Send a Slack notifcation if the workflow has failed.

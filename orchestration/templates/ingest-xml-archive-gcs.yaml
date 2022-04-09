@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: ingest-xml-archive
+  name: ingest-xml-archive-gcs
 spec:
   entrypoint: main
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
@@ -23,6 +23,8 @@ spec:
           {{- $archivePath := "{{inputs.parameters.archive-path}}" }}
           - name: gcs-prefix
           {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+          - name: input-source-gcs-path
+          {{- $inputSourceGcsPath := "{{inputs.parameters.input-source-gcs-path}}" }}
       dag:
         tasks:
           # Generate a PVC to hold the raw XML.
@@ -40,29 +42,18 @@ spec:
                   value: {{ .Values.volumes.storageClass }}
             {{- $downloadPvc := "{{tasks.generate-download-volume.outputs.parameters.pvc-name}}" }}
 
-          # Download the raw XML onto the new PVC.
-          - name: download-archive
+          - name: download-from-gcs
             dependencies: [generate-download-volume]
-            templateRef:
-              name: {{ .Values.argoTemplates.downloadFTPFile.name }}
-              template: main
+            template: download-archive-from-gcs
             arguments:
               parameters:
-                - name: ftp-site
-                  value: 'ftp.ncbi.nlm.nih.gov'
-                - name: ftp-path
-                  value: pub/clinvar/xml/clinvar_variation/{{ $archivePath }}
-                - name: local-path
-                  value: {{ include "clinvar.raw-archive-name" . }}
                 - name: pvc-name
                   value: {{ $downloadPvc | quote }}
-                - name: memory
-                  value: 512Mi
-                - name: cpu
-                  value: 1000m
+                - name: source-gcs-path
+                  value: {{ $inputSourceGcsPath | quote }}
 
           - name: copy-archive-to-gcs-staging-area
-            dependencies: [download-archive]
+            dependencies: [download-from-gcs]
             templateRef:
               name: {{ .Values.argoTemplates.copyToGCS.name }}
               template: main
@@ -399,3 +390,24 @@ spec:
         - -d
         - '{"text": "Workflow $(WORKFLOW_ID) in env *$(WORKFLOW_ENV)* is ingesting a new release file.", "channel": "$(CHANNEL_ID)"}'
         - "https://slack.com/api/chat.postMessage"
+
+
+    - name: download-archive-from-gcs
+      inputs:
+        parameters:
+          - name: pvc-name
+          {{- $pvcName := "{{inputs.parameters.pvc-name}}" }}
+          - name: source-gcs-path
+          {{- $sourceGcsPath := "{{inputs.parameters.source-gcs-path}}" }}
+      volumes:
+        - name: state
+          persistentVolumeClaim:
+            claimName: {{ $pvcName | quote }}
+      script:
+        image: google/cloud-sdk:slim
+        command: [bash]
+        volumeMounts:
+          - name: state
+            mountPath: /state
+        source: |
+          gsutil cp {{ $sourceGcsPath }}  /state/ClinVarRelease.xml.gz

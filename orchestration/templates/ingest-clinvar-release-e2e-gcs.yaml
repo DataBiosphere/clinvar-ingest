@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: ingest-clinvar-release-e2e
+  name: ingest-clinvar-release-e2e-gcs
 spec:
   entrypoint: main
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
@@ -21,11 +21,13 @@ spec:
           {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
           - name: should-export-diff
           {{- $shouldExportDiff := "{{inputs.parameters.should-export-diff}}" }}
+          - name: input-source-gcs-path
+          {{- $inputSourceGcsPath := "{{inputs.parameters.input-source-gcs-path}}" }}
       dag:
         tasks:
           - name: ingest-archive
             templateRef:
-              name: ingest-xml-archive
+              name: ingest-xml-archive-gcs
               template: main
             arguments:
               parameters:
@@ -33,6 +35,8 @@ spec:
                   value: {{ $archivePath | quote }}
                 - name: gcs-prefix
                   value: {{ $gcsPrefix | quote }}
+                - name: input-source-gcs-path
+                  value: {{ $inputSourceGcsPath | quote }}
             {{- $releaseDate := "{{tasks.ingest-archive.outputs.parameters.release-date}}" }}
 
           - name: process-archive
