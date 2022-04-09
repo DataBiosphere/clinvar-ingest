@@ -398,7 +398,7 @@ spec:
           - name: pvc-name
           {{- $pvcName := "{{inputs.parameters.pvc-name}}" }}
           - name: source-gcs-path
-          {{- $sourceGcsPath := "{{inputs.parameters.source-gcs-path}}" }}"
+          {{- $sourceGcsPath := "{{inputs.parameters.source-gcs-path}}" }}
       volumes:
         - name: state
           persistentVolumeClaim:
