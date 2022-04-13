@@ -82,7 +82,7 @@ spec:
           - name: publish-processing-results
             dependencies: [check-latest-snapshot]
             # only publish results when processing is needed and a snapshot is needed
-            # when: {{ "({{tasks.check-latest-snapshot.outputs.result}} == 0)" }}
+            when: {{ "({{tasks.check-latest-snapshot.outputs.result}} == 0)" }}
             template: publish-processing-results
             arguments:
               parameters:
