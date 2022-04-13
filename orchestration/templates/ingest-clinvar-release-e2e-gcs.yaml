@@ -1,0 +1,68 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: ingest-clinvar-release-e2e-gcs
+spec:
+  entrypoint: main
+  serviceAccountName: {{ .Values.serviceAccount.k8sName }}
+  templates:
+    ##
+    ## Entrypoint for end-to-end ETL of a ClinVar archive.
+    ##
+    ## Orchestrates calls to sub-workflows that know how to
+    ## extract, transform, load, and publish the data.
+    ##
+    - name: main
+      inputs:
+        parameters:
+          - name: archive-path
+          {{- $archivePath := "{{inputs.parameters.archive-path}}" }}
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+          - name: should-export-diff
+          {{- $shouldExportDiff := "{{inputs.parameters.should-export-diff}}" }}
+          - name: input-source-gcs-path
+          {{- $inputSourceGcsPath := "{{inputs.parameters.input-source-gcs-path}}" }}
+      dag:
+        tasks:
+          - name: ingest-archive
+            templateRef:
+              name: ingest-xml-archive-gcs
+              template: main
+            arguments:
+              parameters:
+                - name: archive-path
+                  value: {{ $archivePath | quote }}
+                - name: gcs-prefix
+                  value: {{ $gcsPrefix | quote }}
+                - name: input-source-gcs-path
+                  value: {{ $inputSourceGcsPath | quote }}
+            {{- $releaseDate := "{{tasks.ingest-archive.outputs.parameters.release-date}}" }}
+
+          - name: process-archive
+            dependencies: [ingest-archive]
+            templateRef:
+              name: process-and-reingest-release
+              template: main
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+                - name: gcs-prefix
+                  value: {{ $gcsPrefix | quote }}
+            {{- $datasetName := "{{tasks.process-archive.outputs.parameters.dataset-name}}" }}
+
+          - name: export-diff
+            when: {{ $shouldExportDiff | quote }}
+            dependencies: [process-archive]
+            templateRef:
+              name: export-diff
+              template: main
+            arguments:
+              parameters:
+                - name: release-date
+                  value: {{ $releaseDate | quote }}
+                - name: dataset-name
+                  value: {{ $datasetName | quote }}
+                - name: gcs-prefix
+                  value: {{ $gcsPrefix | quote }}
