@@ -3,7 +3,7 @@ kind: CronWorkflow
 metadata:
   name: clinvar-ingest-from-gcs-path
 spec:
-  suspend: {{ not .Values.cron.enable }}
+  suspend: true
   schedule: {{ .Values.cron.schedule | quote }}
   timezone: {{ .Values.cron.timezone | quote }}
   concurrencyPolicy: Forbid
