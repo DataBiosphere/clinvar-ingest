@@ -76,3 +76,5 @@ Stage 3 of ingest exports processed data to ClinGen. For a pair of release dates
    1. Compares data across the two releases to get a diff of created/updated/deleted rows
    2. Exports the three "slices" of data from the diff into GCS
 2. Produces a Kafka message to ClinGen, pointing at the exported data
+
+
