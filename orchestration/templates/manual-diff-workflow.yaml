@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  name: clinvar-diff-datasets
+  name: clinvar-manual-diff
 spec:
 #  suspend: {{ not .Values.cron.enable }}
 #  schedule: {{ .Values.cron.schedule | quote }}
