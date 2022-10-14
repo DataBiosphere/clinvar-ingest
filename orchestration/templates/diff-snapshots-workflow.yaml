@@ -1,0 +1,116 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  name: clinvar-diff-datasets
+spec:
+#  suspend: {{ not .Values.cron.enable }}
+#  schedule: {{ .Values.cron.schedule | quote }}
+#  timezone: {{ .Values.cron.timezone | quote }}
+  concurrencyPolicy: Forbid
+  workflowSpec:
+    entrypoint: main
+    arguments:
+      parameters:
+        - name: jade-dataset-id
+          value: {{ .Values.jade.datasetId }}
+        - name: jade-dataset-name
+          value: {{ .Values.jade.datasetName }}
+        - name: jade-data-project
+          value: {{ .Values.jade.dataProject }}
+        - name: jade-url
+          value: {{ .Values.jade.url }}
+        - name: jade-profile-id
+          value: {{ .Values.jade.profileId }}
+        - name: channel-id
+          value: {{ .Values.notification.channelId }}
+        - name: prev-date
+          value: {{ .Values.jade.prev_date }}
+        - name: release-date
+          value: {{ .Values.jade.release_date }}
+
+    serviceAccountName: {{ .Values.serviceAccount.k8sName }}
+    podGC:
+      strategy: OnWorkflowSuccess
+    onExit: {{ if .Values.notification.onlyOnFailure }}send-slack-notification-if-failed{{ else }}send-slack-notification{{ end }}
+    templates:
+      ##
+      ## Main entry-point to workflow to diff versions of clinvar
+      ##
+      ## Delegates to a WorkflowTemplate for all of the business logic,
+      ## to support easily running manual ingests.
+      ##
+      - name: main
+        steps:
+          - - name: run-table-diffs-from-template
+              templateRef:
+                name: export-manual-diff
+                template: main
+              withItems:
+                - clinical_assertion
+                - clinical_assertion_observation
+                - clinical_assertion_trait
+                - clinical_assertion_trait_set
+                - clinical_assertion_variation
+                - gene
+                - gene_association
+                - rcv_accession
+                - submission
+                - submitter
+                - trait
+                - trait_mapping
+                - trait_set
+                - variation
+                - variation_archive
+              arguments:
+                parameters:
+                  - name: table-name
+                    value: {{ "{{item}}" | quote }}
+                  - name: prev-date
+                    value: {{ $prevDate | quote }}
+                  - name: release-date
+                    value: {{ $releaseDate | quote }}
+                  - name: gcs-prefix
+                    value: {{ $gcsPrefix | quote }}
+                  - name: dataset-name
+                    value: {{ $datasetName | quote }}
+
+
+      ##
+      ## Send a Slack notifcation if the workflow has failed.
+      ##
+      - name: send-slack-notification-if-failed
+        steps:
+          - - name: send-notification
+              template: send-slack-notification
+              when: '{{ "{{workflow.status}} != Succeeded" }}'
+
+      ##
+      ## Send a Slack notification describing the final status of the workflow.
+      ##
+      - name: send-slack-notification
+        container:
+          image: curlimages/curl:7.70.0
+          env:
+            - name: CHANNEL_ID
+              value: {{ .Values.notification.channelId }}
+            - name: WORKFLOW_ID
+              value: '{{ "{{workflow.name}}" }}'
+            - name: WORKFLOW_STATE
+              value: '{{ "{{workflow.status}}" }}'
+            - name: WORKFLOW_ENV
+              value: {{ .Values.jade.environment }}
+            - name: OAUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.notification.oauthToken.secretName }}
+                  key: {{ .Values.notification.oauthToken.secretKey }}
+          command: [curl]
+          args:
+          - -XPOST
+          - -H
+          - 'Content-type: application/json'
+          - -H
+          - 'Authorization: Bearer $(OAUTH_TOKEN)'
+          - -d
+          - '{"text": "Workflow $(WORKFLOW_ID) in env *$(WORKFLOW_ENV)* entered state: *$(WORKFLOW_STATE)*", "channel": "$(CHANNEL_ID)"}'
+          - "https://slack.com/api/chat.postMessage"
