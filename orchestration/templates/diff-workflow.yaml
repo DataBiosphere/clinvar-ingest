@@ -3,7 +3,7 @@ kind: CronWorkflow
 metadata:
   name: diff-workflow
 spec:
-  suspend: {{ not true }}
+  suspend: {{ not .Values.cron.enable }}
   schedule: {{ .Values.cron.schedule | quote }}
   timezone: {{ .Values.cron.timezone | quote }}
   concurrencyPolicy: Forbid
