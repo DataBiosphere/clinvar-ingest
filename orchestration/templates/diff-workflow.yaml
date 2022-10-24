@@ -1,0 +1,45 @@
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: diff-workflow
+spec:
+  suspend: true
+  schedule: {{ .Values.cron.schedule | quote }}
+  timezone: {{ .Values.cron.timezone | quote }}
+  concurrencyPolicy: Forbid
+  workflowSpec:
+    entrypoint: main
+    arguments:
+      parameters:
+        - name: jade-dataset-id
+          value: {{ .Values.jade.datasetId }}
+        - name: jade-dataset-name
+          value: {{ .Values.jade.datasetName }}
+        - name: jade-data-project
+          value: {{ .Values.jade.dataProject }}
+        - name: jade-url
+          value: {{ .Values.jade.url }}
+        - name: jade-profile-id
+          value: {{ .Values.jade.profileId }}
+
+    serviceAccountName: {{ .Values.serviceAccount.k8sName }}
+    podGC:
+      strategy: OnWorkflowSuccess
+    onExit: {{ if .Values.notification.onlyOnFailure }}send-slack-notification-if-failed{{ else }}send-slack-notification{{ end }}
+    templates:
+      ##
+      ## Main entry-point to the regularly-run ClinVar ingest workflow.
+      ##
+      ## Delegates to a WorkflowTemplate for all of the business logic,
+      ## to support easily running manual ingests.
+      ##
+      - name: main
+        steps:
+          - - name: run-main-template
+              templateRef:
+                name: export-diff-standalone
+                template: main
+              arguments:
+                parameters:
+                  - name: release-date
+                    value: '2022-04-03'
