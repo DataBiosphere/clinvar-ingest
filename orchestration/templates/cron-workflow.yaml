@@ -3,7 +3,7 @@ kind: CronWorkflow
 metadata:
   name: clinvar-ingest
 spec:
-  suspend: {{ not .Values.cron.enable }}
+  suspend: {{ .Values.cron.enable }}
   schedule: {{ .Values.cron.schedule | quote }}
   timezone: {{ .Values.cron.timezone | quote }}
   concurrencyPolicy: Forbid
