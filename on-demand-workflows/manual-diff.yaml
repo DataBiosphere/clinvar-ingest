@@ -1,0 +1,55 @@
+metadata:
+  generateName: export-diff-standalone-ah-
+  namespace: clinvar
+spec:
+  arguments:
+    parameters:
+      - name: jade-dataset-id
+        value: '29844445-5005-4672-a2f1-f238de23dc20'
+      - name: jade-dataset-name
+        value: 'broad_dsp_clinvar'
+      - name: jade-data-project
+        value: 'datarepo-4c7e3eea'
+      - name: jade-url
+        value: 'https://data.terra.bio'
+      - name: jade-profile-id
+        value: '53cf7db4-1ac5-4a83-b204-95d2fea68ff1'
+  templates:
+    - name: main
+      dag:
+        tasks:
+          - name: diff-previous
+            template: ''
+            arguments:
+              parameters:
+                - name: dataset-name
+                  value: 'datarepo_broad_dsp_clinvar'
+                - name: table-name
+                  value: '{{item}}'
+                - name: gcs-prefix
+                  value: 'gs://broad-dsp-spec-ops/scratch/andrea/clinvar/'
+                - name: release-date
+                  value: '2022-04-03'
+                - name: pipeline-version
+                  value: 1.6.52
+            templateRef:
+              name: date-present
+              template: main
+            withItems:
+              - clinical_assertion
+              - clinical_assertion_observation
+              - clinical_assertion_trait
+              - clinical_assertion_trait_set
+              - clinical_assertion_variation
+              - gene
+              - gene_association
+              - rcv_accession
+              - submission
+              - submitter
+              - trait
+              - trait_mapping
+              - trait_set
+              - variation
+              - variation_archive
+  entrypoint: main
+  serviceAccountName: argo-runner
