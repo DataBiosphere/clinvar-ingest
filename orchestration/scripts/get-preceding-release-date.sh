@@ -12,5 +12,4 @@ declare -ra BQ_QUERY=(
 )
 declare -r TABLE="\`${JADE_PROJECT}.${JADE_DATASET}.processing_history\`"
 
-${BQ_QUERY[@]} "SELECT release_date FROM ${TABLE} WHERE release_date < '${RELEASE_DATE}' ORDER BY release_date DESC LIMIT 1"
-#${BQ_QUERY[@]} "SELECT release_date FROM ${TABLE} WHERE release_date < '${RELEASE_DATE}' ORDER BY release_date DESC LIMIT 1" | tail -n 1
+${BQ_QUERY[@]} "SELECT release_date FROM ${TABLE} WHERE release_date < '${RELEASE_DATE}' ORDER BY release_date DESC LIMIT 1" | tail -n 1
