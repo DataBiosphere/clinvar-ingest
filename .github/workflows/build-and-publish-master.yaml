@@ -24,7 +24,7 @@ jobs:
           credentials_json: '${{ secrets.Base64ServiceAccountKey }}'
       - uses: google-github-actions/setup-gcloud@v1
         env:
-          CLOUDSDK_PYTHON: python2
+          CLOUDSDK_PYTHON: python3
         with:
           version: '286.0.0'
           project_id: broad-dsp-monster-dev
