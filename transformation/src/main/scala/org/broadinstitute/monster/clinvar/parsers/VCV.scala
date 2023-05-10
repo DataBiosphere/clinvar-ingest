@@ -167,12 +167,10 @@ object VCV {
         val mappingsWithAccessionLinks = traitMappings.map { rawMapping =>
           val matchingScv = parsedScvs
             .find(_.assertion.internalId == rawMapping.clinicalAssertionId)
-            .getOrElse {
-              throw new IllegalStateException(
-                s"Can't link SCV ID ${rawMapping.clinicalAssertionId} to its accession"
-              )
-            }
-          rawMapping.copy(clinicalAssertionId = matchingScv.assertion.id)
+          matchingScv match {
+            case Some(scv) => rawMapping.copy(clinicalAssertionId = scv.assertion.id)
+            case None      => rawMapping
+          }
         }
 
         // Pull out top-level info about the VCV and combine it with summary
