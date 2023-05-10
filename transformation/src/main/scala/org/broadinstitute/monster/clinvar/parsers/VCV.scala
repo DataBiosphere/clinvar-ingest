@@ -163,15 +163,12 @@ object VCV {
           .map(scvParser.parse(scvContext, _))
 
         // Swap SCV accessions for their numeric IDs so the FK in the mapping table
-        // actually works.
+        // actually works. Allow any non-matching records to bypass the re-assignment
+        // of the clinicalAssertionId from the SCVs (since they are orphaned). We
+        // want to leave the 'orphaned' traitMappings in the output as-is.
         val mappingsWithAccessionLinks = traitMappings.map { rawMapping =>
           val matchingScv = parsedScvs
             .find(_.assertion.internalId == rawMapping.clinicalAssertionId)
-            .getOrElse {
-              throw new IllegalStateException(
-                s"Can't link SCV ID ${rawMapping.clinicalAssertionId} to its accession"
-              )
-            }
           rawMapping.copy(clinicalAssertionId = matchingScv.assertion.id)
         }
 
